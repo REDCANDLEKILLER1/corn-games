@@ -152,7 +152,7 @@
       .veil.on { display: flex; }
       /* Game Over only: the host app's bottom toolbar overlays the
          webview on phones and was covering the panel's bottom button
-         row (VIEW COLLECTION / TITLE). Lift the whole panel above it
+         row (VIEW GALLERY / TITLE). Lift the whole panel above it
          with the same ~96px reserve the game floor strip uses, plus
          the veil padding and the safe-area inset, and cap the panel
          height to the space that leaves so its bottom edge — and the
@@ -202,6 +202,7 @@
         padding: 8px 12px 2px; color: #ffd700; font-weight: 800; font-size: 14px; text-align: center;
       }
       .collsummary .dim { color: #8fd98f; font-weight: 700; font-size: 12.5px; }
+      .collsortrow { display: flex; justify-content: flex-end; padding: 6px 10px 0; }
       #collScroll { flex: 1; overflow-y: auto; padding: 6px 10px calc(18px + env(safe-area-inset-bottom)); -webkit-overflow-scrolling: touch; }
       .collgroup { margin-top: 16px; }
       .collgroup:first-child { margin-top: 6px; }
@@ -238,6 +239,14 @@
       }
       .piece.zero .ptitle { color: #7fa87f; }
       .collempty { text-align: center; color: #b9ffb9; font-size: 14px; padding: 26px 12px; line-height: 1.5; }
+      /* gold (Masterpiece) section at the very top of the gallery */
+      .goldgroup .collartist { border-bottom-color: #8a6d00; }
+      .goldgroup .ghandle { color: #ffd700; font-weight: 900; font-size: 15px; letter-spacing: .5px; }
+      .goldgroup .gartist { color: #ffd700; font-weight: 800; font-size: 11.5px; }
+      .goldgroup.dim { opacity: .5; }
+      .goldempty { color: #b9ffb9; font-size: 13.5px; padding: 2px 0 4px; }
+      .piece.gold .thumb { border: 2px solid #ffd700; box-shadow: 0 0 12px rgba(255,215,0,.55); }
+      .piece.gold .cnt { background: #ffd700; }
       /* level-up banner: sits at the top of the play area, shows
          briefly on its own and never blocks play — no tap needed */
       #levelBanner {
@@ -379,19 +388,20 @@
           <div class="haulgrid" id="haulGrid"></div>
           <div class="row">
             <button class="bigbtn" id="againBtn">PLAY AGAIN</button>
-            <button class="ghostbtn" id="viewCollectionBtn">VIEW COLLECTION</button>
+            <button class="ghostbtn" id="viewCollectionBtn">VIEW GALLERY</button>
             <button class="ghostbtn" id="homeBtn">TITLE</button>
           </div>
         </div>
       </div>
 
-      <!-- ================= COLLECTION ================= -->
+      <!-- ================= GALLERY ================= -->
       <section class="screen" id="collectionScreen">
         <div class="collhead">
-          <h2>MY COLLECTION</h2>
+          <h2>MY GALLERY</h2>
           <button class="ghostbtn backbtn" id="collBackBtn">← GAME OVER</button>
         </div>
         <div class="collsummary" id="collSummary"></div>
+        <div class="collsortrow"><button class="sortbtn" id="collSortBtn">SORT: A–Z</button></div>
         <div id="collScroll"><div id="collBody"></div></div>
       </section>
 
@@ -1130,7 +1140,7 @@
         score: 0, level: 1, caught: 0, hearts: 3, masterpieces: 0,
         items: [], trayX: W / 2, trayTarget: W / 2, keys: {},
         spawnIn: 0.4, heartIn: 9 + Math.random() * 6, goldIn: 13 + Math.random() * 9,
-        tally: {}, pieceTally: {}, over: false
+        tally: {}, pieceTally: {}, goldTally: {}, over: false
       };
     }
     function trayW() { return Math.max(112, Math.min(152, W * 0.34)); }
@@ -1223,6 +1233,10 @@
       G.pieceTally[pk] = (G.pieceTally[pk] || 0) + 1;
       if (it.kind === "gold") {
         G.score += 1000; G.masterpieces++;
+        /* gold catches tracked separately (same per-piece key) so the
+           gallery can show this run's Masterpieces at the top —
+           in memory for this run only, nothing saved */
+        G.goldTally[pk] = (G.goldTally[pk] || 0) + 1;
         flash("MASTERPIECE +1000"); sfxMaster();
       } else {
         G.score += 10; sfxCatch();
@@ -1346,13 +1360,49 @@
        Every falling piece in the game, grouped by artist, with the
        count caught in the run that just ended. Pieces never caught
        show ×0, dimmed. Nothing is saved — a new run starts empty. */
-    var lastPieces = {}, lastCaughtTotal = 0;
+    var lastPieces = {}, lastGold = {}, lastCaughtTotal = 0;
+    /* gallery sort: game order by default, A–Z by handle on request.
+       The button label always names the sort a tap switches TO.
+       Only the artist groups move — pieces inside a group keep
+       their order. */
+    var collAZ = false;
     function esc(s) {
       return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
     }
     function renderCollection() {
       var totalPieces = 0, distinct = 0, groups = "";
+      /* gold section first: this run's Masterpieces, gold-framed,
+         with their gold-catch counts — the same pieces still appear
+         in their artist's group below */
+      var goldCards = "", goldTotal = 0;
       ARTISTS.forEach(function (a, ai) {
+        (artistEntries[ai] || []).forEach(function (e) {
+          var gn = lastGold[e.src || ("artist:" + ai)] || 0;
+          if (!gn) return;
+          goldTotal += gn;
+          var gthumb;
+          if (e.src) {
+            gthumb = '<img src="' + e.src + '" alt="' + esc(e.title) + ' by ' + esc(a.name) + '" loading="lazy">';
+          } else {
+            gthumb = '<div class="init" style="background:hsl(' + a.hue + ',70%,48%)">' + esc(a.name.charAt(0)) + '</div>';
+          }
+          goldCards += '<div class="piece gold"><div class="thumb">' + gthumb +
+            '<span class="cnt">×' + gn + '</span></div><div class="ptitle">' + esc(e.title) +
+            '<br><span class="gartist">' + esc(a.handle) + '</span></div></div>';
+        });
+      });
+      var goldHead = '<div class="collartist"><span class="ghandle">★ MASTERPIECE ★ GOLD</span>' +
+        (goldTotal ? '<span class="ctotal">' + goldTotal + ' caught</span>' : '') + '</div>';
+      groups += goldTotal
+        ? '<div class="collgroup goldgroup">' + goldHead + '<div class="collgrid">' + goldCards + '</div></div>'
+        : '<div class="collgroup goldgroup dim">' + goldHead + '<div class="goldempty">No gold caught this run</div></div>';
+      var order = ARTISTS.map(function (a, ai) { return ai; });
+      if (collAZ) order.sort(function (x, y) {
+        var kx = alphaKey(ARTISTS[x]), ky = alphaKey(ARTISTS[y]);
+        return kx < ky ? -1 : kx > ky ? 1 : 0;
+      });
+      order.forEach(function (ai) {
+        var a = ARTISTS[ai];
         var entries = artistEntries[ai] || [];
         if (!entries.length) return;
         var artistTotal = 0, cards = "";
@@ -1380,6 +1430,7 @@
           '<br><span class="dim">Counts are from this run only.</span>'
         : 'No catches this run — the art got away!' +
           '<br><span class="dim">Every piece in the game is below, ready for next time.</span>';
+      $("collSortBtn").textContent = collAZ ? "SORT: GAME ORDER" : "SORT: A–Z";
       $("collScroll").scrollTop = 0;
     }
     function openCollection() {
@@ -1401,7 +1452,7 @@
         " · Masterpieces: " + G.masterpieces;
       lastHaul = Object.keys(G.tally).map(function (k) { return [ARTISTS[k], G.tally[k]]; });
       renderHaul();
-      lastPieces = G.pieceTally; lastCaughtTotal = G.caught;
+      lastPieces = G.pieceTally; lastGold = G.goldTally; lastCaughtTotal = G.caught;
       $("overVeil").classList.add("on");
     }
 
@@ -1431,6 +1482,7 @@
     $("againBtn").addEventListener("click", startGame);
     $("haulSortBtn").addEventListener("click", function () { haulAZ = !haulAZ; renderHaul(); });
     $("viewCollectionBtn").addEventListener("click", openCollection);
+    $("collSortBtn").addEventListener("click", function () { collAZ = !collAZ; renderCollection(); });
     $("collBackBtn").addEventListener("click", function () {
       showScreen("gameScreen");
       $("overVeil").classList.add("on");
