@@ -1,0 +1,1310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<meta name="color-scheme" content="dark" />
+<link rel="icon" href="data:," />
+<title>Pinball Magic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#07030f; --panel:#160a2e; --panel2:#22104a; --ink:#ffffff; --muted:#cdbcf5;
+    --gold:#ffe600; --gold2:#fff36b; --teal:#00e5ff; --pink:#ff2d95; --lime:#00ff00;
+    --orange:#ff8a00; --purple:#b26bff; --line:#4b2a8f;
+    --btn:#2a1f57; --btn-ink:#fff;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%}
+  html{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+  body{background:var(--bg);color:var(--ink);font-family:"Outfit",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-tap-highlight-color:transparent;overflow:hidden;overscroll-behavior:none;touch-action:manipulation}
+  button{min-height:44px;touch-action:manipulation}
+  .wrap,.cabinet,.canvas-wrap,.table-box,.controls,.toolbar,.topbar,.magic-row{touch-action:manipulation}
+  .letter,.ctl,.tbtn,.burger,.menu-item{touch-action:manipulation;-webkit-user-select:none;user-select:none}
+  .wrap{max-width:1060px;margin:0 auto;padding:8px 10px 10px;height:100vh;height:calc(100dvh - var(--hub-bar,0px));display:flex;flex-direction:column}
+  /* Score / DMD bar */
+  .dmd{background:#0a0318;border:2px solid var(--gold);border-radius:14px;padding:6px 12px;display:grid;grid-template-columns:1.4fr .7fr .7fr .9fr;gap:8px;box-shadow:0 0 22px rgba(255,230,0,.35), 0 0 44px rgba(255,45,149,.18), 0 10px 30px rgba(0,0,0,.5);flex-shrink:0}
+  .dmd .lab{font-size:10px;letter-spacing:.14em;color:#b79cff;font-weight:700}
+  .dmd .val{font-family:"Cinzel",serif;font-weight:900;color:var(--gold);font-size:clamp(19px,3.2vw,27px);line-height:1.05;white-space:nowrap;overflow:hidden;text-shadow:0 0 12px rgba(255,230,0,.75)}
+  .dmd .val.small{font-size:clamp(17px,2.8vw,22px);color:#fff}
+  .dmd .val.teal{color:var(--teal);text-shadow:0 0 12px rgba(0,229,255,.8)}
+  /* MAGIC letters */
+  .magic-row{display:flex;align-items:center;gap:8px;margin:5px 0;flex-shrink:0}
+  .magic-row .hint{font-size:12px;color:var(--muted);font-weight:600;margin-right:2px}
+  .letter{flex:1;text-align:center;font-family:"Cinzel",serif;font-weight:900;font-size:17px;padding:4px 0;border-radius:10px;border:2px solid var(--line);background:var(--panel);color:var(--muted);transition:all .2s}
+  .letter.on{color:#12041f}
+  .letter[data-l="0"].on{background:var(--pink);border-color:var(--pink);box-shadow:0 0 20px rgba(255,45,149,.9)}
+  .letter[data-l="1"].on{background:var(--orange);border-color:var(--orange);box-shadow:0 0 20px rgba(255,138,0,.9)}
+  .letter[data-l="2"].on{background:var(--gold);border-color:var(--gold);box-shadow:0 0 20px rgba(255,230,0,.9)}
+  .letter[data-l="3"].on{background:var(--lime);border-color:var(--lime);box-shadow:0 0 20px rgba(0,255,0,.9)}
+  .letter[data-l="4"].on{background:var(--teal);border-color:var(--teal);box-shadow:0 0 20px rgba(0,229,255,.9)}
+  .letter[data-c].on{color:#0d2600}
+  .letter[data-c="0"].on{background:var(--lime);border-color:var(--lime);box-shadow:0 0 20px rgba(0,255,0,.9)}
+  .letter[data-c="1"].on{background:var(--gold);border-color:var(--gold);box-shadow:0 0 20px rgba(255,230,0,.9)}
+  .letter[data-c="2"].on{background:var(--orange);border-color:var(--orange);box-shadow:0 0 20px rgba(255,138,0,.9)}
+  .letter[data-c="3"].on{background:var(--lime);border-color:var(--lime);box-shadow:0 0 20px rgba(0,255,0,.9)}
+  .letter[data-c="0"]{cursor:pointer}
+  .letter[data-c="0"]:active{transform:scale(.94)}
+  .letter.cheat-hit{border-color:var(--gold);color:var(--gold);box-shadow:0 0 22px rgba(255,230,0,.95)}
+  .layout{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr);gap:12px;flex:1;min-height:0}
+  .game-col{display:flex;flex-direction:column;height:100%;min-height:0}
+  /* Cabinet */
+  .cabinet{background:linear-gradient(180deg,#2a0a4a,#0d0221);border:2px solid #7c3aed;border-radius:22px;padding:8px;box-shadow:0 0 28px rgba(178,107,255,.35),0 18px 50px rgba(0,0,0,.6);display:flex;flex-direction:column;height:100%;min-height:0}
+  .canvas-wrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;width:100%}
+  .table-box{position:relative;height:100%;aspect-ratio:420/740;max-width:100%}
+  canvas{display:block;width:100%;height:100%;border-radius:14px;background:#0a0218;touch-action:none}
+  /* Top bar: score display + hamburger */
+  .topbar{position:relative;display:flex;gap:8px;align-items:stretch;flex-shrink:0}
+  .topbar .dmd{flex:1;min-width:0}
+  .burger{flex-shrink:0;width:48px;border:2px solid var(--gold);border-radius:14px;background:#0a0318;color:var(--gold);font-size:21px;font-weight:900;cursor:pointer;box-shadow:0 0 16px rgba(255,230,0,.3)}
+  .burger:active{transform:scale(.96)}
+  .menu{position:absolute;top:calc(100% + 6px);right:0;z-index:40;background:var(--panel);border:1.5px solid var(--line);border-radius:14px;padding:6px;min-width:190px;box-shadow:0 14px 40px rgba(0,0,0,.65)}
+  .menu.hidden{display:none}
+  .menu-item{display:block;width:100%;text-align:left;background:transparent;border:0;border-radius:10px;padding:11px 12px;color:var(--ink);font-weight:700;font-size:15px;cursor:pointer;font-family:inherit}
+  .menu-item:hover,.menu-item:active{background:var(--panel2)}
+  /* How to Play popup */
+  .modal{position:fixed;inset:0;z-index:60;background:rgba(4,0,12,.74);display:flex;align-items:center;justify-content:center;padding:18px}
+  .modal.hidden{display:none}
+  .modal-card{background:var(--panel);border:1.5px solid var(--line);border-radius:16px;padding:20px;max-width:440px;width:100%;max-height:86dvh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.7)}
+  .modal-card h2{font-family:"Cinzel",serif;margin:0 0 10px;font-size:20px}
+  .modal-card h3{margin:16px 0 6px;font-size:13px;letter-spacing:.1em;color:var(--muted)}
+  .modal-card p{font-size:15px;line-height:1.6;margin:8px 0}
+  .modal-card ul{margin:6px 0;padding-left:18px}
+  .modal-card li{font-size:14.5px;line-height:1.55;margin:3px 0}
+  .modal-card .tbtn{width:100%;margin-top:12px}
+  .banner{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;width:92%}
+  .banner .big{font-family:"Cinzel",serif;font-weight:900;font-size:clamp(26px,7vw,42px);color:var(--gold);text-shadow:0 0 6px rgba(255,230,0,.9),0 0 22px rgba(255,45,149,.95),0 0 46px rgba(255,45,149,.6),0 2px 0 #12041f;letter-spacing:.02em}
+  .banner .sub{color:var(--teal);font-weight:800;letter-spacing:.12em;font-size:12px;margin-top:4px;text-shadow:0 0 10px rgba(0,229,255,.9),0 1px 8px #000}
+  .banner.hidden{display:none}
+  /* Bonus milestone screen flash */
+  .flashfx{position:fixed;inset:0;z-index:55;pointer-events:none;background:radial-gradient(circle at 50% 42%,#fffbe6 0%,var(--gold) 55%,var(--pink) 130%);opacity:0}
+  .flashfx.on{animation:bonusFlash .16s steps(2,jump-none) 9 alternate}
+  @keyframes bonusFlash{from{opacity:0}to{opacity:.9}}
+  @media (prefers-reduced-motion: reduce){.flashfx.on{animation-duration:.5s;animation-iteration-count:2}}
+  /* Controls */
+  .controls{display:grid;grid-template-columns:1fr 1fr 1.1fr;gap:10px;width:100%;max-width:460px;margin:8px auto 0;flex-shrink:0}
+  .ctl{border:0;border-radius:14px;padding:10px 8px;font-weight:800;font-size:15px;cursor:pointer;color:#fff;user-select:none;-webkit-user-select:none}
+  .ctl:active{transform:scale(.97)}
+  .ctl.left{background:#ff2d95;box-shadow:0 0 16px rgba(255,45,149,.55)}
+  .ctl.right{background:#7c3aed;box-shadow:0 0 16px rgba(124,58,237,.6)}
+  .ctl.launch{background:var(--gold);color:#221a00;box-shadow:0 0 16px rgba(255,230,0,.55)}
+  .ctl.launch small{display:block;font-size:11px;font-weight:700;opacity:.75}
+  .power{width:100%;max-width:460px;margin:6px auto 0;flex-shrink:0}
+  .power .track{height:10px;background:#0a0716;border:1px solid var(--line);border-radius:99px;overflow:hidden}
+  .power .fill{height:100%;width:0%;background:linear-gradient(90deg,var(--teal),var(--lime),var(--gold),var(--orange),var(--pink))}
+  .power .plab{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.08em;margin-top:4px}
+  .toolbar{display:flex;flex-wrap:wrap;gap:8px;width:100%;max-width:460px;margin:8px auto 0;flex-shrink:0}
+  .tbtn{flex:1;background:var(--panel);color:var(--ink);border:1.5px solid var(--line);border-radius:12px;padding:7px 8px;font-weight:700;cursor:pointer;font-size:14px}
+  /* Side panel */
+  .card{background:var(--panel);border:1.5px solid var(--line);border-radius:16px;padding:16px}
+  .card h2{font-family:"Cinzel",serif;margin:0 0 8px;font-size:19px}
+  .card h3{margin:16px 0 6px;font-size:13px;letter-spacing:.1em;color:var(--muted)}
+  .card p,.card li{font-size:14.5px;line-height:1.55;color:var(--ink)}
+  .card ul{margin:6px 0;padding-left:18px}
+  .score-table{width:100%;border-collapse:collapse;font-size:14px}
+  .score-table td{padding:6px 0;border-bottom:1px solid var(--line)}
+  .score-table td:last-child{text-align:right;font-weight:800;color:var(--gold);white-space:nowrap}
+  .kbd{display:inline-block;background:var(--panel2);border:1px solid var(--line);border-bottom-width:3px;border-radius:6px;padding:1px 7px;font-weight:800;font-size:12.5px}
+  .msg{min-height:19px;text-align:center;font-weight:800;color:var(--teal);margin:5px 0 0;font-size:13.5px;text-shadow:0 0 10px rgba(0,229,255,.45);flex-shrink:0}
+  details.card summary{cursor:pointer;font-family:"Cinzel",serif;font-weight:700;font-size:17px;min-height:36px;display:flex;align-items:center}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <!-- DMD score display + hamburger menu -->
+  <div class="topbar">
+    <div class="dmd" role="status" aria-label="Score display">
+      <div><div class="lab">SCORE</div><div class="val" id="score">0</div></div>
+      <div><div class="lab">BALL</div><div class="val small" id="ballNum">1 / 3</div></div>
+      <div><div class="lab">BONUS ×</div><div class="val teal" id="mult">1×</div></div>
+      <div><div class="lab">BEST (SESSION)</div><div class="val small" id="best">0</div></div>
+    </div>
+    <button class="burger" id="btnMenu" aria-label="Menu" aria-haspopup="true" aria-expanded="false">☰</button>
+    <div class="menu hidden" id="menu" role="menu">
+      <button class="menu-item" id="menuHow" role="menuitem">📖 How to Play</button>
+    </div>
+  </div>
+
+  <!-- How to Play popup -->
+  <div class="modal hidden" id="howModal" role="dialog" aria-modal="true" aria-label="How to Play">
+    <div class="modal-card">
+      <h2>How to Play</h2>
+      <p>Desktop: <b>Z</b> / <b>←</b> left flipper &nbsp;•&nbsp; <b>/</b> / <b>→</b> right flipper &nbsp;•&nbsp; hold <b>Space</b> to launch &nbsp;•&nbsp; <b>X</b> nudge</p>
+      <p>Phone: tap the FLIP buttons — or tap the left / right half of the table.</p>
+      <p><b>1. Launch</b> — hold <span class="kbd">LAUNCH</span> (or Space) to charge the plunger, release to fire. Full power sends the ball around the orbit and onto the board through the opening at the top left.</p>
+      <p><b>2. Flip</b> — keep the ball alive with the flippers. Drain = lose the ball. You get <b>3 balls</b>.</p>
+      <p><b>3. Spell M-A-G-I-C</b> — roll through the 5 glowing star lanes up top. Complete the word for <b>5,000 pts</b> and +1 bonus multiplier (up to 5×).</p>
+      <p><b>4. Mind the magic</b> — the ball is a glowing corn kernel 🌽. The <b style="color:var(--teal)">cyan</b> and <b style="color:var(--pink)">pink</b> portals are linked: dive into either one and you always warp safely to the top center of the table, above the bumpers — never to a spot where you can drain. The <b>wizard hat</b> 🎩 in the middle swallows the kernel and warps it to that same safe spot up top (500 pts).</p>
+      <p><b>5. Cast the CORN spell</b> — light the C-O-R-N targets around the hat. All four lit = <b>GRAVITY FLIPS</b> for a few seconds: the kernel falls <i>up</i>. Ride it to the top lanes, then gravity flips back.</p>
+      <p><b>6. Bonus Machine 🪙</b> — every time your score crosses another <b>100,000 points</b> (100k, 200k, 300k…), the screen blinks and flashes, then a <b>second pinball machine</b> opens for <b>20 seconds</b> (watch the countdown up top). Smash the ball into the gold coins to collect them — each coin is worth <b>500 × your bonus</b>. The bonus table has <b>no drain</b> — its bottom is sealed shut, so the ball can never leave and you keep it in play for the full 20 seconds. Grab every coin and a fresh set drops in. When the clock runs out, you're back on the main table with your score, ball, and multiplier right where you left them — and the next machine arms at the next 100k.</p>
+      <p><b>7. Cheat code 🤫</b> — tap the <b>C</b> in the CAST C-O-R-N row <b>5 times</b> (or press the <b>C</b> key 5 times) to get <b>+99,000 points</b> on the spot. That lands you just 1,000 points short of the bonus machine — score those last points and it opens.</p>
+      <h3>SCORING</h3>
+      <table class="score-table">
+        <tr><td>⭐ Star lane (MAGIC)</td><td>150</td></tr>
+        <tr><td>🔮 Pop bumper</td><td>100</td></tr>
+        <tr><td>🎩 Wizard Hat swallow</td><td>500</td></tr>
+        <tr><td>🌀 Portal hop</td><td>100</td></tr>
+        <tr><td>🌽 C-O-R-N letter</td><td>200</td></tr>
+        <tr><td>🧪 Potion target</td><td>250</td></tr>
+        <tr><td>⚡ Slingshot</td><td>50</td></tr>
+        <tr><td>🪄 Spell MAGIC</td><td>5,000 + ×1</td></tr>
+        <tr><td>🔮 Cast CORN (gravity flip!)</td><td>1,000</td></tr>
+        <tr><td>🪙 Bonus machine coin</td><td>500</td></tr>
+      </table>
+      <p style="color:var(--muted);font-size:13.5px">All points are multiplied by your current bonus. During a gravity flip, the drain is still at the bottom… but nothing falls there. Use it!</p>
+      <h3>PRO TIPS</h3>
+      <ul>
+        <li>Aim for the orbit on launch — passing all 5 star lanes lights letters fast.</li>
+        <li>Dead-flip: let the ball bounce off a still flipper to slow it down and gain control.</li>
+        <li>Nudge (sparingly!) when the ball heads for an outlane.</li>
+        <li>The wizard hat is a safe 500 × your multiplier, dead center — it always warps the kernel to the top of the table, never toward the drain.</li>
+        <li>Portal shortcut: enter low, exit high — both portals always drop you safely above the bumpers, a free ride back into play.</li>
+        <li>Save your last C-O-R-N letter for when the kernel is low: flip gravity and float it back up instead of draining.</li>
+        <li>Bonus machine coins are the fastest points in the game — a full 20 seconds of coins can carry you most of the way to the next 100k machine.</li>
+      </ul>
+      <button class="tbtn" id="btnHowClose">Close</button>
+    </div>
+  </div>
+
+  <div class="flashfx" id="flashFx" aria-hidden="true"></div>
+
+  <div class="magic-row" aria-label="MAGIC letters progress">
+    <span class="hint">SPELL</span>
+    <span class="letter" data-l="0">M</span><span class="letter" data-l="1">A</span><span class="letter" data-l="2">G</span><span class="letter" data-l="3">I</span><span class="letter" data-l="4">C</span>
+  </div>
+
+  <div class="magic-row" style="margin-top:-2px" aria-label="CORN spell letters progress">
+    <span class="hint">CAST&nbsp;&nbsp;</span>
+    <span class="letter" data-c="0">C</span><span class="letter" data-c="1">O</span><span class="letter" data-c="2">R</span><span class="letter" data-c="3">N</span>
+  </div>
+  <div id="gravState" style="text-align:right;font-size:11.5px;font-weight:800;letter-spacing:.08em;color:var(--muted);margin:-2px 0 5px;padding-right:6px;flex-shrink:0">GRAVITY: NORMAL ↓</div>
+
+  <div class="layout">
+    <div class="game-col">
+      <div class="cabinet">
+        <div class="canvas-wrap">
+          <div class="table-box">
+            <canvas id="game" width="420" height="740" aria-label="Pinball Magic playfield"></canvas>
+            <div class="banner" id="banner"><div class="big" id="bannerBig">PINBALL MAGIC</div><div class="sub" id="bannerSub">HOLD LAUNCH TO CHARGE • RELEASE TO FIRE</div></div>
+          </div>
+        </div>
+        <div class="power"><div class="track"><div class="fill" id="powerFill"></div></div><div class="plab"><span>PLUNGER POWER</span><span id="powerPct">0%</span></div></div>
+        <div class="controls">
+          <button class="ctl left" id="btnL" aria-label="Left flipper">◀ FLIP</button>
+          <button class="ctl right" id="btnR" aria-label="Right flipper">FLIP ▶</button>
+          <button class="ctl launch" id="btnLaunch">LAUNCH<small>hold to charge</small></button>
+        </div>
+        <div class="toolbar">
+          <button class="tbtn" id="btnNew">↻ New Game</button>
+          <button class="tbtn" id="btnSound">🔊 Sound: On</button>
+          <button class="tbtn" id="btnNudge">✦ Nudge</button>
+        </div>
+        <p class="msg" id="msg">Pull the plunger and let the magic fly ✨</p>
+      </div>
+    </div>
+
+
+  </div>
+</div>
+
+<script src="./shared/hub.js"></script>
+<script>
+(function(){
+"use strict";
+var cv=document.getElementById('game'), ctx=cv.getContext('2d');
+var W=420,H=740;
+var scoreEl=document.getElementById('score'), ballEl=document.getElementById('ballNum'),
+    multEl=document.getElementById('mult'), bestEl=document.getElementById('best'),
+    msgEl=document.getElementById('msg'), banner=document.getElementById('banner'),
+    bannerBig=document.getElementById('bannerBig'), bannerSub=document.getElementById('bannerSub'),
+    powerFill=document.getElementById('powerFill'), powerPct=document.getElementById('powerPct');
+var flashEl=document.getElementById('flashFx');
+var lettersEls=document.querySelectorAll('[data-l]');
+var cornEls=document.querySelectorAll('[data-c]');
+var gravEl=document.getElementById('gravState');
+
+/* ---------- Audio (synthesized, no files) ---------- */
+var AC=null, soundOn=true;
+function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(AC&&AC.state==='suspended')AC.resume(); return AC; }
+function beep(f,d,type,g,slide){
+  if(!soundOn) return; var a=ac(); if(!a)return;
+  var o=a.createOscillator(), gn=a.createGain(); o.type=type||'square'; o.frequency.setValueAtTime(f,a.currentTime);
+  if(slide) o.frequency.exponentialRampToValueAtTime(slide,a.currentTime+(d||0.08));
+  gn.gain.setValueAtTime(g||0.08,a.currentTime); gn.gain.exponentialRampToValueAtTime(0.001,a.currentTime+(d||0.08));
+  o.connect(gn); gn.connect(a.destination); o.start(); o.stop(a.currentTime+(d||0.08)+0.02);
+}
+var sBumper=function(){beep(620,0.09,'square',0.07,180);};
+var sFlip=function(){beep(220,0.05,'square',0.05,90);};
+var sTarget=function(){beep(880,0.12,'sine',0.09,1320);};
+var sLane=function(){beep(1046,0.1,'sine',0.08,1568);};
+var sCrystal=function(){beep(523,0.22,'sine',0.1,1046); setTimeout(function(){beep(784,0.2,'sine',0.08,1568);},70);};
+var sMagic=function(){[523,659,784,1046,1318].forEach(function(f,i){setTimeout(function(){beep(f,0.18,'sine',0.09);},i*80);});};
+var sDrain=function(){beep(300,0.35,'sawtooth',0.06,70);};
+var sLaunch=function(){beep(160,0.18,'sawtooth',0.06,520);};
+var sCoin=function(){beep(1318,0.09,'sine',0.09,1760); setTimeout(function(){beep(1760,0.13,'sine',0.08,2349);},60);};
+
+/* ---------- Table geometry ---------- */
+// Line-segment walls: {x1,y1,x2,y2, rest, kick?}
+var walls=[];
+function wall(x1,y1,x2,y2,rest){ walls.push({x1:x1,y1:y1,x2:x2,y2:y2,rest:(rest==null?0.45:rest),flash:0}); return walls[walls.length-1]; }
+// Inner dome: ONE smooth classic arc, centered (192,212) r=180 from
+// 115deg..0deg. Physics uses fine 3deg steps (invisible) so the ball
+// rides the curve smoothly with no angular bounces; the visible rail is
+// drawn as a single continuous arc (see draw()). The dome deliberately
+// stops at 115deg — past that point the orbit channel has NO floor, and
+// that gap is the ONE opening where the ball drops off the orbit and
+// onto the board.
+(function(){
+  var cx=192,cy=212,r=180,prev=null;
+  for(var a=115;a>=0;a-=3){
+    var rad=a*Math.PI/180, p={x:cx+r*Math.cos(rad), y:cy-r*Math.sin(rad)};
+    if(prev){ var w=wall(prev.x,prev.y,p.x,p.y,0.5); w.rail=true; }
+    prev=p;
+  }
+})();
+// Left wall + funnel to left flipper (extends up to guard the orbit opening)
+wall(10,96,10,545,0.4);
+wall(10,545,58,618,0.4);            // left outlane slope
+var leftInlaneWall=wall(88,560,88,600,0.4); wall(88,600,118,640,0.4);
+// Right side of main field (above divider end) funnel
+wall(340,545,340,600,0.4); wall(340,600,270,646,0.4);
+// Launch lane divider & outer wall
+wall(374,212,374,655,0.4);           // divider runs right up to the dome end — no side gap for the ball to slip through
+wall(410,212,410,712,0.4);           // outer right wall — starts exactly at (410,212), where the single top arc is tangent to it, so wall and arc form one smooth curve
+// TOP RAIL: ONE single, plain, smooth, classic pinball orbit arc that
+// fully closes the top of the table — including the top-right corner.
+// The arc is centered (198,212) with r=212, chosen so the arc itself
+// passes through (410,212) with a perfectly vertical tangent: it meets
+// the straight launch-lane wall (x=410) exactly there and sweeps up,
+// over, and around the top as one continuous curve all the way to its
+// end at 148deg. No corner patch, no angle, no kink, no flat spot
+// anywhere along it — the top-right section is the same arc as the
+// rest of the rail. Physics follows the exact same arc in fine 3deg
+// steps (invisible) so the ball rides it smoothly; the visible rail is
+// drawn as the identical single arc (see draw()). The channel's inner
+// floor (the dome) ends at 115deg, so the only way off the orbit is to
+// drop through that floor gap onto the board: a ball hugging the outer
+// rail past the arc's end at 148deg meets the left wall, bounces off
+// it, and drops through the same gap.
+(function(){
+  var cx=198,cy=212,r=212,prev={x:410,y:212};   // the arc's own 0deg point — tangent to the lane wall
+  for(var a=3;a<=148;a+=3){
+    var rad=a*Math.PI/180, q={x:cx+r*Math.cos(rad), y:cy-r*Math.sin(rad)};
+    var w=wall(prev.x,prev.y,q.x,q.y,0.5); w.rail=true; prev=q;
+  }
+  var w3=wall(prev.x,prev.y,9,100,0.5); w3.rail=true;   // short close to the left wall top
+})();
+// Slingshots (triangles as segments) with kick
+var slingL1=wall(66,486,116,516,0.5), slingL2=wall(116,516,66,540,0.5);
+var slingR1=wall(314,516,264,486,0.5), slingR2=wall(264,486,314,540,0.5);
+[slingL1,slingL2,slingR1,slingR2].forEach(function(w){w.sling=true;});
+// Lane guide posts under bumpers (short deflectors)
+wall(52,330,86,384,0.5); wall(328,330,294,384,0.5);
+
+// Bumpers
+var bumpers=[
+  {x:112,y:268,r:27,flash:0,c:'#ff8a00',hi:'#ffd9a0',glow:'rgba(255,138,0,'},
+  {x:192,y:214,r:27,flash:0,c:'#00e5ff',hi:'#c9f7ff',glow:'rgba(0,229,255,'},
+  {x:272,y:268,r:27,flash:0,c:'#ff2d95',hi:'#ffc2e0',glow:'rgba(255,45,149,'}
+];
+// Wizard hat (center) — swallows the kernel, warps it to the safe spot up top
+var hat={x:192,y:392,r:24,flash:0,cool:0};
+// Linked portals — enter either one, always warp to the safe spot up top
+var portalA={x:48,y:288,r:16,c:'#00e5ff'};
+var portalB={x:332,y:452,r:16,c:'#ff2d95'};
+var portalCool=0;
+// SAFE WARP EXIT — the one place every portal warp and every hat warp
+// lands. High center of the playfield (x=192, y=145): directly above the
+// center bumper (192,214), well above all bumpers/targets, and far from
+// the outlanes (x≈10–88 and x≈340–374), the slingshots (y≈486–540) and
+// the drain (y≈734). A ball landing here falls straight onto the center
+// bumper and back into open play — it cannot drain straight off a warp.
+var SAFE_WARP={x:192,y:145};
+function warpToSafeSpot(){
+  // Small centered jitter (±14px) so warps don't feel robotic, while
+  // staying in the safe central lane between the lane dividers.
+  ball.x=SAFE_WARP.x+(Math.random()*28-14);
+  ball.y=SAFE_WARP.y;
+  // Gentle exit velocity: a soft upward pop with a small sideways drift.
+  // Never aimed down at the flippers/drain and never toward an outlane —
+  // gravity eases the kernel down onto the bumpers, giving the player
+  // plenty of time to react.
+  ball.vx=(Math.random()*2-1)*1.8;
+  ball.vy=-1.6;
+  ball.trail=[];
+}
+// C-O-R-N spell targets around the hat
+var cornTargets=[
+  {x:104,y:352,r:14,lit:false,flash:0,cool:0},
+  {x:280,y:352,r:14,lit:false,flash:0,cool:0},
+  {x:104,y:448,r:14,lit:false,flash:0,cool:0},
+  {x:280,y:448,r:14,lit:false,flash:0,cool:0}
+];
+// Potion targets (circles, standup style)
+var targets=[
+  {x:34,y:420,r:13,flash:0,cool:0},
+  {x:350,y:420,r:13,flash:0,cool:0},
+  {x:192,y:300,r:0,flash:0,cool:0,hidden:true} // placeholder unused
+];
+targets=targets.filter(function(t){return !t.hidden;});
+targets.push({x:56,y:196,r:12,flash:0,cool:0});
+// MAGIC rollover lanes: sensor points along the dome
+var lanes=[
+  {x:66,y:150,lit:false,flash:0},
+  {x:118,y:112,lit:false,flash:0},
+  {x:192,y:96,lit:false,flash:0},
+  {x:266,y:112,lit:false,flash:0},
+  {x:318,y:150,lit:false,flash:0}
+];
+// Lane divider ticks under dome
+wall(88,120,96,168,0.4); wall(150,92,154,142,0.4); wall(230,92,226,142,0.4); wall(292,120,288,168,0.4);
+
+/* ---------- Flippers ---------- */
+function makeFlipper(px,py,side){
+  return {px:px,py:py,side:side,len:56,r:11,rest:0.52,up:-0.55,ang:0.52,pressed:false,angVel:0};
+}
+var flipL=makeFlipper(128,668,-1), flipR=makeFlipper(256,668,1);
+flipL.rest=0.52; flipL.up=-0.52; flipR.rest=Math.PI-0.52; flipR.up=Math.PI+0.52; flipR.ang=flipR.rest;
+function flipTip(f){
+  return {x:f.px+Math.cos(f.ang)*f.len*(f.side<0?1:-1)* (f.side<0?1:1), y:0};
+}
+// tip computed properly below (angle already encodes direction for right flipper via PI-based rest)
+function tipOf(f){ return {x:f.px+Math.cos(f.ang)*f.len, y:f.py+Math.sin(f.ang)*f.len}; }
+
+/* ---------- Ball & game state ---------- */
+var ball={x:392,y:660,vx:0,vy:0,r:11,active:false,inLane:true,trail:[],held:0};
+var state={score:0,best:0,ballNum:1,multiplier:1,magic:[false,false,false,false,false],corn:[false,false,false,false],gravFlip:0,over:false,started:false};
+var particles=[], floaters=[];
+var charging=false, power=0, chargeDir=1, lastNudge=0, shake=0;
+var drainCooldown=0;
+var stuckFrames=0;
+
+function showBanner(big,sub,ms){
+  bannerBig.textContent=big; bannerSub.textContent=sub||''; banner.classList.remove('hidden');
+  if(ms){ setTimeout(function(){ if(state.started&&!state.over) banner.classList.add('hidden'); },ms); }
+}
+function setMsg(t){ msgEl.textContent=t; }
+function addScore(n,label,x,y){
+  var pts=n*state.multiplier; state.score+=pts;
+  if(state.score>state.best) state.best=state.score;
+  floaters.push({x:x||ball.x,y:(y||ball.y)-16,txt:'+'+pts,life:1,color:'#ffe600'});
+  updateHUD();
+}
+function updateHUD(){
+  scoreEl.textContent=state.score.toLocaleString('en-US');
+  bestEl.textContent=state.best.toLocaleString('en-US');
+  ballEl.textContent=Math.min(state.ballNum,3)+' / 3';
+  multEl.textContent=state.multiplier+'×';
+  state.magic.forEach(function(on,i){ lettersEls[i].classList.toggle('on',on); });
+  state.corn.forEach(function(on,i){ cornEls[i].classList.toggle('on',on); });
+  gravEl.textContent=state.gravFlip>0?'GRAVITY: FLIPPED ↑':'GRAVITY: NORMAL ↓';
+  gravEl.style.color=state.gravFlip>0?'#ff2d95':'';
+}
+function burst(x,y,color,n){
+  for(var i=0;i<(n||10);i++){ var a=Math.random()*Math.PI*2, s=1+Math.random()*3;
+    particles.push({x:x,y:y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-1,life:1,color:color,r:2+Math.random()*2}); }
+}
+function serveBall(){
+  ball.x=392; ball.y=655; ball.vx=0; ball.vy=0; ball.active=false; ball.inLane=true; ball.trail=[]; ball.held=0;
+  if(state.gravFlip>0){ state.gravFlip=0; updateHUD(); }
+  power=0; charging=false;
+  setMsg('Ball '+state.ballNum+' — hold LAUNCH to charge, release to fire!');
+  showBanner('BALL '+state.ballNum,'HOLD LAUNCH • RELEASE TO FIRE',1800);
+}
+function newGame(){
+  state.score=0; state.ballNum=1; state.multiplier=1; state.over=false; state.started=true;
+  state.magic=[false,false,false,false,false];
+  state.corn=[false,false,false,false]; state.gravFlip=0;
+  lanes.forEach(function(l){l.lit=false;});
+  cornTargets.forEach(function(t){t.lit=false;});
+  ball.held=0;
+  bonus.active=false; bonus.phase='none'; bonus.timer=0; bonus.nextAt=100000; bonus.stash=null;
+  flashEl.classList.remove('on');
+  updateHUD(); serveBall();
+}
+function castCornSpell(){
+  state.score+=1000;
+  if(state.score>state.best) state.best=state.score;
+  state.gravFlip=270; // ~4.5 seconds of upward gravity
+  burst(192,392,'#00ff00',26); burst(104,352,'#ffe600',12); burst(280,448,'#ff8a00',12);
+  showBanner('🌽 GRAVITY SPELL! 🌽','THE KERNEL FALLS UP! • +1,000',2300);
+  setMsg('CORN spell cast — gravity is FLIPPED! Ride the kernel to the top!');
+  sMagic();
+  state.corn=[false,false,false,false];
+  cornTargets.forEach(function(t){t.lit=false;});
+  updateHUD();
+}
+function endGame(){
+  state.over=true; ball.active=false;
+  if(window.Hub) Hub.submitScore('pinball-magic', state.score);
+  showBanner('GAME OVER','FINAL SCORE  '+state.score.toLocaleString('en-US')+'  —  TAP NEW GAME',0);
+  setMsg('Game over! Final score '+state.score.toLocaleString('en-US')+'. Hit New Game to play again.');
+  sDrain();
+}
+function drain(){
+  if(drainCooldown>0) return; drainCooldown=90;
+  sDrain(); burst(ball.x,720,'#ff2d95',14);
+  state.ballNum++;
+  if(state.ballNum>3){ endGame(); return; }
+  updateHUD(); serveBall();
+}
+function completeMagic(){
+  state.score+=5000; // flat celebration bonus (announced as 5,000)
+  if(state.multiplier<5) state.multiplier++;
+  burst(192,140,'#ffe600',30); burst(112,268,'#00ff00',16); burst(272,268,'#ff2d95',16); burst(192,392,'#00e5ff',16);
+  showBanner('✦ MAGIC! ✦','+5,000 • BONUS NOW '+state.multiplier+'×',2200);
+  setMsg('You spelled MAGIC! +5,000 and bonus is now '+state.multiplier+'×');
+  sMagic();
+  state.magic=[false,false,false,false,false]; lanes.forEach(function(l){l.lit=false;});
+  updateHUD();
+}
+
+/* ---------- Bonus machine (every 100k points) ---------- */
+// Crossing each 100,000-point milestone (100k, 200k, 300k…) blinks and
+// flashes the screen, then opens a SECOND pinball machine for 20
+// seconds where the player collects gold coins with the ball. The main
+// table's ball is stashed untouched and restored when time runs out, so
+// score, ball, and bonus multiplier carry on exactly where they left
+// off. bonus.nextAt always holds the next armed milestone; when a bonus
+// round ends it re-arms at the next multiple of 100k above the score,
+// so points banked on the bonus table never re-trigger a machine
+// retroactively.
+var bonus={active:false,phase:'none',timer:0,framesLeft:0,nextAt:100000,coins:[],stash:null};
+var bwalls=[];
+function bwall(x1,y1,x2,y2,rest){ bwalls.push({x1:x1,y1:y1,x2:x2,y2:y2,rest:(rest==null?0.45:rest),flash:0}); }
+// Bonus table outline: one smooth top arc, straight side walls, and
+// funnels down to the flippers (the same flipper pair, now serving as
+// the bonus table's own flippers). Unlike the main table, the bottom
+// is SEALED — there is no drain and no exit anywhere (see below).
+(function(){
+  var cx=210,cy=210,r=190,prev=null;
+  for(var a=180;a>=0;a-=6){
+    var rad=a*Math.PI/180, p={x:cx+r*Math.cos(rad), y:cy-r*Math.sin(rad)};
+    if(prev) bwall(prev.x,prev.y,p.x,p.y,0.5);
+    prev=p;
+  }
+})();
+bwall(20,210,20,545,0.4);
+bwall(20,545,68,618,0.4);            // left outlane slope
+bwall(400,210,400,545,0.4);
+bwall(400,545,352,618,0.4);          // right outlane slope
+// (No inlane guides on the bonus table: with the sealed bottom they
+// would hang over the return ramps and form wedge pockets barely a
+// ball wide, where the ball could jam. Without them both sides are
+// one clean open funnel: wall -> slope -> ramp -> flipper.)
+// SEALED BOTTOM — no drain, no gap, no exit. Ramps run from both
+// outlane slopes straight into the flipper pivots, and from there the
+// seal HUGS the underside of each flipper — never more than ~8px
+// below the flipper's centerline, a gap far thinner than the ball
+// (22px across) — and closes tip-to-tip with a plug at flipper
+// height (y=702, just under the resting tips at y≈696). The first
+// version of this seal dropped to a deep floor at y=716, which left
+// a pocket UNDER the flipper tips: the ball fell through the tip
+// gap, landed on that floor below the flippers' swing, and sat
+// there stuck — flipping only made it hop in place. Now the ball
+// physically cannot get underneath a flipper: anything slipping
+// past a tip lands on the plug at flipper height, resting against
+// the tips themselves, where the next flip strikes it squarely and
+// launches it back into play for the full 20 seconds.
+bwall(68,618,128,668,0.5);           // left ramp: outlane slope -> left flipper pivot
+bwall(128,668,170,702,0.5);          // seal hugging under the left flipper, down to the plug
+bwall(170,702,214,702,0.55);         // center plug between the flipper tips — gap closed at flipper height
+bwall(214,702,256,668,0.5);          // seal hugging under the right flipper, up to its pivot
+bwall(256,668,352,618,0.5);          // right ramp: right flipper pivot -> outlane slope
+var bbumpers=[
+  {x:112,y:268,r:27,flash:0,c:'#ff8a00',hi:'#ffd9a0',glow:'rgba(255,138,0,'},
+  {x:210,y:214,r:27,flash:0,c:'#ffe600',hi:'#fff9c4',glow:'rgba(255,230,0,'},
+  {x:308,y:268,r:27,flash:0,c:'#ff2d95',hi:'#ffc2e0',glow:'rgba(255,45,149,'}
+];
+function buildCoins(){
+  // A fresh coin layout for every bonus machine (slight random jitter
+  // so no two machines play exactly alike).
+  var spots=[[80,180],[150,138],[230,128],[312,150],[352,224],[70,300],[150,332],[270,332],[350,318],[100,432],[210,472],[290,432],[88,540],[210,548],[322,540],[210,300]];
+  bonus.coins=spots.map(function(s){
+    return {x:s[0]+(Math.random()*16-8), y:s[1]+(Math.random()*16-8), r:13, taken:false};
+  });
+}
+function serveBonusBall(){
+  ball.x=210; ball.y=64; ball.vx=(Math.random()*2-1)*2.2; ball.vy=1.5;
+  ball.active=true; ball.inLane=false; ball.held=0; ball.trail=[];
+  burst(210,64,'#ffe600',10);
+}
+function startBonusFlash(){
+  bonus.phase='flash'; bonus.timer=84;   // ~1.4s of blinking, then the bonus table opens
+  flashEl.classList.add('on');
+  showBanner('🎉 '+bonus.nextAt.toLocaleString('en-US')+' POINTS! 🎉','BONUS MACHINE OPENING — GET READY!',0);
+  setMsg('Milestone! '+bonus.nextAt.toLocaleString('en-US')+' points — the bonus machine is opening!');
+  sMagic();
+}
+function beginBonus(){
+  bonus.active=true; bonus.phase='play'; bonus.framesLeft=1200;   // 20 seconds at 60fps
+  bonus.stash={x:ball.x,y:ball.y,vx:ball.vx,vy:ball.vy,active:ball.active,inLane:ball.inLane,held:ball.held,trail:ball.trail};
+  buildCoins();
+  serveBonusBall();
+  showBanner('🪙 BONUS MACHINE! 🪙','COLLECT THE COINS — 20 SECONDS!',1600);
+  setMsg('Bonus machine! Every coin is worth '+(500*state.multiplier)+' — grab them all!');
+  sMagic();
+}
+function endBonus(){
+  bonus.active=false; bonus.phase='none';
+  if(bonus.stash){
+    ball.x=bonus.stash.x; ball.y=bonus.stash.y; ball.vx=bonus.stash.vx; ball.vy=bonus.stash.vy;
+    ball.active=bonus.stash.active; ball.inLane=bonus.stash.inLane; ball.held=bonus.stash.held; ball.trail=bonus.stash.trail;
+    bonus.stash=null;
+  }
+  bonus.nextAt=(Math.floor(state.score/100000)+1)*100000;
+  showBanner('⏰ TIME UP!','BACK TO THE MAIN TABLE — NEXT MACHINE AT '+bonus.nextAt.toLocaleString('en-US'),2200);
+  setMsg('Bonus over! Back to Pinball Magic — next bonus machine at '+bonus.nextAt.toLocaleString('en-US')+' points.');
+  sTarget();
+  updateHUD();
+}
+function stepBonus(){
+  [flipL,flipR].forEach(function(f){
+    var target=f.pressed?f.up:f.rest; var prev=f.ang;
+    var d=(target-f.ang)*0.55;
+    // Bonus table only: cap the flippers' downward return speed. The
+    // flip up stays full speed, but a flipper falling back onto a ball
+    // resting on the sealed floor can no longer slam it across the
+    // floor line in a single frame — the return just takes a few
+    // frames longer, which play never notices.
+    if(!f.pressed&&Math.abs(d)>0.12) d=d>0?0.12:-0.12;
+    f.ang+=d; f.angVel=(f.ang-prev);
+  });
+  bonus.framesLeft--;
+  if(bonus.framesLeft<=0){ endBonus(); return; }
+  ball.vy+=0.32;
+  var steps=4, MAXV=27;
+  for(var s=0;s<steps;s++){
+    ball.x+=ball.vx/steps; ball.y+=ball.vy/steps;
+    var sp=Math.sqrt(ball.vx*ball.vx+ball.vy*ball.vy);
+    if(sp>MAXV){ ball.vx*=MAXV/sp; ball.vy*=MAXV/sp; }
+    bwalls.forEach(segCollide);
+    flipperCollide(flipL); flipperCollide(flipR);
+    bwalls.forEach(segCollide); // walls get the final say each substep, so a flipper push can never shove the ball through the sealed bottom
+    bbumpers.forEach(function(b){
+      if(circleHit(b,6.5,0.9)&&b.flash<=0){ b.flash=1; addScore(100,'BUMPER',b.x,b.y); sBumper(); burst(b.x,b.y,b.c,9); }
+    });
+  }
+  // coins — collected on contact, each worth 500 × the bonus multiplier
+  var remaining=0;
+  bonus.coins.forEach(function(c){
+    if(c.taken) return;
+    var dx=ball.x-c.x, dy=ball.y-c.y;
+    if(dx*dx+dy*dy<(c.r+ball.r)*(c.r+ball.r)){
+      c.taken=true; addScore(500,'COIN',c.x,c.y); sCoin(); burst(c.x,c.y,'#ffe600',12);
+      setMsg('Coin collected! +'+(500*state.multiplier)+' 🪙');
+    } else remaining++;
+  });
+  if(remaining===0){ buildCoins(); setMsg('Every coin grabbed — a fresh set drops in! 🪙'); }
+  checkStuck();
+  ball.trail.push({x:ball.x,y:ball.y}); if(ball.trail.length>10)ball.trail.shift();
+  if(ball.x<ball.r){ ball.x=ball.r; ball.vx=Math.abs(ball.vx)*0.4; }
+  if(ball.x>W-ball.r){ ball.x=W-ball.r; ball.vx=-Math.abs(ball.vx)*0.4; }
+  if(ball.y<ball.r){ ball.y=ball.r; ball.vy=Math.abs(ball.vy)*0.4; }
+  // NO DRAIN on the bonus table: the sealed bottom (see the bwalls
+  // hugging the flippers) bounces the ball back into play, so it can
+  // never exit. Safety net, mirroring the main table's: a ball resting
+  // on the seal's center plug sits at center y=691, so anything below
+  // y=700 has somehow slipped past the seal — pop it back above the
+  // plug, still in play, instead of ever letting it leave.
+  if(ball.y>700){
+    ball.x=192; ball.y=690; ball.vx=0; ball.vy=-2; ball.trail=[];
+    burst(192,690,'#ffe600',12);
+    setMsg('Magic rescue — the kernel pops back into play! ✨');
+  }
+  if(ball.y>H-ball.r){ ball.y=H-ball.r; ball.vy=-Math.abs(ball.vy)*0.5; }
+  bbumpers.forEach(function(b){ if(b.flash>0)b.flash-=0.08; });
+}
+function drawBonus(){
+  // playfield — warm gold-tinted dark so the bonus table reads as its own machine
+  var g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#2a1503'); g.addColorStop(0.55,'#1c0b33'); g.addColorStop(1,'#0d0221');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  var starCols=['#ffe600','#ffd700','#fff3a0','#ffb300'];
+  var starPts=[[40,90],[90,50],[330,60],[380,140],[36,320],[384,320],[150,470],[270,540],[60,470],[340,470]];
+  starPts.forEach(function(p,i){ ctx.globalAlpha=0.4+0.35*Math.sin(Date.now()/500+i*1.7); ctx.fillStyle=starCols[i%starCols.length]; ctx.fillRect(p[0],p[1],3,3); });
+  ctx.globalAlpha=1;
+  // gold rails
+  bwalls.forEach(function(w){
+    ctx.save();
+    ctx.beginPath(); ctx.moveTo(w.x1,w.y1); ctx.lineTo(w.x2,w.y2);
+    ctx.lineWidth=6; ctx.lineCap='round';
+    ctx.shadowColor='rgba(255,183,0,0.85)'; ctx.shadowBlur=6; ctx.strokeStyle='#ffb300'; ctx.stroke();
+    ctx.shadowBlur=0; ctx.lineWidth=2; ctx.strokeStyle='rgba(255,255,255,0.55)'; ctx.stroke();
+    ctx.restore();
+  });
+  // bumpers
+  bbumpers.forEach(function(b){
+    ctx.save();
+    ctx.beginPath(); ctx.arc(b.x,b.y,b.r+6,0,Math.PI*2); ctx.fillStyle=b.glow+'0.16)'; ctx.fill();
+    ctx.shadowColor=b.c; ctx.shadowBlur=b.flash>0?30:16;
+    ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,Math.PI*2);
+    var bg=ctx.createRadialGradient(b.x-8,b.y-8,4,b.x,b.y,b.r);
+    if(b.flash>0){ bg.addColorStop(0,'#ffffff'); bg.addColorStop(1,b.c); } else { bg.addColorStop(0,b.hi); bg.addColorStop(1,b.c); }
+    ctx.fillStyle=bg; ctx.fill(); ctx.lineWidth=3; ctx.strokeStyle='#ffffff'; ctx.stroke();
+    ctx.restore();
+    ctx.font='15px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('⭐',b.x,b.y+1);
+  });
+  // coins — spinning gold, collected on contact
+  bonus.coins.forEach(function(c,i){
+    if(c.taken) return;
+    var sq=0.35+0.65*Math.abs(Math.cos(Date.now()/280+i*0.9));
+    ctx.save(); ctx.translate(c.x,c.y); ctx.scale(sq,1);
+    ctx.shadowColor='#ffe600'; ctx.shadowBlur=14;
+    ctx.beginPath(); ctx.arc(0,0,c.r,0,Math.PI*2);
+    var cg=ctx.createRadialGradient(-4,-4,2,0,0,c.r);
+    cg.addColorStop(0,'#fff7ae'); cg.addColorStop(0.6,'#ffd700'); cg.addColorStop(1,'#e0a800');
+    ctx.fillStyle=cg; ctx.fill();
+    ctx.shadowBlur=0; ctx.lineWidth=2; ctx.strokeStyle='#fff3a0'; ctx.stroke();
+    ctx.beginPath(); ctx.arc(0,0,c.r-4.5,0,Math.PI*2); ctx.lineWidth=1.5; ctx.strokeStyle='rgba(146,104,0,0.85)'; ctx.stroke();
+    ctx.fillStyle='#926800'; ctx.font='900 11px Outfit, sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('★',0,1);
+    ctx.restore();
+  });
+  // table title
+  ctx.save(); ctx.shadowColor='#ff8a00'; ctx.shadowBlur=14;
+  ctx.fillStyle='#ffe600'; ctx.font='900 15px Cinzel, serif'; ctx.textAlign='center';
+  ctx.fillText('🪙 BONUS MACHINE 🪙',210,592); ctx.restore();
+  ctx.fillStyle='#00e5ff'; ctx.font='700 9px Outfit, sans-serif'; ctx.textAlign='center';
+  ctx.fillText('EVERY COIN +500 × YOUR BONUS',210,608);
+  // countdown — big and clear at the top, with a draining time bar
+  ctx.fillStyle='rgba(10,0,24,0.78)'; roundRect(146,12,128,46,10); ctx.fill();
+  ctx.lineWidth=1.5; ctx.strokeStyle='rgba(255,230,0,0.6)'; roundRect(146,12,128,46,10); ctx.stroke();
+  var secs=Math.ceil(Math.max(bonus.framesLeft,0)/60);
+  ctx.save(); ctx.shadowColor=secs<=5?'#ff2d95':'#ffe600'; ctx.shadowBlur=14;
+  ctx.fillStyle=secs<=5?'#ff2d95':'#ffe600'; ctx.font='900 27px Cinzel, serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('⏱ '+secs,210,36); ctx.restore();
+  ctx.fillStyle='rgba(255,255,255,0.15)'; roundRect(130,66,160,7,4); ctx.fill();
+  ctx.fillStyle='#ffe600'; roundRect(130,66,Math.max(160*bonus.framesLeft/1200,0),7,4); ctx.fill();
+  // flippers — lime green with neon glow (same as the main table)
+  [flipL,flipR].forEach(function(f){
+    var tip=tipOf(f);
+    ctx.save(); ctx.shadowColor='#00ff00'; ctx.shadowBlur=14;
+    ctx.beginPath(); ctx.moveTo(f.px,f.py); ctx.lineTo(tip.x,tip.y);
+    ctx.lineWidth=15; ctx.lineCap='round'; ctx.strokeStyle='#00c853'; ctx.stroke();
+    ctx.lineWidth=9; ctx.strokeStyle='#00ff00'; ctx.stroke();
+    ctx.restore();
+    ctx.beginPath(); ctx.arc(f.px,f.py,8,0,Math.PI*2); ctx.fillStyle='#eaffea'; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle='#00701a'; ctx.stroke();
+  });
+  ctx.fillStyle='rgba(255,230,0,0.85)'; ctx.font='800 9px Outfit, sans-serif'; ctx.textAlign='center'; ctx.fillText('✦ NO DRAIN — THE BALL STAYS IN PLAY ✦',210,732);
+  // ball trail — neon green
+  ball.trail.forEach(function(p,i){ ctx.beginPath(); ctx.arc(p.x,p.y,ball.r*(i/ball.trail.length)*0.85,0,Math.PI*2); ctx.fillStyle='rgba(0,255,0,'+(0.05+0.10*(i/ball.trail.length))+')'; ctx.fill(); });
+  // THE BALL — the same glowing #00ff00 corn kernel
+  (function(){
+    ctx.save();
+    ctx.translate(ball.x,ball.y);
+    ctx.rotate(Math.max(-0.35,Math.min(0.35,ball.vx*0.02)));
+    ctx.beginPath(); ctx.arc(0,0,ball.r+9,0,Math.PI*2);
+    var halo=ctx.createRadialGradient(0,0,ball.r*0.4,0,0,ball.r+9);
+    halo.addColorStop(0,'rgba(0,255,0,0.35)'); halo.addColorStop(1,'rgba(0,255,0,0)');
+    ctx.fillStyle=halo; ctx.fill();
+    ctx.shadowColor='#00ff00'; ctx.shadowBlur=22;
+    ctx.beginPath();
+    ctx.moveTo(0,-12);
+    ctx.bezierCurveTo(8,-12,11,-4,11,2);
+    ctx.bezierCurveTo(11,9,6,13,0,13);
+    ctx.bezierCurveTo(-6,13,-11,9,-11,2);
+    ctx.bezierCurveTo(-11,-4,-8,-12,0,-12);
+    var kg=ctx.createRadialGradient(-3,-5,2,0,0,14);
+    kg.addColorStop(0,'#eaffea'); kg.addColorStop(0.45,'#4dff4d'); kg.addColorStop(0.8,'#00ff00'); kg.addColorStop(1,'#00cc33');
+    ctx.fillStyle=kg; ctx.fill();
+    ctx.shadowBlur=0;
+    ctx.lineWidth=1.5; ctx.strokeStyle='rgba(230,255,230,0.95)'; ctx.stroke();
+    ctx.strokeStyle='rgba(0,92,20,0.55)'; ctx.lineWidth=1.4;
+    ctx.beginPath(); ctx.moveTo(-5,-9); ctx.quadraticCurveTo(-7,1,-4,10); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0,-11); ctx.quadraticCurveTo(-1,1,0,12); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(5,-9); ctx.quadraticCurveTo(7,1,4,10); ctx.stroke();
+    ctx.fillStyle='#ccffcc'; ctx.beginPath(); ctx.arc(0,-11,2.4,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  })();
+  // particles
+  particles=particles.filter(function(p){return p.life>0;});
+  particles.forEach(function(p){ p.x+=p.vx; p.y+=p.vy; p.vy+=0.08; p.life-=0.03;
+    ctx.globalAlpha=Math.max(p.life,0); ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fillStyle=p.color; ctx.fill(); ctx.globalAlpha=1; });
+  // floaters
+  floaters=floaters.filter(function(f){return f.life>0;});
+  floaters.forEach(function(f){ f.y-=0.9; f.life-=0.022;
+    ctx.globalAlpha=Math.max(f.life,0); ctx.font='900 15px Outfit, sans-serif'; ctx.textAlign='center';
+    ctx.lineWidth=4; ctx.strokeStyle='rgba(10,0,24,0.9)'; ctx.strokeText(f.txt,f.x,f.y);
+    ctx.fillStyle=f.color; ctx.fillText(f.txt,f.x,f.y); ctx.globalAlpha=1; });
+}
+
+/* ---------- Physics helpers ---------- */
+function segCollide(w){
+  var dx=w.x2-w.x1, dy=w.y2-w.y1, len2=dx*dx+dy*dy||1;
+  var t=((ball.x-w.x1)*dx+(ball.y-w.y1)*dy)/len2; t=Math.max(0,Math.min(1,t));
+  var cx=w.x1+dx*t, cy=w.y1+dy*t;
+  var ox=ball.x-cx, oy=ball.y-cy, d=Math.sqrt(ox*ox+oy*oy);
+  if(d<ball.r&&d>0.001){
+    var nx=ox/d, ny=oy/d;
+    ball.x=cx+nx*ball.r; ball.y=cy+ny*ball.r;
+    var vn=ball.vx*nx+ball.vy*ny;
+    if(vn<0){
+      ball.vx-=(1+w.rest)*vn*nx; ball.vy-=(1+w.rest)*vn*ny;
+      if(w.sling){
+        ball.vx+=nx*7; ball.vy+=ny*7-1; w.flash=1;
+        addScore(50,'SLING',cx,cy); sBumper();
+        burst(cx,cy,'#00e5ff',6);
+      }
+    }
+    return true;
+  }
+  return false;
+}
+function circleHit(c,kick,rest){
+  var dx=ball.x-c.x, dy=ball.y-c.y, d=Math.sqrt(dx*dx+dy*dy), min=c.r+ball.r;
+  if(d<min&&d>0.001){
+    var nx=dx/d, ny=dy/d;
+    ball.x=c.x+nx*min; ball.y=c.y+ny*min;
+    var vn=ball.vx*nx+ball.vy*ny;
+    if(vn<0){ ball.vx-=(1+rest)*vn*nx; ball.vy-=(1+rest)*vn*ny; }
+    ball.vx+=nx*kick; ball.vy+=ny*kick;
+    return true;
+  }
+  return false;
+}
+function flipperCollide(f){
+  var tip=tipOf(f);
+  var dx=tip.x-f.px, dy=tip.y-f.py, len2=dx*dx+dy*dy||1;
+  var t=((ball.x-f.px)*dx+(ball.y-f.py)*dy)/len2; t=Math.max(0,Math.min(1,t));
+  var cx=f.px+dx*t, cy=f.py+dy*t;
+  var ox=ball.x-cx, oy=ball.y-cy, d=Math.sqrt(ox*ox+oy*oy), min=ball.r+f.r*0.72;
+  if(d<min&&d>0.001){
+    var nx=ox/d, ny=oy/d;
+    ball.x=cx+nx*min; ball.y=cy+ny*min;
+    // surface velocity from flipper rotation at contact point
+    var rdx=cx-f.px, rdy=cy-f.py;
+    var svx=-f.angVel*rdy, svy=f.angVel*rdx;
+    var rvx=ball.vx-svx, rvy=ball.vy-svy;
+    var vn=rvx*nx+rvy*ny;
+    if(vn<0){ ball.vx-=(1.35)*vn*nx; ball.vy-=(1.35)*vn*ny; }
+    if(f.pressed){ ball.vy-=Math.abs(f.angVel)*6.5; ball.vx+= (f===flipL?1:-1)*Math.abs(f.angVel)*1.2; }
+  }
+}
+/* ---------- Anti-stuck watchdog ---------- */
+// If the ball sits essentially motionless for ~1.8 seconds while in
+// play, it is trapped somewhere the flippers cannot reach — wedged
+// under a flipper, balanced dead-center on the flipper tips, pinched
+// in a corner. Pop it back into open play above the flippers rather
+// than leaving the player stuck. A ball cradled on a held flipper
+// (a flipper is pressed) and a ball floating on the top rail during
+// a gravity flip are legitimate rests, not traps, so both reset the
+// count; on the bonus table gravity is always normal, so the flip
+// exclusion only applies on the main table.
+function checkStuck(){
+  var speed=Math.sqrt(ball.vx*ball.vx+ball.vy*ball.vy);
+  var resting=state.gravFlip>0&&!bonus.active;
+  if(ball.active&&ball.held<=0&&!flipL.pressed&&!flipR.pressed&&!resting&&speed<0.4){
+    stuckFrames++;
+  } else {
+    stuckFrames=0;
+  }
+  if(stuckFrames>=110){
+    stuckFrames=0;
+    ball.x=192; ball.y=648; ball.vx=(Math.random()*2-1)*1.5; ball.vy=-6.5; ball.trail=[];
+    burst(192,660,'#00ff00',14);
+    setMsg('Magic rescue — the kernel was stuck, so it pops back into play! ✨');
+    beep(300,0.18,'sine',0.07,900);
+  }
+}
+function step(){
+  // flippers animation
+  [flipL,flipR].forEach(function(f){
+    var target=f.pressed?f.up:f.rest;
+    var prev=f.ang;
+    f.ang += (target-f.ang)*0.55;
+    f.angVel=(f.ang-prev);
+  });
+  // charging
+  if(charging&&!ball.active){
+    power+=chargeDir*0.022; if(power>=1){power=1;chargeDir=-1;} if(power<=0.15){power=0.15;chargeDir=1;}
+    powerFill.style.width=(power*100)+'%'; powerPct.textContent=Math.round(power*100)+'%';
+  }
+  if(!ball.active) return;
+  if(drainCooldown>0)drainCooldown--;
+  // CORN gravity-spell countdown
+  if(state.gravFlip>0){
+    state.gravFlip--;
+    if(state.gravFlip===0){ setMsg('Gravity restored — back to normal ↓'); showBanner('GRAVITY RESTORED','THE KERNEL FALLS DOWN AGAIN',1000); updateHUD(); }
+  }
+  // wizard hat is holding the kernel — count down, then warp it to the
+  // safe spot high on the playfield (same rule as the portals: a warp
+  // must never spit the ball toward the drain or an outlane)
+  if(ball.held>0){
+    stuckFrames=0;
+    ball.held--; ball.x=hat.x; ball.y=hat.y; ball.trail=[];
+    if(ball.held===0){
+      burst(hat.x,hat.y,'#b26bff',16);
+      warpToSafeSpot();
+      burst(ball.x,ball.y,'#b26bff',16);
+      setMsg('The hat warps the kernel safely to the top! 🎩');
+      beep(300,0.2,'sawtooth',0.07,900);
+    }
+    return;
+  }
+  var GRAV=state.gravFlip>0?-0.32:0.32, MAXV=27;
+  ball.vy+=GRAV;
+  // substeps for stability (4 keeps the faster full-power launch from tunneling)
+  var steps=4;
+  for(var s=0;s<steps;s++){
+    ball.x+=ball.vx/steps; ball.y+=ball.vy/steps;
+    // speed cap
+    var sp=Math.sqrt(ball.vx*ball.vx+ball.vy*ball.vy);
+    if(sp>MAXV){ ball.vx*=MAXV/sp; ball.vy*=MAXV/sp; }
+    walls.forEach(segCollide);
+    flipperCollide(flipL); flipperCollide(flipR);
+    // bumpers
+    bumpers.forEach(function(b){
+      if(circleHit(b,6.5,0.9)&&b.flash<=0){ b.flash=1; addScore(100,'BUMPER',b.x,b.y); sBumper(); burst(b.x,b.y,b.c,9); }
+    });
+    // wizard hat swallow
+    if(hat.cool>0)hat.cool--;
+    (function(){ var dx=ball.x-hat.x, dy=ball.y-hat.y, rr=hat.r+ball.r-2;
+      if(dx*dx+dy*dy<rr*rr&&hat.cool<=0&&ball.held<=0){
+        ball.held=24; ball.vx=0; ball.vy=0; hat.cool=110; hat.flash=1;
+        addScore(500,'HAT',hat.x,hat.y); sCrystal(); burst(hat.x,hat.y,'#b26bff',14);
+        setMsg('The wizard hat swallows the kernel… 🎩');
+      } })();
+    // portals — dive into either one, always warp out at the safe spot
+    // high on the playfield. The old exit (popping out of the other
+    // portal, keeping the entry velocity) could dump the ball at the
+    // low pink portal (332,452) aimed straight down past the slingshot
+    // toward the drain — a warp must never cost the player a ball.
+    if(portalCool>0)portalCool--;
+    [portalA,portalB].forEach(function(p){
+      if(portalCool>0||ball.held>0) return;
+      var dx=ball.x-p.x, dy=ball.y-p.y, rr=p.r+3;
+      if(dx*dx+dy*dy<rr*rr){
+        burst(p.x,p.y,p.c,12);
+        warpToSafeSpot();
+        portalCool=55; addScore(100,'PORTAL',ball.x,ball.y); sTarget(); burst(ball.x,ball.y,p.c,12);
+        setMsg('Portal hop! Warped safely to the top 🌀');
+      }
+    });
+    // C-O-R-N spell targets
+    cornTargets.forEach(function(t,i){
+      if(t.cool>0)t.cool--;
+      if(circleHit(t,3,0.7)&&t.cool<=0){ t.flash=1; t.cool=22;
+        if(!t.lit){ t.lit=true; state.corn[i]=true; addScore(200,'CORN',t.x,t.y); sLane(); burst(t.x,t.y,'#00ff00',9);
+          setMsg('Lit the letter '+'CORN'[i]+' of the CORN spell! ('+state.corn.filter(Boolean).length+'/4)');
+          updateHUD();
+          if(state.corn.every(Boolean)) castCornSpell();
+        } else { addScore(50,'CORN',t.x,t.y); }
+      }
+    });
+    targets.forEach(function(t){
+      if(t.cool>0)t.cool--;
+      if(circleHit(t,3.5,0.7)&&t.cool<=0){ t.flash=1; t.cool=22; addScore(250,'POTION',t.x,t.y); sTarget(); burst(t.x,t.y,'#ff2d95',8); setMsg('Potion target smashed! +'+(250*state.multiplier)); }
+    });
+    // MAGIC lanes (proximity sensors)
+    lanes.forEach(function(l,i){
+      var dx=ball.x-l.x, dy=ball.y-l.y;
+      if(dx*dx+dy*dy<31*31&&!l.lit){
+        l.lit=true; l.flash=1; state.magic[i]=true; addScore(150,'LANE',l.x,l.y); sLane(); burst(l.x,l.y,'#ffe600',7);
+        setMsg('Lit the letter '+'MAGIC'[i]+'! ('+state.magic.filter(Boolean).length+'/5)');
+        updateHUD();
+        if(state.magic.every(Boolean)) completeMagic();
+      }
+    });
+  }
+  checkStuck();
+  // trail
+  ball.trail.push({x:ball.x,y:ball.y}); if(ball.trail.length>10)ball.trail.shift();
+  // SAFETY NET: the top wall should make escape impossible, but if the
+  // kernel ever does get out of bounds, rescue it back into play instead
+  // of letting it vanish.
+  if(ball.x<-30||ball.x>W+30||ball.y<-30){
+    ball.x=192; ball.y=150; ball.vx=0; ball.vy=2; ball.trail=[];
+    burst(192,150,'#00ff00',14);
+    setMsg('Magic rescue — the kernel pops back into play! ✨');
+  } else {
+    if(ball.y<ball.r){ ball.y=ball.r; ball.vy=Math.abs(ball.vy)*0.4; }
+    if(ball.x<ball.r){ ball.x=ball.r; ball.vx=Math.abs(ball.vx)*0.4; }
+    if(ball.x>W-ball.r){ ball.x=W-ball.r; ball.vx=-Math.abs(ball.vx)*0.4; }
+  }
+  // drain: bottom gap between flippers
+  if(ball.y>H-6){
+    if(ball.x>374){ // fell back in launch lane -> re-serve softly (short plunge)
+      ball.y=655; ball.vy=0; ball.vx=0; ball.active=false; ball.inLane=true; setMsg('Short plunge — charge a little more and fire again!');
+    } else { drain(); }
+  }
+  // decay flashes
+  bumpers.forEach(function(b){if(b.flash>0)b.flash-=0.08;});
+  if(hat.flash>0)hat.flash-=0.06;
+  cornTargets.forEach(function(t){if(t.flash>0)t.flash-=0.08;});
+  targets.forEach(function(t){if(t.flash>0)t.flash-=0.08;});
+  walls.forEach(function(w){if(w.flash>0)w.flash-=0.1;});
+  lanes.forEach(function(l){if(l.flash>0)l.flash-=0.06;});
+}
+
+/* ---------- Drawing ---------- */
+function roundRect(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function draw(){
+  ctx.save();
+  if(shake>0){ ctx.translate((Math.random()-0.5)*shake,(Math.random()-0.5)*shake); shake*=0.85; if(shake<0.3)shake=0; }
+  // playfield — deep dark violet so the neon pops
+  var g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#1a0533'); g.addColorStop(0.55,'#0e0221'); g.addColorStop(1,'#07010f');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  // neon stars (multicolor, twinkling)
+  var starCols=['#00e5ff','#ff2d95','#ffe600','#00ff00','#ff8a00','#b26bff'];
+  var starPts=[[40,80],[90,40],[330,60],[370,120],[30,300],[360,300],[150,470],[250,540],[60,470],[330,470]];
+  starPts.forEach(function(p,i){ ctx.globalAlpha=0.45+0.35*Math.sin(Date.now()/500+i*1.7); ctx.fillStyle=starCols[i%starCols.length]; ctx.fillRect(p[0],p[1],3,3); });
+  ctx.globalAlpha=1;
+  // launch lane shading
+  ctx.fillStyle='rgba(255,230,0,0.08)'; ctx.fillRect(374,26,36,714);
+  ctx.fillStyle='rgba(178,107,255,0.06)'; ctx.fillRect(10,26,364,714);
+  // MAGIC lane sensors — each letter its own neon color
+  var laneCols=['#ff2d95','#ff8a00','#ffe600','#00ff00','#00e5ff'];
+  lanes.forEach(function(l,i){
+    ctx.save();
+    if(l.lit){ ctx.shadowColor=laneCols[i]; ctx.shadowBlur=16; }
+    ctx.beginPath(); ctx.arc(l.x,l.y,15,0,Math.PI*2);
+    ctx.fillStyle=l.lit?laneCols[i]:'rgba(255,255,255,0.07)'; ctx.fill();
+    ctx.lineWidth=2; ctx.strokeStyle=l.lit?laneCols[i]:laneCols[i]; ctx.globalAlpha=l.lit?1:0.65; ctx.stroke(); ctx.globalAlpha=1;
+    ctx.restore();
+    ctx.fillStyle=l.lit?'#12041f':laneCols[i]; ctx.font='900 13px Cinzel, serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('MAGIC'[i],l.x,l.y+1);
+    if(l.flash>0){ ctx.beginPath(); ctx.arc(l.x,l.y,15+(1-l.flash)*16,0,Math.PI*2); ctx.strokeStyle=laneCols[i]; ctx.globalAlpha=l.flash; ctx.stroke(); ctx.globalAlpha=1; }
+  });
+  // walls — neon purple rails, cyan flash on slingshots. Rail walls
+  // (the orbit curves) are skipped here and drawn below as smooth arcs.
+  walls.forEach(function(w){
+    if(w.rail) return;
+    ctx.save();
+    ctx.beginPath(); ctx.moveTo(w.x1,w.y1); ctx.lineTo(w.x2,w.y2);
+    ctx.lineWidth=w.sling?7:6; ctx.lineCap='round';
+    if(w.flash>0){ ctx.shadowColor='#00e5ff'; ctx.shadowBlur=14; ctx.strokeStyle='#00e5ff'; }
+    else { ctx.shadowColor='rgba(178,107,255,0.8)'; ctx.shadowBlur=w.sling?8:5; ctx.strokeStyle=w.sling?'#ff2d95':'#b26bff'; }
+    ctx.stroke();
+    ctx.shadowBlur=0; ctx.lineWidth=2; ctx.strokeStyle='rgba(255,255,255,0.55)'; ctx.stroke();
+    ctx.restore();
+  });
+  // THE RAILS — drawn as single smooth continuous curves, exactly the
+  // paths the physics follows: the outer orbit rail (up the launch lane
+  // into one plain arc — centered (198,212), r=212, tangent to the lane
+  // wall at (410,212) — up and around the whole top, top-right corner
+  // included) and the inner dome arc. One stroke each — no segments,
+  // no dashes, no corner patch.
+  function strokeRail(build){
+    ctx.save();
+    ctx.lineCap='round'; ctx.lineJoin='round';
+    ctx.beginPath(); build();
+    ctx.shadowColor='rgba(178,107,255,0.8)'; ctx.shadowBlur=5;
+    ctx.lineWidth=6; ctx.strokeStyle='#b26bff'; ctx.stroke();
+    ctx.shadowBlur=0; ctx.lineWidth=2; ctx.strokeStyle='rgba(255,255,255,0.55)'; ctx.stroke();
+    ctx.restore();
+  }
+  strokeRail(function(){
+    ctx.moveTo(410,260); ctx.lineTo(410,212);
+    ctx.arc(198,212,212,0,-148*Math.PI/180,true);
+    ctx.lineTo(9,100);
+  });
+  strokeRail(function(){
+    ctx.arc(192,212,180,-115*Math.PI/180,0,false);
+  });
+  // potion targets — hot pink, glowing
+  targets.forEach(function(t){
+    ctx.save(); ctx.shadowColor='#ff2d95'; ctx.shadowBlur=t.flash>0?22:12;
+    ctx.beginPath(); ctx.arc(t.x,t.y,t.r,0,Math.PI*2);
+    ctx.fillStyle=t.flash>0?'#ffffff':'#ff2d95'; ctx.fill();
+    ctx.lineWidth=2.5; ctx.strokeStyle='#ff8ac2'; ctx.stroke();
+    ctx.restore();
+    ctx.font='11px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('🧪',t.x,t.y+1);
+  });
+  // bumpers — orange / cyan / pink, glowing, white-hot on hit
+  bumpers.forEach(function(b){
+    ctx.save();
+    ctx.beginPath(); ctx.arc(b.x,b.y,b.r+6,0,Math.PI*2); ctx.fillStyle=b.glow+'0.16)'; ctx.fill();
+    ctx.shadowColor=b.c; ctx.shadowBlur=b.flash>0?30:16;
+    ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,Math.PI*2);
+    var bg=ctx.createRadialGradient(b.x-8,b.y-8,4,b.x,b.y,b.r);
+    if(b.flash>0){ bg.addColorStop(0,'#ffffff'); bg.addColorStop(1,b.c); } else { bg.addColorStop(0,b.hi); bg.addColorStop(1,b.c); }
+    ctx.fillStyle=bg; ctx.fill(); ctx.lineWidth=3; ctx.strokeStyle='#ffffff'; ctx.stroke();
+    ctx.restore();
+    ctx.font='15px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('⭐',b.x,b.y+1);
+  });
+  // portals — bright glowing discs with a swirling vortex (cyan ⇄ pink)
+  [portalA,portalB].forEach(function(p,pi){
+    ctx.save();
+    var pg=ctx.createRadialGradient(p.x,p.y,2,p.x,p.y,p.r+4);
+    pg.addColorStop(0,'#ffffff'); pg.addColorStop(0.35,p.c); pg.addColorStop(1,'rgba(0,0,0,0.2)');
+    ctx.shadowColor=p.c; ctx.shadowBlur=24;
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.r+2,0,Math.PI*2); ctx.globalAlpha=0.95; ctx.fillStyle=pg; ctx.fill(); ctx.globalAlpha=1;
+    ctx.lineWidth=3; ctx.strokeStyle='#ffffff'; ctx.beginPath(); ctx.arc(p.x,p.y,p.r+2,0,Math.PI*2); ctx.stroke();
+    // rotating dark swirl cuts over the bright disc
+    ctx.shadowBlur=0; ctx.lineWidth=3.5; ctx.lineCap='round'; ctx.strokeStyle='rgba(10,0,30,0.6)';
+    var t0=Date.now()/280*(pi===0?1:-1);
+    for(var k=0;k<3;k++){ ctx.beginPath(); ctx.arc(p.x,p.y,p.r-4,t0+k*2.09,t0+k*2.09+1.4); ctx.stroke(); }
+    ctx.beginPath(); ctx.arc(p.x,p.y,3.5,0,Math.PI*2); ctx.fillStyle='rgba(10,0,30,0.85)'; ctx.fill();
+    ctx.restore();
+    ctx.fillStyle=p.c; ctx.font='800 8px Outfit, sans-serif'; ctx.textAlign='center'; ctx.fillText('PORTAL',p.x,p.y+p.r+14);
+  });
+  // C-O-R-N spell targets
+  cornTargets.forEach(function(t,i){
+    ctx.save(); if(t.lit||t.flash>0){ ctx.shadowColor='#00ff00'; ctx.shadowBlur=16; }
+    ctx.beginPath(); ctx.arc(t.x,t.y,t.r,0,Math.PI*2);
+    ctx.fillStyle=t.lit?'#00ff00':'rgba(0,255,0,0.10)'; ctx.fill();
+    ctx.lineWidth=2.5; ctx.strokeStyle='#00ff00'; ctx.stroke(); ctx.restore();
+    ctx.fillStyle=t.lit?'#0d2600':'#00ff00'; ctx.font='900 13px Cinzel, serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('CORN'[i],t.x,t.y+1);
+  });
+  // wizard hat — center of the table
+  (function(){
+    var pulse=ball.held>0?1+0.13*Math.sin(Date.now()/60):1;
+    ctx.save(); ctx.translate(hat.x,hat.y); ctx.scale(pulse,pulse);
+    ctx.shadowColor='#b26bff'; ctx.shadowBlur=hat.flash>0?30:16;
+    ctx.beginPath(); ctx.moveTo(-17,4); ctx.quadraticCurveTo(-10,-26,2,-34); ctx.quadraticCurveTo(6,-18,17,4); ctx.closePath();
+    var hg=ctx.createLinearGradient(0,-34,0,6); hg.addColorStop(0,'#7c3aed'); hg.addColorStop(1,'#2a0a4a');
+    ctx.fillStyle=hg; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle='#d8b4fe'; ctx.stroke();
+    ctx.shadowBlur=0; ctx.fillStyle='#ffe600'; ctx.fillRect(-15,-2,30,5);
+    ctx.beginPath(); ctx.ellipse(0,7,30,8,0,0,Math.PI*2); ctx.fillStyle='#3b1470'; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle='#b26bff'; ctx.stroke();
+    ctx.fillStyle='#ffe600'; ctx.font='8px sans-serif'; ctx.textAlign='center'; ctx.fillText('✦',-4,-16); ctx.fillText('✦',5,-8);
+    ctx.restore();
+    ctx.fillStyle='#00e5ff'; ctx.font='800 9px Outfit, sans-serif'; ctx.textAlign='center'; ctx.fillText('HAT • 500',hat.x,hat.y+hat.r+16);
+  })();
+  // table title art — fluorescent yellow with hot-pink glow
+  ctx.save(); ctx.shadowColor='#ff2d95'; ctx.shadowBlur=16;
+  ctx.fillStyle='#ffe600'; ctx.font='900 15px Cinzel, serif'; ctx.textAlign='center';
+  ctx.fillText('✦ PINBALL MAGIC ✦',192,478); ctx.restore();
+  ctx.fillStyle='#00e5ff'; ctx.font='700 9px Outfit, sans-serif'; ctx.textAlign='center';
+  ctx.fillText('SPELL  M A G I C  FOR  A  BONUS',192,494);
+  if(state.gravFlip>0){ ctx.save(); ctx.shadowColor='#ff2d95'; ctx.shadowBlur=12;
+    ctx.fillStyle='#ff2d95'; ctx.font='900 13px Outfit, sans-serif'; ctx.textAlign='center';
+    ctx.fillText('▲▲ GRAVITY FLIPPED ▲▲',192,568); ctx.restore(); }
+  // plunger
+  (function(){
+    var px=392, base=712, compress=ball.active?0:power*26;
+    ctx.fillStyle='#3b1470'; roundRect(px-9,600,18,112,8); ctx.fill();
+    ctx.save(); ctx.shadowColor='#ff8a00'; ctx.shadowBlur=10;
+    ctx.fillStyle='#ff8a00'; roundRect(px-11,base-58+compress,22,16,5); ctx.fill(); ctx.restore();
+    ctx.fillStyle='#e8e8f5'; roundRect(px-3,base-44+compress,6,44-compress,3); ctx.fill();
+  })();
+  // flippers — lime green with neon glow
+  [flipL,flipR].forEach(function(f){
+    var tip=tipOf(f);
+    ctx.save(); ctx.shadowColor='#00ff00'; ctx.shadowBlur=14;
+    ctx.beginPath(); ctx.moveTo(f.px,f.py); ctx.lineTo(tip.x,tip.y);
+    ctx.lineWidth=15; ctx.lineCap='round'; ctx.strokeStyle='#00c853'; ctx.stroke();
+    ctx.lineWidth=9; ctx.strokeStyle='#00ff00'; ctx.stroke();
+    ctx.restore();
+    ctx.beginPath(); ctx.arc(f.px,f.py,8,0,Math.PI*2); ctx.fillStyle='#eaffea'; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle='#00701a'; ctx.stroke();
+  });
+  // drain label
+  ctx.fillStyle='rgba(255,45,149,0.85)'; ctx.font='800 9px Outfit, sans-serif'; ctx.textAlign='center'; ctx.fillText('▼ DRAIN ▼',192,732);
+  // ball trail — neon green
+  ball.trail.forEach(function(p,i){ ctx.beginPath(); ctx.arc(p.x,p.y,ball.r*(i/ball.trail.length)*0.85,0,Math.PI*2); ctx.fillStyle='rgba(0,255,0,'+(0.05+0.10*(i/ball.trail.length))+')'; ctx.fill(); });
+  // THE BALL — a glowing magic corn kernel, #00ff00 neon green
+  if(ball.held<=0) (function(){
+    ctx.save();
+    ctx.translate(ball.x,ball.y);
+    ctx.rotate(Math.max(-0.35,Math.min(0.35,ball.vx*0.02)));
+    // outer halo
+    ctx.beginPath(); ctx.arc(0,0,ball.r+9,0,Math.PI*2);
+    var halo=ctx.createRadialGradient(0,0,ball.r*0.4,0,0,ball.r+9);
+    halo.addColorStop(0,'rgba(0,255,0,0.35)'); halo.addColorStop(1,'rgba(0,255,0,0)');
+    ctx.fillStyle=halo; ctx.fill();
+    ctx.shadowColor='#00ff00'; ctx.shadowBlur=22;
+    // kernel body — plump teardrop
+    ctx.beginPath();
+    ctx.moveTo(0,-12);
+    ctx.bezierCurveTo(8,-12,11,-4,11,2);
+    ctx.bezierCurveTo(11,9,6,13,0,13);
+    ctx.bezierCurveTo(-6,13,-11,9,-11,2);
+    ctx.bezierCurveTo(-11,-4,-8,-12,0,-12);
+    var kg=ctx.createRadialGradient(-3,-5,2,0,0,14);
+    kg.addColorStop(0,'#eaffea'); kg.addColorStop(0.45,'#4dff4d'); kg.addColorStop(0.8,'#00ff00'); kg.addColorStop(1,'#00cc33');
+    ctx.fillStyle=kg; ctx.fill();
+    ctx.shadowBlur=0;
+    ctx.lineWidth=1.5; ctx.strokeStyle='rgba(230,255,230,0.95)'; ctx.stroke();
+    // kernel ridges
+    ctx.strokeStyle='rgba(0,92,20,0.55)'; ctx.lineWidth=1.4;
+    ctx.beginPath(); ctx.moveTo(-5,-9); ctx.quadraticCurveTo(-7,1,-4,10); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0,-11); ctx.quadraticCurveTo(-1,1,0,12); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(5,-9); ctx.quadraticCurveTo(7,1,4,10); ctx.stroke();
+    // crown tip
+    ctx.fillStyle='#ccffcc'; ctx.beginPath(); ctx.arc(0,-11,2.4,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  })();
+  // particles
+  particles=particles.filter(function(p){return p.life>0;});
+  particles.forEach(function(p){ p.x+=p.vx; p.y+=p.vy; p.vy+=0.08; p.life-=0.03;
+    ctx.globalAlpha=Math.max(p.life,0); ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fillStyle=p.color; ctx.fill(); ctx.globalAlpha=1; });
+  // floaters
+  floaters=floaters.filter(function(f){return f.life>0;});
+  floaters.forEach(function(f){ f.y-=0.9; f.life-=0.022;
+    ctx.globalAlpha=Math.max(f.life,0); ctx.font='900 15px Outfit, sans-serif'; ctx.textAlign='center';
+    ctx.lineWidth=4; ctx.strokeStyle='rgba(10,0,24,0.9)'; ctx.strokeText(f.txt,f.x,f.y);
+    ctx.fillStyle=f.color; ctx.fillText(f.txt,f.x,f.y); ctx.globalAlpha=1; });
+  ctx.restore();
+}
+/* ---------- Cheat code: tap the C of C-O-R-N 5 times ---------- */
+// Five taps on the CAST row's C tile (or five presses of the C key)
+// award a flat +99,000 points — no multiplier — landing the player
+// just 1,000 short of the 100k bonus machine so they can test it.
+// Taps more than 3 seconds apart restart the count. If no game is
+// running yet, the cheat starts one first so New Game can't wipe the
+// points afterwards.
+var cheatCount=0, cheatLast=0;
+function cheatTap(){
+  var now=Date.now();
+  if(now-cheatLast>3000) cheatCount=0;
+  cheatLast=now; cheatCount++;
+  var tile=cornEls[0];
+  if(tile){ tile.classList.add('cheat-hit'); setTimeout(function(){ tile.classList.remove('cheat-hit'); },180); }
+  if(cheatCount<5){
+    setMsg('🤫 Cheat code… C tap '+cheatCount+' of 5');
+    beep(620+cheatCount*90,0.07,'sine',0.06);
+    return;
+  }
+  cheatCount=0;
+  if(bonus.active||bonus.phase==='flash'){ setMsg('Cheat code works on the main table — finish the bonus round first!'); return; }
+  if(!state.started||state.over) newGame();
+  state.score+=99000;
+  if(state.score>state.best) state.best=state.score;
+  floaters.push({x:192,y:110,txt:'+99,000',life:1,color:'#ffe600'});
+  burst(192,140,'#ffe600',24);
+  showBanner('🤫 CHEAT CODE! 🤫','+99,000 POINTS!',2400);
+  setMsg('Cheat code! +99,000 points — you are at '+state.score.toLocaleString('en-US')+'. Cross '+bonus.nextAt.toLocaleString('en-US')+' to open the bonus machine!');
+  sMagic();
+  updateHUD();
+}
+if(cornEls[0]) cornEls[0].addEventListener('click',function(){ ac(); cheatTap(); });
+
+function loop(){
+  if(bonus.phase==='flash'){
+    // Milestone hit: the screen blinks/flashes (CSS overlay) over the
+    // frozen main table, then the bonus machine opens.
+    bonus.timer--; draw();
+    if(bonus.timer<=0){ flashEl.classList.remove('on'); beginBonus(); }
+  } else if(bonus.active){
+    stepBonus(); if(bonus.active) drawBonus(); else draw();
+  } else if(!state.over&&state.score>=bonus.nextAt){
+    // NOTE: this check must NOT require state.started — the table
+    // invites players to "just launch" without pressing New Game, and
+    // a just-launch game used to sail past 100k with no bonus machine
+    // because started stayed false. Any live game that reaches the
+    // milestone gets its machine.
+    startBonusFlash(); draw();
+  } else { step(); draw(); }
+  requestAnimationFrame(loop);
+}
+
+/* ---------- Launch ---------- */
+function startCharge(){ if(state.over){return;} if(ball.active){return;} ac(); charging=true; power=0.12; chargeDir=1; }
+function releaseLaunch(){
+  if(!charging) return; charging=false;
+  if(ball.active||state.over) return;
+  state.started=true; // a just-launch game is a real game (bonus milestones included)
+  ball.active=true; ball.inLane=false;
+  ball.vy=-(13+power*13.5); ball.vx=0; sLaunch();
+  setMsg('Away it goes! Flip with ◀ ▶');
+  banner.classList.add('hidden');
+  powerFill.style.width='0%'; powerPct.textContent='0%';
+}
+
+/* ---------- No zoom on tap / click / pinch ---------- */
+// Tapping FLIP / LAUNCH rapidly (or double-tapping the table) must
+// never enlarge the screen. The viewport meta locks scaling, CSS
+// touch-action:manipulation removes double-tap zoom, and these
+// handlers cover iPad Safari, which ignores user-scalable=no:
+// pinch gestures, multi-touch moves, double-tap and double-click
+// are all swallowed here. Single taps, holds and modal scrolling
+// are untouched, so the game plays exactly as before.
+document.addEventListener('gesturestart',function(e){e.preventDefault();},{passive:false});
+document.addEventListener('gesturechange',function(e){e.preventDefault();},{passive:false});
+document.addEventListener('gestureend',function(e){e.preventDefault();},{passive:false});
+document.addEventListener('dblclick',function(e){e.preventDefault();},{passive:false});
+document.addEventListener('touchmove',function(e){ if(e.touches&&e.touches.length>1) e.preventDefault(); },{passive:false});
+document.addEventListener('wheel',function(e){ if(e.ctrlKey) e.preventDefault(); },{passive:false});
+var lastTouchEnd=0;
+document.addEventListener('touchend',function(e){
+  var now=Date.now();
+  // Rapid taps on real controls (FLIP, LAUNCH, the cheat-code C tile,
+  // the canvas) fire on pointerdown/click and must never be swallowed
+  // — those elements already carry touch-action:manipulation, so they
+  // cannot trigger zoom themselves. Only double-taps on inert areas
+  // of the page are blocked here.
+  var t=e.target;
+  var onControl=t&&(t.closest&&t.closest('button,canvas,.letter,.menu,.modal-card'));
+  if(!onControl&&now-lastTouchEnd<=350) e.preventDefault();
+  lastTouchEnd=now;
+},{passive:false});
+
+/* ---------- Input ---------- */
+function bindHold(el,down,up){
+  el.addEventListener('pointerdown',function(e){e.preventDefault(); down();});
+  ['pointerup','pointerleave','pointercancel'].forEach(function(ev){ el.addEventListener(ev,function(e){ if(up)up(); }); });
+  el.addEventListener('contextmenu',function(e){e.preventDefault();});
+}
+bindHold(document.getElementById('btnL'),function(){flipL.pressed=true; sFlip();},function(){flipL.pressed=false;});
+bindHold(document.getElementById('btnR'),function(){flipR.pressed=true; sFlip();},function(){flipR.pressed=false;});
+bindHold(document.getElementById('btnLaunch'),startCharge,releaseLaunch);
+// tap halves of table = flippers (touch)
+var pressCount={l:0,r:0};
+cv.addEventListener('pointerdown',function(e){
+  var r=cv.getBoundingClientRect(); var x=(e.clientX-r.left)/r.width*W; var y=(e.clientY-r.top)/r.height*H;
+  if(x>374&&y>500){ startCharge(); return; }
+  if(y<430) return;
+  if(x<W/2){ flipL.pressed=true; pressCount.l++; sFlip(); } else { flipR.pressed=true; pressCount.r++; sFlip(); }
+});
+cv.addEventListener('pointerup',function(e){
+  var r=cv.getBoundingClientRect(); var x=(e.clientX-r.left)/r.width*W;
+  if(x>374){ releaseLaunch(); }
+  flipL.pressed=false; flipR.pressed=false;
+});
+cv.addEventListener('pointercancel',function(){ flipL.pressed=false; flipR.pressed=false; releaseLaunch(); });
+
+document.addEventListener('keydown',function(e){
+  if(e.repeat) { if(e.code==='Space') e.preventDefault(); return; }
+  if(e.code==='KeyZ'||e.code==='ArrowLeft'){ flipL.pressed=true; sFlip(); }
+  if(e.code==='Slash'||e.code==='ArrowRight'){ flipR.pressed=true; sFlip(); }
+  if(e.code==='Space'||e.code==='ArrowDown'){ e.preventDefault(); startCharge(); }
+  if(e.code==='KeyX'){ doNudge(); }
+  if(e.code==='KeyC'){ cheatTap(); }
+});
+document.addEventListener('keyup',function(e){
+  if(e.code==='KeyZ'||e.code==='ArrowLeft') flipL.pressed=false;
+  if(e.code==='Slash'||e.code==='ArrowRight') flipR.pressed=false;
+  if(e.code==='Space'||e.code==='ArrowDown'){ e.preventDefault(); releaseLaunch(); }
+});
+function doNudge(){
+  var now=Date.now(); if(now-lastNudge<2500){ setMsg('Easy — too much nudging risks a TILT!'); return; }
+  lastNudge=now; shake=7;
+  if(ball.active){ ball.vx+=(Math.random()<0.5?-1.6:1.6); ball.vy-=1.2; setMsg('Nudge! The table rattles ✦'); beep(90,0.12,'sawtooth',0.07,50); }
+}
+/* ---------- Hamburger menu + How to Play popup ---------- */
+var menuEl=document.getElementById('menu'), burgerEl=document.getElementById('btnMenu'), howModal=document.getElementById('howModal');
+function closeMenu(){ menuEl.classList.add('hidden'); burgerEl.setAttribute('aria-expanded','false'); }
+burgerEl.addEventListener('click',function(e){
+  e.stopPropagation();
+  var open=menuEl.classList.toggle('hidden')===false;
+  burgerEl.setAttribute('aria-expanded',open?'true':'false');
+});
+document.getElementById('menuHow').addEventListener('click',function(){ closeMenu(); howModal.classList.remove('hidden'); });
+document.getElementById('btnHowClose').addEventListener('click',function(){ howModal.classList.add('hidden'); });
+howModal.addEventListener('click',function(e){ if(e.target===howModal) howModal.classList.add('hidden'); });
+document.addEventListener('click',function(e){ if(!menuEl.classList.contains('hidden')&&!menuEl.contains(e.target)) closeMenu(); });
+document.addEventListener('keydown',function(e){ if(e.code==='Escape'){ closeMenu(); howModal.classList.add('hidden'); } });
+
+document.getElementById('btnNudge').addEventListener('click',doNudge);
+document.getElementById('btnNew').addEventListener('click',function(){ ac(); newGame(); });
+document.getElementById('btnSound').addEventListener('click',function(){
+  soundOn=!soundOn; this.textContent=soundOn?'🔊 Sound: On':'🔇 Sound: Off'; if(soundOn)sLane();
+});
+
+/* ---------- Go ---------- */
+updateHUD();
+showBanner('PINBALL MAGIC','HOLD LAUNCH TO CHARGE • RELEASE TO FIRE',0);
+serveBall(); state.started=false; ball.active=false;
+// serveBall shows ball banner; restore title banner initially
+showBanner('PINBALL MAGIC','PRESS NEW GAME — OR JUST LAUNCH!',0);
+setMsg('Press New Game, then hold LAUNCH to fire your first ball ✨');
+loop();
+// Corn Games hub deployment only (Vercel copy): yellow Back to Menu bar.
+// shared/hub.js is loaded by an external script tag ahead of this script;
+// where hub.js is absent this guarded call simply does nothing.
+if (window.Hub) { Hub.menuButton(); }
+})();
+</script>
+</body>
+</html>
