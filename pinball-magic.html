@@ -108,11 +108,78 @@
   .kbd{display:inline-block;background:var(--panel2);border:1px solid var(--line);border-bottom-width:3px;border-radius:6px;padding:1px 7px;font-weight:800;font-size:12.5px}
   .msg{min-height:19px;text-align:center;font-weight:800;color:var(--teal);margin:5px 0 0;font-size:13.5px;text-shadow:0 0 10px rgba(0,229,255,.45);flex-shrink:0}
   details.card summary{cursor:pointer;font-family:"Cinzel",serif;font-weight:700;font-size:17px;min-height:36px;display:flex;align-items:center}
+  /* ---------- Title screen ---------- */
+  .wrap.screen-hidden{display:none}
+  .title-screen{position:fixed;inset:0;z-index:80;background:radial-gradient(ellipse 90% 55% at 50% -5%,rgba(255,45,149,.28) 0%,transparent 60%),radial-gradient(ellipse 70% 50% at 50% 110%,rgba(0,229,255,.14) 0%,transparent 60%),linear-gradient(180deg,#1d0738 0%,#0d0221 52%,#07030f 100%);display:flex;flex-direction:column;align-items:center;padding:max(22px,env(safe-area-inset-top)) 20px max(20px,env(safe-area-inset-bottom));overflow:hidden;text-align:center}
+  .title-screen.hidden{display:none}
+  .title-top{flex-shrink:0;width:100%;max-width:640px;padding-top:6px}
+  .title-kicker{color:var(--teal);font-weight:800;letter-spacing:.22em;font-size:11px;text-transform:uppercase;text-shadow:0 0 12px rgba(0,229,255,.8);margin:0 0 10px}
+  .title-main{font-family:"Cinzel",serif;font-weight:900;font-size:clamp(44px,11vw,78px);line-height:.92;letter-spacing:.01em;color:var(--gold);margin:0;text-shadow:0 0 8px rgba(255,230,0,.85),0 0 28px rgba(255,45,149,.85),0 0 64px rgba(255,45,149,.45),0 3px 0 #1a0533}
+  .title-main span{display:block}
+  .title-main .line2{color:#fff;text-shadow:0 0 8px rgba(255,255,255,.6),0 0 28px rgba(0,229,255,.9),0 0 54px rgba(0,229,255,.45),0 3px 0 #1a0533}
+  .title-tag{color:var(--muted);font-size:15px;font-weight:600;line-height:1.45;margin:14px auto 0;max-width:420px}
+  .title-visual{flex:1;min-height:0;width:100%;max-width:520px;display:flex;align-items:center;justify-content:center;padding:18px 0 10px}
+  .title-table{position:relative;width:min(66vw,262px);aspect-ratio:262/318;border:2px solid #7c3aed;border-radius:140px 140px 22px 22px;background:linear-gradient(180deg,#1a0533,#0a0218);box-shadow:0 0 34px rgba(178,107,255,.35),inset 0 0 40px rgba(0,0,0,.55);overflow:hidden}
+  .title-table::before{content:"";position:absolute;inset:12px;border:1.5px solid rgba(178,107,255,.45);border-radius:128px 128px 16px 16px;pointer-events:none}
+  .tt-bumper{position:absolute;width:44px;height:44px;border-radius:50%;border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:16px;transform:translate(-50%,-50%)}
+  .tt-bumper.b1{left:30%;top:32%;background:radial-gradient(circle at 35% 30%,#ffd9a0,#ff8a00);box-shadow:0 0 20px rgba(255,138,0,.9)}
+  .tt-bumper.b2{left:50%;top:24%;background:radial-gradient(circle at 35% 30%,#c9f7ff,#00e5ff);box-shadow:0 0 20px rgba(0,229,255,.9)}
+  .tt-bumper.b3{left:70%;top:32%;background:radial-gradient(circle at 35% 30%,#ffc2e0,#ff2d95);box-shadow:0 0 20px rgba(255,45,149,.9)}
+  .tt-portal{position:absolute;width:28px;height:28px;border-radius:50%;transform:translate(-50%,-50%);border:2.5px solid #fff}
+  .tt-portal.p1{left:18%;top:46%;background:radial-gradient(circle,#fff 0%,#00e5ff 45%,rgba(0,229,255,.15) 100%);box-shadow:0 0 18px #00e5ff}
+  .tt-portal.p2{left:82%;top:62%;background:radial-gradient(circle,#fff 0%,#ff2d95 45%,rgba(255,45,149,.15) 100%);box-shadow:0 0 18px #ff2d95}
+  .tt-hat{position:absolute;left:50%;top:53%;transform:translate(-50%,-50%);font-size:38px;line-height:1;filter:drop-shadow(0 0 12px rgba(178,107,255,.95))}
+  .tt-kernel{position:absolute;left:50%;top:70%;width:26px;height:30px;transform:translate(-50%,-50%);border-radius:50% 50% 50% 50%/58% 58% 42% 42%;background:radial-gradient(circle at 35% 28%,#eaffea 0%,#4dff4d 42%,#00ff00 78%,#00cc33 100%);box-shadow:0 0 22px #00ff00,0 0 44px rgba(0,255,0,.45);border:1.5px solid rgba(230,255,230,.95)}
+  .tt-kernel::after{content:"";position:absolute;left:50%;top:5px;bottom:5px;width:1.5px;background:rgba(0,92,20,.5);transform:translateX(-.75px);box-shadow:-6px 0 0 rgba(0,92,20,.45),6px 0 0 rgba(0,92,20,.45)}
+  .tt-flip{position:absolute;bottom:20px;width:52px;height:10px;border-radius:99px;background:#00ff00;box-shadow:0 0 14px rgba(0,255,0,.85)}
+  .tt-flip.l{left:22%;transform:rotate(28deg)}
+  .tt-flip.r{right:22%;transform:rotate(-28deg)}
+  .tt-word{position:absolute;left:0;right:0;bottom:52px;text-align:center;font-family:"Cinzel",serif;font-weight:900;font-size:11px;letter-spacing:.28em;color:var(--gold);text-shadow:0 0 10px rgba(255,230,0,.8)}
+  .title-bottom{flex-shrink:0;width:100%;max-width:460px;display:flex;flex-direction:column;align-items:center}
+  .title-feats{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin-bottom:16px}
+  .title-feats span{font-size:12px;font-weight:700;color:#e9defc;background:rgba(255,255,255,.07);border:1px solid var(--line);border-radius:999px;padding:6px 11px;white-space:nowrap}
+  .btn-enter{width:100%;max-width:340px;border:0;border-radius:999px;background:var(--gold);color:#221a00;font-family:"Cinzel",serif;font-weight:900;font-size:21px;letter-spacing:.06em;padding:16px 28px 15px;cursor:pointer;box-shadow:0 0 0 2px rgba(255,243,107,.55),0 0 28px rgba(255,230,0,.65),0 12px 30px rgba(0,0,0,.55)}
+  .btn-enter:active{transform:scale(.97)}
+  .title-hint{margin:12px 0 0;font-size:12.5px;color:var(--muted);font-weight:600;line-height:1.4}
+  @media (max-height:640px){.title-tag{display:none}.title-visual{padding:10px 0 6px}.title-table{width:min(52vw,200px)}}
+  @media (prefers-reduced-motion: no-preference){.tt-kernel{animation:kernelBob 2.2s ease-in-out infinite}@keyframes kernelBob{0%,100%{transform:translate(-50%,-50%)}50%{transform:translate(-50%,-68%)}}}
+  /* Vercel copy only: keep the title screen below the 38px Hub back bar. */
+  .title-screen{top:var(--hub-bar,0px)}
 
 </style>
 </head>
 <body>
-<div class="wrap">
+  <!-- Title screen — shown first, title at the top -->
+  <div class="title-screen" id="titleScreen">
+    <div class="title-top">
+      <p class="title-kicker">✦ The Neon Magic Table ✦</p>
+      <h1 class="title-main"><span>PINBALL</span><span class="line2">MAGIC</span></h1>
+      <p class="title-tag">A glowing corn kernel, linked portals, a wizard hat, and a gravity-flipping CORN spell — all on one vibrant neon table.</p>
+    </div>
+    <div class="title-visual" aria-hidden="true">
+      <div class="title-table">
+        <div class="tt-bumper b1">★</div>
+        <div class="tt-bumper b2">★</div>
+        <div class="tt-bumper b3">★</div>
+        <div class="tt-portal p1"></div>
+        <div class="tt-portal p2"></div>
+        <div class="tt-hat">🎩</div>
+        <div class="tt-kernel"></div>
+        <div class="tt-word">M A G I C</div>
+        <div class="tt-flip l"></div>
+        <div class="tt-flip r"></div>
+      </div>
+    </div>
+    <div class="title-bottom">
+      <div class="title-feats" aria-label="Game highlights">
+        <span>🌽 3 Balls</span><span>✦ Spell M-A-G-I-C</span><span>🪙 Bonus Machine at 100k</span>
+      </div>
+      <button class="btn-enter" id="btnEnter" type="button">ENTER GAME →</button>
+      <p class="title-hint">Hold LAUNCH to charge the plunger, then flip to keep the kernel alive.</p>
+    </div>
+  </div>
+
+<div class="wrap screen-hidden" id="gameWrap">
   <!-- DMD score display + hamburger menu -->
   <div class="topbar">
     <div class="dmd" role="status" aria-label="Score display">
@@ -1285,6 +1352,26 @@ document.getElementById('btnHowClose').addEventListener('click',function(){ howM
 howModal.addEventListener('click',function(e){ if(e.target===howModal) howModal.classList.add('hidden'); });
 document.addEventListener('click',function(e){ if(!menuEl.classList.contains('hidden')&&!menuEl.contains(e.target)) closeMenu(); });
 document.addEventListener('keydown',function(e){ if(e.code==='Escape'){ closeMenu(); howModal.classList.add('hidden'); } });
+
+/* ---------- Title screen ---------- */
+var titleScreenEl=document.getElementById('titleScreen'), gameWrapEl=document.getElementById('gameWrap');
+function enterGame(){
+  if(!titleScreenEl||titleScreenEl.classList.contains('hidden')) return;
+  ac();
+  titleScreenEl.classList.add('hidden');
+  if(gameWrapEl) gameWrapEl.classList.remove('screen-hidden');
+  // Land on exactly the screen the game has always opened on —
+  // fresh table, Ball 1 ready, "hold LAUNCH to charge" prompt.
+  if(!state.started&&!state.over){
+    showBanner('PINBALL MAGIC','PRESS NEW GAME — OR JUST LAUNCH!',0);
+    setMsg('Press New Game, then hold LAUNCH to fire your first ball ✨');
+  }
+  var lb=document.getElementById('btnLaunch'); if(lb) lb.focus({preventScroll:true});
+}
+document.getElementById('btnEnter').addEventListener('click',enterGame);
+document.addEventListener('keydown',function(e){
+  if(titleScreenEl&&!titleScreenEl.classList.contains('hidden')&&e.code==='Enter'){ e.preventDefault(); enterGame(); }
+});
 
 document.getElementById('btnNudge').addEventListener('click',doNudge);
 document.getElementById('btnNew').addEventListener('click',function(){ ac(); newGame(); });
