@@ -2007,6 +2007,7 @@ var state = {
 };
 var player, enemies, obstacles, pickups, kernels, bolts, wrenches, particles, chest, boss, keys, swingT, throwCd, bowCd, goldCd, wrenchCd, bannerT, shakeT, runTime;
 var punchT = 0;   // bare-fist punch timer — 0 at rest, counts down from 0.24 while a punch is out (see doSwing / drawCornMan)
+var punchAlt = false;   // which arm throws the next punch — flips every punch, so fists alternate left, right, left, right (Michael, 2026-11-16)
 var flames = [], lanternCd = 0, burnHintT = 0, dunLit = false, litRooms = {};   // lantern fire + rooms lit this barn visit
 var eprojectiles = [], resistT = 0;
 var phase = 'field';         // field | bigboss | doorwait | door | room | blink (dungeon sub-states reuse these)
@@ -5621,7 +5622,7 @@ function doSwing(){
        reach than the sword, same honest 1 damage (see the punch hit
        box in update()). The sword arrives with his first weapon, the
        free Wooden Wrench at a Country Store (see shopBuy 'wrench'). */
-    if (!(punchT > 0)){ punchT = 0.24; sfx('punch'); }
+    if (!(punchT > 0)){ punchT = 0.24; punchAlt = !punchAlt; sfx('punch'); }
   }
 }
 function doThrow(){
@@ -6459,49 +6460,103 @@ function drawObstacle(o){
   else { R(x + 3, y + 8, 34, 28, '#8a8f96'); R(x + 8, y + 3, 20, 8, '#a7adb5'); R(x + 10, y + 18, 8, 4, '#6f757d'); }
 }
 function drawCornMan(p){
-  /* ---- Sprite sequence (Michael, 2026-11-16) ----
-     Corn Man is drawn from rectangles, so his "sprites" are four walk
-     frames built from the same pieces, sequenced by p.walkT (which
-     only advances while a move key is held):
-       frame 0: LEFT step  — left boot lifted, right arm swung forward
-       frame 1: PASSING    — both boots down, body at its highest bob
-       frame 2: RIGHT step — right boot lifted, left arm swung forward
-       frame 3: PASSING    — both boots down again, then back to 0
-     Standing still he holds the neutral frame: boots planted, arms at
-     his sides, no bob. The cape trails the step, and the whole body
-     bounces twice per cycle (once per step), like a real walk. */
+  /* ---- Movement sprites + punch (Michael, 2026-11-16, v2) ----
+     Corn Man is drawn from rectangles, so his sprites are pose sets
+     picked by the way he faces, each with its own 4-frame walk cycle
+     (walkT only advances while a move key is held):
+       DOWN  = front view (sunglasses at you)
+       UP    = back view (no sunglasses — the back of the cob, cape
+               spread across his back)
+       LEFT / RIGHT = side profile (one lens, cape trailing behind
+               him, boots striding forward/back instead of lifting)
+     Walk frames: 0 = one step, 1 = passing (both feet down, body at
+     its highest), 2 = the other step, 3 = passing. Arms swing against
+     the legs, the cape trails the step, and standing still holds the
+     neutral passing frame.
+     PUNCH: the fist always comes off a SHOULDER, out at his side —
+     never from the middle of his body — and the arms alternate:
+     one punch left, the next right (punchAlt flips in doSwing).
+     In profile the arms alternate near/far (shoulder height changes
+     and the far arm draws darker). */
   var moving = !!(keys.up || keys.down || keys.left || keys.right);
   var frame = moving ? (Math.floor(p.walkT / (Math.PI / 2)) % 4) : 1;
-  var liftL = (frame === 0) ? 3 : 0;          /* left boot lift, px */
-  var liftR = (frame === 2) ? 3 : 0;          /* right boot lift, px */
-  var armSwing = (frame === 0) ? 3 : (frame === 2) ? -3 : 0;
+  var stepA = (frame === 0), stepB = (frame === 2);
   var x = p.x, y = p.y;
-  var bob = moving ? ((frame === 1 || frame === 3) ? 1.2 : 0.2) : 0;
+  var bob = moving ? ((frame === 1 || frame === 3) ? 2 : 0) : 0;
   y -= bob;
   if (p.invuln > 0 && Math.floor(runTime * 14) % 2) ctx.globalAlpha = 0.35;
-  /* red cape — trails a step behind the body */
-  var sway = moving ? (frame === 0 ? -1.5 : frame === 2 ? 1.5 : 0) : 0;
-  R(x - 3 + sway, y + 14, 10, 20, '#d92b1f'); R(x + 25 + sway, y + 14, 10, 20, '#d92b1f');
-  /* arms — shirt sleeves with corn-yellow hands, swinging against the
-     legs (left arm forward on a right step, and the other way round) */
-  R(x + 1, y + 20 - armSwing * 0.4, 5, 8, '#f2c230'); R(x + 1, y + 27 - armSwing * 0.4, 5, 4, '#ffd91a');
-  R(x + 26, y + 20 + armSwing * 0.4, 5, 8, '#f2c230'); R(x + 26, y + 27 + armSwing * 0.4, 5, 4, '#ffd91a');
-  /* body / overalls (color follows the overalls Corn Man is wearing) */
   var ov = ['#2456c9', '#2456c9', '#aebfd0', '#e8b93a'][state.armor];
-  R(x + 6, y + 20, 20, 10, '#f2c230'); R(x + 6, y + 28, 20, 8, ov);
-  /* legs + boots — the stepping half of the sequence: a lifted boot
-     shows a leg of overalls above it, a planted boot sits on the ground */
-  if (liftL) R(x + 8, y + 32, 4, 3, ov);
-  if (liftR) R(x + 20, y + 32, 4, 3, ov);
-  R(x + 7, y + 34 - liftL, 6, 4, '#5b3a12'); R(x + 19, y + 34 - liftR, 6, 4, '#5b3a12');
-  /* corn cob head */
-  R(x + 7, y + 2, 18, 20, '#ffd91a');
-  R(x + 12, y + 2, 2, 20, '#e0aa00'); R(x + 18, y + 2, 2, 20, '#e0aa00');
-  R(x + 7, y + 7, 18, 2, '#e0aa00'); R(x + 7, y + 13, 18, 2, '#e0aa00');
-  /* husk */
-  R(x + 4, y + 16, 5, 8, '#3f8f22'); R(x + 23, y + 16, 5, 8, '#3f8f22'); R(x + 13, y - 2, 6, 5, '#58b02c');
-  /* sunglasses */
-  R(x + 6, y + 8, 20, 5, '#14181d'); R(x + 14, y + 9, 4, 3, '#3d4bff');
+  var sway = moving ? (stepA ? -2 : stepB ? 2 : 0) : 0;
+  var liftL = stepA ? 4 : 0, liftR = stepB ? 4 : 0;
+  var handL = stepA ? 3 : stepB ? -3 : 0, handR = -handL;
+
+  if (p.dir === 'up'){
+    /* ===== BACK VIEW ===== */
+    /* cape spread across the back, trailing the step */
+    R(x + 3 + sway * 0.5, y + 15, 26, 21, '#d92b1f');
+    R(x + 6 + sway * 0.5, y + 32, 20, 4, '#b01e14');
+    /* arms at his sides, swinging against the legs */
+    R(x + 0, y + 20, 5, 8, '#f2c230'); R(x + 0, y + 27 + handL, 5, 4, '#ffd91a');
+    R(x + 27, y + 20, 5, 8, '#f2c230'); R(x + 27, y + 27 + handR, 5, 4, '#ffd91a');
+    /* shoulders above the cape */
+    R(x + 6, y + 19, 20, 5, '#f2c230');
+    /* back of the corn cob head — kernel rows, NO sunglasses */
+    R(x + 7, y + 2, 18, 20, '#ffd91a');
+    R(x + 12, y + 2, 2, 20, '#e0aa00'); R(x + 18, y + 2, 2, 20, '#e0aa00');
+    R(x + 7, y + 7, 18, 2, '#e0aa00'); R(x + 7, y + 13, 18, 2, '#e0aa00');
+    /* husk wraps the back of the head, leaf up the middle */
+    R(x + 4, y + 14, 6, 10, '#3f8f22'); R(x + 22, y + 14, 6, 10, '#3f8f22'); R(x + 13, y - 2, 6, 6, '#58b02c');
+    /* boots stepping (below the cape hem) */
+    if (liftL) R(x + 8, y + 31, 4, 4, '#5b3a12');
+    if (liftR) R(x + 20, y + 31, 4, 4, '#5b3a12');
+    R(x + 7, y + 34 - liftL, 6, 4, '#5b3a12'); R(x + 19, y + 34 - liftR, 6, 4, '#5b3a12');
+  } else if (p.dir === 'left' || p.dir === 'right'){
+    /* ===== SIDE PROFILE ===== */
+    var f = (p.dir === 'right') ? 1 : -1;         /* facing: +1 right, -1 left */
+    var strideA = stepA ? 6 : stepB ? -4 : 0;     /* near boot stride, px along facing */
+    var strideB = stepB ? 6 : stepA ? -4 : 0;     /* far boot stride */
+    /* cape trailing BEHIND him (opposite the facing) */
+    R(x + (f > 0 ? 1 : 21) + sway * 0.5, y + 14, 10, 21, '#d92b1f');
+    /* far arm (darker) + far boot (darker) — the side away from us */
+    R(x + 13 - f * 2, y + 21 - handL * 0.5, 5, 8, '#d9a91f'); R(x + 13 - f * 2, y + 28 - handL * 0.5, 5, 4, '#e0aa00');
+    R(x + 13 - f * strideB, y + 35 - (stepA ? 3 : 0), 7, 4, '#4a2f0e');
+    /* body in profile — shirt over overalls, narrower than front view */
+    R(x + 9, y + 20, 14, 9, '#f2c230'); R(x + 9, y + 28, 14, 8, ov);
+    /* near arm, swinging against the near leg */
+    R(x + 13 + f * 1, y + 21, 5, 8, '#f2c230'); R(x + 13 + f * 1, y + 28 + handL * 0.5, 5, 4, '#ffd91a');
+    /* near boot striding */
+    R(x + 13 + f * strideA, y + 35 - (stepB ? 3 : 0), 7, 4, '#5b3a12');
+    /* head in profile — narrower cob, kernel line down the middle */
+    R(x + 10, y + 2, 13, 20, '#ffd91a');
+    R(x + 16, y + 2, 2, 20, '#e0aa00');
+    R(x + 10, y + 7, 13, 2, '#e0aa00'); R(x + 10, y + 13, 13, 2, '#e0aa00');
+    /* one sunglasses lens, on the facing side of the head */
+    R(x + (f > 0 ? 16 : 9), y + 8, 8, 5, '#14181d'); R(x + (f > 0 ? 19 : 12), y + 9, 3, 3, '#3d4bff');
+    /* husk at the BACK of the head + the top leaf */
+    R(x + (f > 0 ? 6 : 21), y + 15, 5, 9, '#3f8f22'); R(x + 13, y - 2, 6, 5, '#58b02c');
+  } else {
+    /* ===== FRONT VIEW (down) ===== */
+    /* red cape, trailing the step */
+    R(x - 3 + sway, y + 14, 10, 20, '#d92b1f'); R(x + 25 + sway, y + 14, 10, 20, '#d92b1f');
+    /* arms — shirt sleeves with corn-yellow hands, swinging against the legs */
+    R(x + 1, y + 20, 5, 8, '#f2c230'); R(x + 1, y + 27 + handL, 5, 4, '#ffd91a');
+    R(x + 26, y + 20, 5, 8, '#f2c230'); R(x + 26, y + 27 + handR, 5, 4, '#ffd91a');
+    /* body / overalls */
+    R(x + 6, y + 20, 20, 10, '#f2c230'); R(x + 6, y + 28, 20, 8, ov);
+    /* legs + boots — a lifted boot shows a leg of overalls above it */
+    if (liftL) R(x + 8, y + 32, 4, 4, ov);
+    if (liftR) R(x + 20, y + 32, 4, 4, ov);
+    R(x + 7, y + 34 - liftL, 6, 4, '#5b3a12'); R(x + 19, y + 34 - liftR, 6, 4, '#5b3a12');
+    /* corn cob head */
+    R(x + 7, y + 2, 18, 20, '#ffd91a');
+    R(x + 12, y + 2, 2, 20, '#e0aa00'); R(x + 18, y + 2, 2, 20, '#e0aa00');
+    R(x + 7, y + 7, 18, 2, '#e0aa00'); R(x + 7, y + 13, 18, 2, '#e0aa00');
+    /* husk */
+    R(x + 4, y + 16, 5, 8, '#3f8f22'); R(x + 23, y + 16, 5, 8, '#3f8f22'); R(x + 13, y - 2, 6, 5, '#58b02c');
+    /* sunglasses */
+    R(x + 6, y + 8, 20, 5, '#14181d'); R(x + 14, y + 9, 4, 3, '#3d4bff');
+  }
+
   /* sword while swinging (only once he carries the Corn Sword) */
   if (swingT > 0){
     ctx.save(); ctx.translate(x + 16, y + 18);
@@ -6510,23 +6565,30 @@ function drawCornMan(p){
     R(10, -3, 30, 6, '#ffd91a'); R(10, -3, 30, 2, '#fff3a0'); R(6, -6, 5, 12, '#7a4d16');
     ctx.restore();
   }
-  /* fist while punching — bare hands, before the sword: the fist
-     shoots out the way he faces and snaps back, on a straight arm */
+  /* fist while punching — off the SHOULDER of the punching arm, out
+     at his side, never from the middle of his body; arms alternate
+     left / right every punch (punchAlt, flipped in doSwing) */
   if (punchT > 0){
     var pp = (0.24 - punchT) / 0.24;                 /* 0 -> 1 over the punch */
     var ext = Math.sin(pp * Math.PI) * 15;           /* out fast, back in */
     if (p.dir === 'up'){
-      R(x + 13, y + 6 - ext, 6, 12 + ext, '#f2c230');
-      R(x + 11, y - 2 - ext, 10, 9, '#ffd91a'); R(x + 11, y - 2 - ext, 10, 2, '#e0aa00');
+      var sxu = punchAlt ? x + 26 : x + 1;           /* shoulder of the punching arm */
+      var extu = ext * 0.7;
+      R(sxu, y + 8 - extu, 5, 14 + extu, '#f2c230');
+      R(sxu - 2, y - 1 - extu, 9, 9, '#ffd91a'); R(sxu - 2, y - 1 - extu, 9, 2, '#e0aa00');
     } else if (p.dir === 'down'){
-      R(x + 13, y + 24, 6, 12 + ext, '#f2c230');
-      R(x + 11, y + 34 + ext, 10, 9, '#ffd91a'); R(x + 11, y + 41 + ext, 10, 2, '#e0aa00');
+      var sxd = punchAlt ? x + 26 : x + 1;
+      var extd = ext * 0.55;
+      R(sxd, y + 26, 5, 6 + extd, '#f2c230');
+      R(sxd - 3, y + 30 + extd, 11, 10, '#ffd91a'); R(sxd - 3, y + 38 + extd, 11, 2, '#e0aa00');
     } else if (p.dir === 'left'){
-      R(x - 4 - ext, y + 21, 12 + ext, 6, '#f2c230');
-      R(x - 13 - ext, y + 19, 10, 10, '#ffd91a'); R(x - 13 - ext, y + 19, 2, 10, '#e0aa00');
+      var ayl = punchAlt ? y + 17 : y + 23;          /* far arm rides higher, near arm lower */
+      R(x + 2 - ext, ayl, 10 + ext, 5, punchAlt ? '#d9a91f' : '#f2c230');
+      R(x - 7 - ext, ayl - 2, 9, 9, '#ffd91a'); R(x - 7 - ext, ayl - 2, 2, 9, '#e0aa00');
     } else {
-      R(x + 24, y + 21, 12 + ext, 6, '#f2c230');
-      R(x + 35 + ext, y + 19, 10, 10, '#ffd91a'); R(x + 43 + ext, y + 19, 2, 10, '#e0aa00');
+      var ayr = punchAlt ? y + 17 : y + 23;
+      R(x + 20, ayr, 10 + ext, 5, punchAlt ? '#d9a91f' : '#f2c230');
+      R(x + 30 + ext, ayr - 2, 9, 9, '#ffd91a'); R(x + 37 + ext, ayr - 2, 2, 9, '#e0aa00');
     }
   }
   ctx.globalAlpha = 1;
