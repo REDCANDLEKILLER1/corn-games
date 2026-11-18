@@ -892,6 +892,11 @@
   #pauseBtn{ background:#ffb03a; color:#3a2400; white-space:nowrap; }
   #pauseBtn.paused{ background:#37c978; color:#08300f; }
   body:not([data-screen="play"]) #pauseBtn{ display:none !important; }
+  /* The whole top bar — hearts, chips, MAP / sound / menu — belongs
+     to the game screen only (Michael, 2026-11-18): before the game
+     starts, and on every menu screen, it is clutter over the art.
+     The hearts and gear live in the pause Pack too. */
+  body:not([data-screen="play"]) header{ display:none !important; }
   @media (max-width:560px){ #pauseBtn{ padding:6px 7px; } }
   #pauseScreen{ background:#000b; z-index:28; }
   #pauseScreen .pause-note{ font-size:13px; font-weight:800; color:var(--ink-dim); }
@@ -929,7 +934,7 @@
   #worldMapScreen.show{ display:flex; flex-direction:column; }
   #worldMapScreen h2{ flex:0 0 auto; font-family:"Press Start 2P",monospace; font-size:clamp(12px,2.8vw,17px); color:#ffe95e; margin:2px 0 2px; text-shadow:3px 3px 0 #0007; }
   #worldMapScreen .hint{ flex:0 1 auto; min-height:0; font-size:12px; color:#d8e6c3; margin:0 auto 4px; font-weight:800; max-width:760px; line-height:1.35; }
-  #farmGrid{ flex:0 1 auto; aspect-ratio:2/1; max-height:54vh; min-height:0; position:relative; overflow:hidden; width:min(940px,100%); margin:0 auto; border-radius:10px; background:#16280f; touch-action:none; box-shadow:inset 0 0 0 2px #0a1c0b; }
+  #farmGrid{ flex:0 1 auto; aspect-ratio:2/1; max-height:68vh; min-height:0; position:relative; overflow:hidden; width:min(940px,100%); margin:0 auto; border-radius:10px; background:#16280f; touch-action:none; box-shadow:inset 0 0 0 2px #0a1c0b; }
   #farmMapCanvas{ position:absolute; left:0; top:0; transform-origin:0 0; border-radius:6px; }
   .map-zoom-bar{ position:absolute; right:8px; bottom:8px; display:flex; gap:6px; z-index:3; }
   .map-zoom-bar button{ width:40px; height:40px; border-radius:50%; border:2px solid #0a1c0b; background:#fffbe8e6; color:#21360f; font-size:20px; font-weight:900; line-height:1; cursor:pointer; box-shadow:0 2px 6px #0008; }
@@ -1581,7 +1586,6 @@
     <div class="overlay" id="worldMapScreen">
       <div class="map-close-bar"><button class="big-btn green" id="worldMapCloseBtn">✔ CLOSE MAP — KEEP EXPLORING</button></div>
       <h2 id="worldMapTitle">🗺️ FARM MAP</h2>
-      <p class="hint" id="worldMapHint">The whole farm, laid out just like you walk it — north is up. <b>128 fields in a grid, 16 across × 8 down</b>, like the original Zelda. Every barn is marked from the start: <b>L1–L8</b> hold the 8 barn pieces, the <b>Great Barn (L9)</b> opens once you have all 8. <b>Tap any field to see its name below.</b></p>
       <div id="farmGrid" role="img" aria-label="A drawn map of the farm: fields you have walked are charted, fields you have not are lost in fog. Pinch or scroll to zoom, drag to look around, tap a charted field to read about it.">
         <canvas id="farmMapCanvas" width="1600" height="800"></canvas>
         <div class="map-zoom-bar">
@@ -1591,7 +1595,6 @@
         </div>
       </div>
       <p id="farmMapDetail"></p>
-      <p class="legend" id="farmMapLegend"></p>
     </div>
 
     <!-- LEVEL MAP — the rooms of the barn Corn Man is standing in.
@@ -3236,6 +3239,22 @@ function drawFarmMap(cv, withLabels){
     }
     mc.restore();
     /* ---- structures, drawn as structures ---- */
+    /* the north road + Corn Village's houses, drawn on the map
+       (Michael, 2026-11-18) — so the charted map reads like the farm
+       itself: a dirt road running up the middle to the grove, and a
+       real little village where the houses stand */
+    var mcc = i % OW_COLS, mrr = Math.floor(i / OW_COLS);
+    if (state.world === 1 && mcc === 7 && mrr >= 2 && mrr <= 6){
+      mc.fillStyle = '#b99a5e'; mc.fillRect(cx + 42, cy, 16, CH);
+      if (i === OW_MIDDLE) mc.fillRect(cx, cy + 42, CW, 16);
+      mc.fillStyle = 'rgba(120,90,40,0.45)'; mc.fillRect(cx + 49, cy, 2, CH);
+    }
+    if (state.world === 1 && i === OW_MIDDLE){
+      [[8, 8], [64, 8], [8, 62], [64, 62]].forEach(function(hp2){
+        mc.fillStyle = '#e8dcc0'; mc.fillRect(cx + hp2[0], cy + hp2[1] + 9, 26, 15);
+        mc.fillStyle = '#7c1a12'; mc.beginPath(); mc.moveTo(cx + hp2[0] - 3, cy + hp2[1] + 10); mc.lineTo(cx + hp2[0] + 29, cy + hp2[1] + 10); mc.lineTo(cx + hp2[0] + 13, cy + hp2[1]); mc.closePath(); mc.fill();
+      });
+    }
     if (healPondFor(i)){ mc.fillStyle = '#2f7fc4'; mc.beginPath(); mc.ellipse(cx + 20, cy + 82, 15, 9, 0, 0, Math.PI * 2); mc.fill(); mc.fillStyle = '#7cc0ee'; mc.beginPath(); mc.ellipse(cx + 17, cy + 79, 7, 3, 0, 0, Math.PI * 2); mc.fill(); }
     if (i === OW_L4){ mc.fillStyle = '#2f7fc4'; mc.beginPath(); mc.ellipse(cx + 50, cy + 50, 32, 23, 0, 0, Math.PI * 2); mc.fill(); mc.fillStyle = S.ground; mc.beginPath(); mc.ellipse(cx + 50, cy + 50, 17, 12, 0, 0, Math.PI * 2); mc.fill(); }
     if (i === OW_L3){ mc.fillStyle = 'rgba(30,80,20,0.55)'; for (var mz = 0; mz < 4; mz++) mc.fillRect(cx + 12 + mz * 22, cy + 6, 9, 88); }
@@ -3353,12 +3372,6 @@ function renderWorldMap(){
   var sub = document.getElementById('subMapCanvas');
   if (sub) drawFarmMap(sub, false);
   document.getElementById('farmMapDetail').textContent = farmCellDetail(heroOwIndex());
-  document.getElementById('farmMapLegend').textContent = warpMode
-    ? '⭐ CHEAT WARP: tap any field ONCE to select it (it glows orange), then tap the SAME field again to warp straight there. Tap the red ✖ CLOSE button at the top to cancel the warp.'
-    : (state.world === 2 ? '⭐ WORLD 2: the switched-around farm! Same fields, new layout — barns, secrets and even Home Farm moved. Your World 1 map knowledge will betray you here. ' : '') +
-      'Barn pieces: ' + state.pieces.filter(Boolean).length + ' / 8' +
-      (state.world === 1 && piecesGot() >= 8 ? ' — the Great Barn stands open in the far north! ⭐' : '') +
-      ' 💖 = a special hay bale hides a Super Heart — burn it with the Lantern. 🪙 = a shed or little barn hides coins — burn it too. 🪜 = a ladder hides on this field. 💧 = a healing pond. 🌫️ Fog = a field you have not walked yet: its name, barn and secrets stay hidden until Corn Man stands on it. Pinch or scroll to zoom, drag to look around, tap a charted field to read about it — the note gives compass directions from where you stand. Lost? Farmers out on the fields know every road: walk up and talk to them. The map shows where to go — you still walk there yourself. No shortcuts!';
   updateHUD();
 }
 
@@ -3419,9 +3432,6 @@ function openWorldMap(){
      in case the cheat warp map was up before. */
   warpMode = false; warpSel = -1; farmTapCell = -1; farmTapCount = 0;
   document.getElementById('worldMapTitle').textContent = state.world === 2 ? '🗺️ FARM MAP — WORLD 2' : '🗺️ FARM MAP';
-  document.getElementById('worldMapHint').innerHTML = state.world === 2
-    ? 'This is <b>World 2 — the switched-around farm!</b> The same 128 fields in a <b>new layout</b>: the barns, the secrets and even Home Farm moved. The map only shows what you have walked <b>here</b> — fields you have not stood on in World 2 are lost in fog, same as before. <b>Pinch or scroll to zoom, drag to look around, tap a charted field to read about it.</b> Farmers on the fields know the roads here too.'
-    : 'The whole farm, drawn the way you walk it — north is up, <b>128 fields in a grid, 16 across × 8 down</b>, like the original Zelda. But a map is only as good as the walking behind it: <b>fields you have not stood on yet are lost in fog</b> — their names, barns and secrets stay hidden until you chart them yourself. <b>Pinch or scroll to zoom in, drag to look around, tap a charted field to read about it</b> — the note below gives compass directions from where you stand. Lost? <b>Farmers out on the fields know every road</b> — walk up and talk to them.';
   document.getElementById('worldMapCloseBtn').textContent = '✔ CLOSE MAP — KEEP EXPLORING';
   showOverlay('worldMapScreen'); mapFitView(); renderWorldMap(); updateHUD();
   dlog('Farm Map opened — all 9 level locations shown. Hero on screen ' + heroOwIndex() + '.');
@@ -3877,7 +3887,7 @@ function openWarpMap(){
   document.getElementById('stageWrap').classList.add('tall');
   document.getElementById('bossBar').classList.remove('show');
   document.getElementById('worldMapTitle').textContent = '🗺️ FARM MAP — ⭐ PICK WHERE YOU START ⭐';
-  document.getElementById('worldMapHint').innerHTML = '<b>⭐ CHEAT WARP + ALL ITEMS! ⭐</b> Farmer picked, game started — <b>now pick the field Corn Man starts on!</b> Tap any field to <b>pick it</b> — it glows orange — then tap it <b>again</b> and he pops out right there instead of the Home Farm, carrying <b>ALL the gear</b>: Bow 🏹, Arrows, Gold Arrows ✨, Overalls 👕, Oil Can 🛢️, Wooden Wrench 🔧 and the Lantern 🔦, with hearts full! All 128 fields are here, with the barns (L1–L9) marked.';
+  document.getElementById('farmMapDetail').textContent = '⭐ CHEAT WARP: tap a field to pick it — tap it again and Corn Man pops out there with ALL the gear.';
   document.getElementById('worldMapCloseBtn').textContent = '✖ NO WARP — START AT HOME FARM';
   showOverlay('worldMapScreen'); mapFitView(); renderWorldMap(); updateHUD();
   document.getElementById('farmMapDetail').textContent = '⭐ PICK YOUR STARTING FIELD! ⭐ Tap any field to pick it, tap it again to start there — ALL ITEMS in hand! ⭐';
@@ -4317,6 +4327,18 @@ function loadOwScreen(){
   var avoid = [{ x: W/2, y: 40, r: 90 }, { x: W/2, y: H - 60, r: 90 }, { x: 40, y: H/2, r: 90 }, { x: W - 60, y: H/2, r: 90 }];
   if (idx === OW_HOME){                                      /* HOME FARM — a clear field (Michael, 2026-11-17): no store, no farmer standing on it. And no wrench lying in the grass (2026-11-18): it waits in the Pedestal Grove, four fields north — Corn Man fights his way there with his fists, through the morning fog. */
     scatterObstacles(R, 'hay', 4, avoid);
+    /* ELI — the greeter (Michael, 2026-11-18: "put a person in the
+       beginning... you gotta be led"). He stands by the spawn with a
+       real conversation: the wrench, the road, the barns, in order. */
+    owFeatures.push({ kind:'npc', id:'eli', name:'ELI', x: 424, y: 296, w: 36, h: 40, pages: [
+      'Well now — look who is awake. I am Eli. I keep an eye on the home place while you are out saving it.',
+      'First thing, and hear me plain: you cannot rebuild this farm with bare fists. Your WOODEN WRENCH waits north of here, thrust into the old pedestal stone in the grove — four fields up the road.',
+      'The road is easy to keep: follow the wooden SIGNS and go NORTH at every one. Two fields up is Corn Village — Pearl, Hank, Fern, and Ruth at the inn will all help you. Two fields more and you are standing in the grove.',
+      'Pull the wrench from that stone and everything changes: the red button swings it, and holding the button down charges up a spin. Then it is the BARNS, one by one — the first stands EAST of here, on this very row: Sunny Field. The Lantern inside it lights the dark and burns the special bales.',
+      'Lost later on? Open your MAP, and ask anybody you meet — folks out on the fields know every road on this farm. Now go on. The farm is waiting on you.'
+    ] });
+    owFeatures.push({ kind:'sign', arrow:'⬆', x: 322, y: 62, w: 44, h: 40, pages: ['🪧 THE NORTH ROAD — Corn Village is 2 fields NORTH. The Pedestal Grove is 4 fields NORTH, and your wrench waits in the grove stone. Follow the signs, and keep going north.'] });
+    owFeatures.push({ kind:'sign', arrow:'➡', x: 682, y: 258, w: 44, h: 40, pages: ['🪧 EAST — Sunny Field, and the FIRST BARN (Level 1). The Lantern inside lights the dark rooms, and its flame burns the special hay bales and the little sheds.'] });
   } else if (idx === OW_L1){                                 /* Level 1 — visible barn, far end of the field */
     owFeatures.push({ kind:'dungeon', idx: dunIdxForField(0), style:'barn', x: 592, y: 158, w: 52, h: 30, bx: 520, by: 52, bw: 176, bh: 116 });
     scatterObstacles(R, 'hay', 6, avoid.concat([{ x: 600, y: 110, r: 150 }]));
@@ -4389,6 +4411,7 @@ function loadOwScreen(){
     /* the well in the square, and the village directions farmer */
     obstacles.push({ x: 420, y: 330, w: 34, h: 30, type:'well' });
     owFeatures.push({ kind:'npc', x: 300, y: 268, w: 36, h: 40, hint:'🧑‍🌾 OLD FARMER: “Welcome to Corn Village, son. Folks live here — walk up to any door and you are inside; Pearl, Hank and Fern all take visitors, and they love to talk — and Ruth keeps the Hayloft Inn, where a bed mends every hurt by morning. West along this row is the corn maze. Far north-west, the graveyard. Two fields north stands the Pedestal Grove, where a wrench waits in the stone. And going UP four times climbs the Lost Hills, north-east, on the way to the Owl Roost…”' });
+    owFeatures.push({ kind:'sign', arrow:'⬆', x: 466, y: 288, w: 44, h: 40, pages: ['🪧 CORN VILLAGE — Pearl’s Cottage north-west, Hank’s Forge north-east, Fern’s Farmhouse south, Ruth’s Hayloft Inn south-west: a bed at the inn mends every hurt by morning. NORTH 2 fields: the Pedestal Grove — pull the wrench from the stone! SOUTH 2 fields: Home Farm.'] });
     var rock = { x: 620, y: 470, w: 40, h: 40, type:'rock', secretId:'cache' };
     obstacles.push(rock);
     owSecrets.push({ id:'cache', x: 612, y: 462, w: 56, h: 56 });
@@ -4424,13 +4447,17 @@ function loadOwScreen(){
     /* Direction-givers (Michael, 2026-11-18): farmers at the crossroads
        fields TALK — compass points, field counts, landmarks — so
        nobody has to wander the farm and hope. */
+    if (idx === owIdx(7, 5)) owFeatures.push({ kind:'sign', arrow:'⬆', x: 296, y: 62, w: 44, h: 40, pages: ['🪧 NORTH 1 field: Corn Village. NORTH 3 fields: the Pedestal Grove, where your wrench waits in the stone. SOUTH 1 field: Home Farm.'] });
     if (idx === owIdx(7, 5)) owFeatures.push({ kind:'npc', x: 366, y: 268, w: 36, h: 40, hint:'🧑‍🌾 OLD FARMER: “Morning, son. NORTH one field is Corn Village; two more past it stands the Pedestal Grove, where your wrench waits in the stone. SOUTH is home. EAST along the bottom fields you will find the Sunny East Field and the first barn.”' });
     if (idx === owIdx(9, 6)) owFeatures.push({ kind:'npc', x: 366, y: 268, w: 36, h: 40, hint:'🧑‍🌾 OLD FARMER: “Nearly there, traveler. One field EAST is the Sunny East Field — the first barn stands on it. WEST along this row takes you home. The Great Barn sits far NORTH, clean at the top of the farm.”' });
     if (idx === owIdx(5, 6)) owFeatures.push({ kind:'npc', x: 366, y: 268, w: 36, h: 40, hint:'👵 OLD FARMER: “Westward bound, dearie? Four fields WEST is the West Meadow — mind the lone hay bale there, it is not what it seems. Corn Village is two EAST and two NORTH of here, and the old farmer there knows every road on this farm.”' });
     scatterObstacles(R, S.ob, 5, avoid);
+  } else if (idx === owIdx(7, 3)){
+    owFeatures.push({ kind:'sign', arrow:'⬆', x: 322, y: 62, w: 44, h: 40, pages: ['🪧 NORTH 1 field: the Pedestal Grove — step up to the stone and pull the wrench free. SOUTH 1 field: Corn Village.'] });
   } else if (idx === OW_GROVE){                              /* THE PEDESTAL GROVE — the Wooden Wrench waits thrust into the old stone (Michael, 2026-11-18, modeled on Zelda: the sword has a PLACE, and you earn the walk to it — fists only, four fields north). The stone is a real obstacle; the apron in front of it is the trigger (see the pedestal branch in the feature loop). */
     obstacles.push({ x: W/2 - 26, y: 222, w: 52, h: 36, type:'rock' });
     owFeatures.push({ kind:'pedestal', x: W/2 - 34, y: 226, w: 68, h: 34 });
+    owFeatures.push({ kind:'sign', arrow:'⬆', x: 322, y: 462, w: 44, h: 40, pages: ['🪧 THE PEDESTAL GROVE — the wrench is in the stone at the top of this field. Step up to the stone and pull it free. After that, the BARNS: the first stands far EAST, on Home Farm’s own row.'] });
     scatterObstacles(R, 'tree', 7, avoid.concat([{ x: W/2, y: 250, r: 175 }]));
   } else {
     scatterObstacles(R, S.ob, 6, avoid);
@@ -5606,7 +5633,10 @@ function owUpdate(dt){
       var f = owFeatures[fi];
       if (!rectsOverlap(pb, f)) continue;
       if (f.kind === 'npc'){
-        if (npcCd <= 0){ showBanner(f.hint, 5000); npcCd = 5; sfx('corn'); }
+        if (f.pages){ if (npcCd <= 0 && !houseTalk && !intro) startHouseTalk(f); }
+        else if (npcCd <= 0){ showBanner(f.hint, 5000); npcCd = 5; sfx('corn'); }
+      } else if (f.kind === 'sign'){
+        if (npcCd <= 0 && !houseTalk && !intro) startHouseTalk(f);
       } else if (f.kind === 'pedestal'){
         if (state.wrench < 1 && !intro){ startIntro('wrench'); interactCd = 1.5; }
       } else if (f.kind === 'shop'){
@@ -8257,9 +8287,21 @@ function drawOwFeatures(){
     ctx.textAlign = 'center';
     if (f.kind === 'npc'){
       /* a drawn farmer now, not an emoji (Michael, 2026-11-18) */
-      drawVillager(f.x + 3, f.y, Math.abs(f.x * 7 + f.y) % 4, null, false);
+      drawVillager(f.x + 3, f.y, Math.abs(f.x * 7 + f.y) % 4, f.name || null, false);
       ctx.font = '13px serif';
       ctx.fillText('💬', f.x + f.w / 2 + 16, f.y + 2 + Math.sin(runTime * 5) * 2);
+      return;
+    }
+    if (f.kind === 'sign'){
+      /* a wooden road sign (Michael, 2026-11-18: "put signs up") —
+         a post, a plank, and the arrow burned into it; the words
+         come up in the chat bubble when you step up to read it */
+      ctx.fillStyle = 'rgba(0,0,0,0.18)'; ctx.beginPath(); ctx.ellipse(f.x + f.w / 2, f.y + f.h - 2, 17, 4, 0, 0, Math.PI * 2); ctx.fill();
+      R(f.x + f.w / 2 - 3, f.y + 13, 6, f.h - 13, '#6d4520');
+      R(f.x, f.y, f.w, 21, '#a4713a');
+      R(f.x + 3, f.y + 3, f.w - 6, 2, '#c08d4e');
+      ctx.strokeStyle = '#5d3a17'; ctx.lineWidth = 2; ctx.strokeRect(f.x + 1, f.y + 1, f.w - 2, 19);
+      ctx.fillStyle = '#2e1c05'; ctx.font = '15px serif'; ctx.fillText(f.arrow || '🪧', f.x + f.w / 2, f.y + 16);
       return;
     }
     if (f.kind === 'path'){
