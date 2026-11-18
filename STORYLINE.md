@@ -77,6 +77,13 @@ level, forever. Everything else on the farm is tougher than a chicken.
 - **Nobody wanders and hopes**: farmers stand on the crossroads fields and TALK — compass points, field counts, landmarks — on top of the Middle Field farmer who already knew every road.
 - **PAUSE is the Pack** (the Zelda subscreen): the charted map, an inventory grid of everything he carries, the eight Great Barn pieces and his hearts — and **equip**: take the wrench off and the red button punches again; put it on and it swings; choose whether THROW throws kernels, bow arrows or gold arrows. The music keeps playing while the Pack is open, like the original.
 
+## Corn Village & the houses (v8, Michael 2026-11-18)
+
+- **Middle Field is Corn Village now**: dirt paths, a well in the square, and three full-size houses — Grandma Pearl's Cottage, Hank's Forge, Fern's Farmhouse — each with a door you walk through into a furnished room.
+- **People live here**: Pearl and her granddaughter June, Blacksmith Hank, and Fern. They are drawn characters with names, and walking up to them opens a chat-bubble conversation. Pearl tells the storm story and gives corn for the road; Hank teaches the wrench lore (silver at five hearts, gold at ten, the spin) and gives tractor oil; June knows four secrets; Fern tells the wedding legend of the Great Barn.
+- **Every talking farmer on the farm is a drawn character now** — the emoji stand-ins are gone.
+- **The Level 4 hut is a full-size cottage** on its pond island. No more person-sized buildings.
+
 ## The dialogue script (as shipped in the game)
 Zelda rules: short lines, plain words, one idea per page, tap NEXT to read
 on. The full text lives in the game file as `INTRO_TEXT` — opening, one
