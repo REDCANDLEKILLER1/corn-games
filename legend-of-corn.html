@@ -901,8 +901,28 @@
   #pauseScreen{ background:#000b; z-index:28; }
   #pauseScreen .pause-note{ font-size:13px; font-weight:800; color:var(--ink-dim); }
   #pauseScreen .sub-sheet{ max-width:720px; width:min(720px,94vw); max-height:92vh; overflow-y:auto; text-align:left; }
-  .sub-panel{ background:#101408; border:3px solid #7c5a24; border-radius:10px; padding:8px; margin:10px 0; }
+  .sub-panel{ background:#101408; border:3px solid #37c978; border-radius:10px; padding:8px; margin:0; }
   .sub-panel-title{ font-family:"Press Start 2P",monospace; font-size:10px; color:#ffe95e; margin:2px 2px 8px; line-height:1.6; }
+  /* The Zelda subscreen layout (v16, Michael 2026-11-18): ITEM and
+     DO stacked on the left; IN HIS HANDS, the BARN PIECES (our
+     crystals) and EQUIPMENT down the right — like his screenshot. */
+  .sub-layout{ display:grid; grid-template-columns:1fr 216px; gap:10px; align-items:start; margin:10px 0; }
+  .sub-col-main, .sub-col-side{ display:flex; flex-direction:column; gap:10px; min-width:0; }
+  @media (max-width:560px){ .sub-layout{ grid-template-columns:1fr 158px; gap:7px; } .sub-col-main, .sub-col-side{ gap:7px; } }
+  .sub-crystals{ display:grid; grid-template-columns:repeat(4, 1fr); gap:9px; padding:6px 4px 2px; }
+  .sub-gem{ aspect-ratio:1/1; transform:rotate(45deg); border:2px solid #37c978; background:#141c0c; border-radius:4px; display:flex; align-items:center; justify-content:center; }
+  .sub-gem span{ transform:rotate(-45deg); font-family:"Press Start 2P",monospace; font-size:9px; color:#5d7050; }
+  .sub-gem.got{ background:linear-gradient(135deg, #ffe95e, #e8a93a); border-color:#fff2b0; box-shadow:0 0 8px #ffe95e88; }
+  .sub-gem.got span{ color:#5d3405; }
+  .sub-crystal-count{ grid-column:1 / -1; text-align:center; font-weight:800; font-size:12px; color:#d8e6c3; }
+  .sub-do div{ display:flex; justify-content:space-between; gap:8px; padding:2.5px 2px; font-size:12.5px; font-weight:800; color:#eef5e0; }
+  .sub-do .dim{ opacity:0.35; }
+  .sub-do-verb{ font-family:"Press Start 2P",monospace; font-size:8.5px; color:#ffe95e; line-height:1.9; white-space:nowrap; }
+  .sub-detail-row{ display:flex; gap:9px; align-items:center; padding:3px 2px; font-family:"Press Start 2P",monospace; font-size:10px; color:#fffbe8; line-height:1.7; }
+  .sub-detail-row small{ font-family:inherit; font-size:8px; color:#a9bd94; }
+  .sub-detail-ic{ font-size:27px; line-height:1; }
+  .sub-equip div{ display:flex; gap:9px; align-items:center; padding:2.5px 2px; font-size:12.5px; font-weight:800; color:#eef5e0; }
+  .sub-equip div span:first-child{ font-size:17px; width:24px; text-align:center; }
   #subMapCanvas{ width:100%; height:auto; display:block; border-radius:6px; }
   .sub-panel .big-btn{ width:100%; margin-top:8px; }
   .sub-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
@@ -1645,25 +1665,36 @@
     <div class="overlay" id="pauseScreen" role="alertdialog" aria-modal="true" aria-labelledby="pauseTitle">
       <div class="col"><div class="sheet sub-sheet">
         <h2 id="pauseTitle">⏸️ PAUSED — CORN MAN'S PACK</h2>
-        <p class="pause-note">The farm holds still — but the music plays on. This is your pack: the map as far as you've charted it, everything you carry, and what's in his hands.</p>
-        <div class="sub-panel">
-          <div class="sub-panel-title">🗺️ THE FARM — AS FAR AS YOU'VE WALKED IT</div>
-          <canvas id="subMapCanvas" width="1600" height="800"></canvas>
-          <button class="big-btn green" id="subFullMapBtn" type="button">🔍 OPEN THE FULL MAP — ZOOM &amp; EXPLORE</button>
-        </div>
-        <div class="sub-panel">
-          <div class="sub-panel-title">🎒 WEAPONS &amp; TOOLS — TAP TO EQUIP</div>
-          <div class="sub-grid" id="subGear"></div>
-          <p class="pause-note" id="subEquipNote"></p>
-        </div>
-        <div class="sub-panel">
-          <div class="sub-panel-title">🧩 THE GREAT BARN — PIECES &amp; HEARTS</div>
-          <div class="sub-grid" id="subPieces"></div>
+        <div class="sub-layout">
+          <div class="sub-col-main">
+            <div class="sub-panel">
+              <div class="sub-panel-title">ITEM — TAP TO EQUIP</div>
+              <div class="sub-grid" id="subGear"></div>
+            </div>
+            <div class="sub-panel">
+              <div class="sub-panel-title">DO</div>
+              <div class="sub-do" id="subDo"></div>
+            </div>
+          </div>
+          <div class="sub-col-side">
+            <div class="sub-panel">
+              <div class="sub-panel-title">IN HIS HANDS</div>
+              <div class="sub-detail" id="subDetail"></div>
+            </div>
+            <div class="sub-panel">
+              <div class="sub-panel-title">BARN PIECES</div>
+              <div class="sub-crystals" id="subPieces"></div>
+            </div>
+            <div class="sub-panel">
+              <div class="sub-panel-title">EQUIPMENT</div>
+              <div class="sub-equip" id="subEquip"></div>
+            </div>
+          </div>
         </div>
         <div class="btn-row">
           <button class="big-btn green" id="pauseResumeBtn" type="button">▶ RESUME GAME</button>
+          <button class="big-btn" id="subFullMapBtn" type="button">🗺️ FULL MAP</button>
         </div>
-        <p class="pause-note">You can also press <b>P</b> or <b>Esc</b> to pause and resume.</p>
       </div></div>
     </div>
 
@@ -3406,19 +3437,48 @@ function renderSubscreen(){
   g += state.armor > 0 ? subSlot('🛡️', 'ARMOR<br>softens the knocks', {}) : subSlot('🛡️', 'ARMOR<br>not found yet', { locked: true });
   g += subSlot('🌽', 'KERNELS ARE<br>endless in his pouch', {});
   gear.innerHTML = g;
-  var note = document.getElementById('subEquipNote');
-  if (note) note.innerHTML = 'Red button: <b>' + (armed ? WRENCH_NAME[state.wrench] + ' SWING' : 'BARE FIST PUNCH') + '</b> · Throw button: <b>' + (state.equipThrow === 'bow' ? 'BOW &amp; ARROWS' : state.equipThrow === 'gold' ? 'GOLD ARROWS' : 'CORN KERNELS') + '</b>. Tap the fist or the wrench to take the wrench off or put it on; tap a throw item to load the THROW button.';
+  /* IN HIS HANDS — the reference's selected-item box: what the red
+     button and the throw button will actually do right now */
+  var throwIc = state.equipThrow === 'bow' ? '🏹' : state.equipThrow === 'gold' ? '✨🏹' : '🌽';
+  var throwName = state.equipThrow === 'bow' ? 'BOW &amp; ARROWS' : state.equipThrow === 'gold' ? 'GOLD ARROWS' : 'CORN KERNELS';
+  var det = document.getElementById('subDetail');
+  if (det) det.innerHTML =
+    '<div class="sub-detail-row"><span class="sub-detail-ic">' + (armed ? '🔧' : '👊') + '</span><span>' + (armed ? WRENCH_NAME[state.wrench] : 'BARE FIST') + '<br><small>' + (armed ? WRENCH_SWING[state.wrench] : 1) + ' DMG · RED BUTTON</small></span></div>' +
+    '<div class="sub-detail-row"><span class="sub-detail-ic">' + throwIc + '</span><span>' + throwName + '<br><small>THROW BUTTON</small></span></div>';
+  /* DO — everything Corn Man can do, greyed until he can do it */
+  var doEl = document.getElementById('subDo');
+  if (doEl){
+    var doRow = function(verb, how, can){ return '<div class="' + (can ? '' : 'dim') + '"><span class="sub-do-verb">' + verb + '</span><span>' + how + '</span></div>'; };
+    doEl.innerHTML =
+      doRow('TALK', 'step up to folks', true) +
+      doRow('READ', 'step up to signs', true) +
+      doRow('PULL', 'the grove stone', true) +
+      doRow('PUSH', 'stones &amp; bales', true) +
+      doRow(armed ? 'SWING' : 'PUNCH', 'red button', true) +
+      doRow('SPIN', 'hold the red button', armed) +
+      doRow('THROW', 'green button', true) +
+      doRow('BURN', 'lantern flame', !!state.hasLantern) +
+      doRow('CROSS WATER', 'the small ladder', !!state.hasLadder);
+  }
+  /* EQUIPMENT — what he wears and carries into a fight, hearts too */
+  var eq = document.getElementById('subEquip');
+  if (eq) eq.innerHTML =
+    '<div><span>' + (armed ? '🔧' : '👊') + '</span><span>' + (armed ? WRENCH_NAME[state.wrench] : 'BARE FIST') + '</span></div>' +
+    '<div><span>' + throwIc + '</span><span>' + (state.equipThrow === 'bow' ? 'BOW' : state.equipThrow === 'gold' ? 'GOLD ARROWS' : 'KERNELS') + '</span></div>' +
+    '<div><span>🛡️</span><span>' + (state.armor > 0 ? 'ARMOR' : 'NO ARMOR YET') + '</span></div>' +
+    '<div><span>❤️</span><span>' + (state.hp / 2) + ' / ' + (state.maxHp / 2) + ' HEARTS</span></div>' +
+    '<div><span>💖</span><span>' + Object.keys(state.superHearts || {}).filter(function(k){ return state.superHearts[k]; }).length + ' SUPER HEARTS</span></div>';
+  /* THE BARN PIECES — our crystals (Michael, 2026-11-18): eight
+     diamond slots that fill gold as the pieces come home; all
+     eight and the Great Barn opens, same as Zelda's crystals */
   var pc = document.getElementById('subPieces');
   if (pc){
     var p = '';
     for (var pi = 0; pi < 8; pi++)
-      p += subSlot('🧩', 'PIECE ' + (pi + 1) + '<br>' + LEVELS[pi].name, state.pieces[pi] ? { tag: 'GOT IT' } : { locked: true });
-    p += subSlot('❤️', 'HEARTS<br>' + (state.hp / 2) + ' of ' + (state.maxHp / 2), {});
-    p += subSlot('💖', 'SUPER HEARTS<br>×' + Object.keys(state.superHearts || {}).filter(function(k){ return state.superHearts[k]; }).length + ' found', {});
+      p += '<div class="sub-gem' + (state.pieces[pi] ? ' got' : '') + '" title="' + LEVELS[pi].name + '"><span>' + (pi + 1) + '</span></div>';
+    p += '<div class="sub-crystal-count">' + piecesGot() + ' / 8' + (piecesGot() >= 8 ? ' — THE GREAT BARN STANDS OPEN!' : ' — the Great Barn opens at 8') + '</div>';
     pc.innerHTML = p;
   }
-  var sub = document.getElementById('subMapCanvas');
-  if (sub) drawFarmMap(sub, false);
 }
 
 function openWorldMap(){
