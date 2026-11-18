@@ -2162,7 +2162,7 @@ var state = {
   wrench:0,                  // 0 none · 1 wooden · 2 silver · 3 golden
   armor:0,                   // 0 none · 1 overalls · 2 silver overalls · 3 gold overalls
   maxHp:6, hp:6,             // 3 hearts to start; +1 heart per level beaten
-  hasLantern:false,          // shop lantern (150 coin) — lights dark barn rooms
+  hasLantern:false, hasPouch:false,          // shop lantern (150 coin) — lights dark barn rooms
   keys:0,                    // rusty keys — 1 opens 1 padlocked door, in any barn
   found:{},                  // secrets/entrances discovered: maze, hay, tomb
   burned:{},                 // designated hay bales burned with the lantern: burn1..burn5
@@ -2187,7 +2187,7 @@ var punchT = 0;   // bare-fist punch timer — 0 at rest, counts down from 0.24 
 var spinT = 0, spinHitDone = false;   // Zelda-style spin attack: counts down from 0.45 while he whirls; the all-around hit lands once, early in the spin
 var attackHeld = false, attackHoldT = 0, chargeReady = false, chargeFxT = 0;   // hold-to-charge: hold the attack button 0.8s with the sword and he raises it, charged — release to spin
 var punchAlt = false;   // which arm throws the next punch — flips every punch, so fists alternate left, right, left, right (Michael, 2026-11-16)
-var flames = [], lanternCd = 0, burnHintT = 0, dunLit = false, litRooms = {};   // lantern fire + rooms lit this barn visit
+var flames = [], lanternCd = 0, burnHintT = 0, punchHintT = 0, dunLit = false, litRooms = {};   // lantern fire + rooms lit this barn visit
 var eprojectiles = [], resistT = 0;
 var phase = 'field';         // field | bigboss | doorwait | door | room | blink (dungeon sub-states reuse these)
 var bigRef = null, door = null, roomItems = [], blinkT = 0, shopReturn = 'map';
@@ -2265,7 +2265,7 @@ function resetRun(){
   state.day = 1;
   state.equipMelee = 'wrench'; state.equipThrow = 'kernel';   /* the Pack starts empty-handed too (map knowledge stays — like visitedRooms) */
   state.maxHp = 6; state.hp = state.maxHp; state.cheatAll = false; state.cheatCorn = false;
-  state.hasLantern = false; state.keys = 0; state.found = {};
+  state.hasLantern = false; state.hasPouch = false; state.keys = 0; state.found = {};
   state.burned = {}; state.superHearts = {};
   state.shedBurned = {}; state.shedStashes = {};
   state.hasLadder = false; state.ladderBurned = false;
@@ -2433,7 +2433,7 @@ function snapshotState(){
     corn: state.corn, coins: state.coins, arrows: state.arrows, goldArrows: state.goldArrows,
     hasBow: state.hasBow, hasSword: state.hasSword, oilUses: state.oilUses, wrench: state.wrench, armor: state.armor,
     maxHp: state.maxHp, hp: state.hp, cheatAll: state.cheatAll, cheatCorn: state.cheatCorn,
-    hasLantern: state.hasLantern, keys: state.keys, found: state.found,
+    hasLantern: state.hasLantern, hasPouch: state.hasPouch, keys: state.keys, found: state.found,
     burned: state.burned, superHearts: state.superHearts,
     shedBurned: state.shedBurned, shedStashes: state.shedStashes,
     hasLadder: state.hasLadder, ladderBurned: state.ladderBurned,
@@ -2462,7 +2462,7 @@ function applySnapshot(d){
   state.maxHp = Math.max(2, d.maxHp | 0); state.hp = Math.min(state.maxHp, Math.max(0, d.hp | 0));
   if (state.hp <= 0) state.hp = state.maxHp;
   state.cheatAll = !!d.cheatAll; state.cheatCorn = !!d.cheatCorn;
-  state.hasLantern = !!d.hasLantern; state.keys = d.keys | 0;
+  state.hasLantern = !!d.hasLantern; state.hasPouch = !!d.hasPouch; state.keys = d.keys | 0;
   state.found = (d.found && typeof d.found === 'object') ? d.found : {};
   state.burned = (d.burned && typeof d.burned === 'object') ? d.burned : {};
   state.superHearts = (d.superHearts && typeof d.superHearts === 'object') ? d.superHearts : {};
@@ -2561,6 +2561,7 @@ function updateHUD(){
      the button back to the .abtn stylesheet rule (display:flex). */
   document.getElementById('swingBtn').textContent = meleeArmed() ? 'SWING' : 'PUNCH';
   document.getElementById('throwBtn').textContent = state.equipThrow === 'bow' ? 'BOW' : state.equipThrow === 'gold' ? 'GOLD' : 'THROW';
+  document.getElementById('throwBtn').style.display = state.hasPouch ? '' : 'none';
   document.getElementById('bowBtn').style.display = state.hasBow ? '' : 'none';
   document.getElementById('goldBtn').style.display = state.goldArrows > 0 ? '' : 'none';
   document.getElementById('lanternBtn').style.display = state.hasLantern ? '' : 'none';
@@ -3426,7 +3427,9 @@ function renderSubscreen(){
   g += state.wrench >= 1
     ? subSlot('🔧', WRENCH_NAME[state.wrench] + '<br>' + WRENCH_SWING[state.wrench] + ' dmg', { equip: true, sel: armed, act: 'melee-wrench', tag: 'RED BTN' })
     : subSlot('🔧', 'A WRENCH<br>not found yet', { locked: true });
-  g += subSlot('🌽', 'CORN KERNELS<br>×' + state.corn, { equip: true, sel: state.equipThrow === 'kernel', act: 'throw-kernel', tag: 'THROW' });
+  g += state.hasPouch
+    ? subSlot('🌽', 'CORN KERNELS<br>×' + state.corn, { equip: true, sel: state.equipThrow === 'kernel', act: 'throw-kernel', tag: 'THROW' })
+    : subSlot('🌽', 'KERNEL POUCH<br>not found yet', { locked: true });
   g += state.hasBow
     ? subSlot('🏹', 'BOW &amp; ARROWS<br>×' + state.arrows, { equip: true, sel: state.equipThrow === 'bow', act: 'throw-bow', tag: 'THROW' })
     : subSlot('🏹', 'A BOW<br>not found yet', { locked: true });
@@ -3445,6 +3448,7 @@ function renderSubscreen(){
      button and the throw button will actually do right now */
   var throwIc = state.equipThrow === 'bow' ? '🏹' : state.equipThrow === 'gold' ? '✨🏹' : '🌽';
   var throwName = state.equipThrow === 'bow' ? 'BOW &amp; ARROWS' : state.equipThrow === 'gold' ? 'GOLD ARROWS' : 'CORN KERNELS';
+  if (!state.hasPouch){ throwIc = '🌽'; throwName = 'NO THROW YET'; }
   var det = document.getElementById('subDetail');
   if (det) det.innerHTML =
     '<div class="sub-detail-row"><span class="sub-detail-ic">' + (armed ? '🔧' : '👊') + '</span><span>' + (armed ? WRENCH_NAME[state.wrench] : 'BARE FIST') + '<br><small>' + (armed ? WRENCH_SWING[state.wrench] : 1) + ' DMG · RED BUTTON</small></span></div>' +
@@ -3460,7 +3464,7 @@ function renderSubscreen(){
       doRow('PUSH', 'stones &amp; bales', true) +
       doRow(armed ? 'SWING' : 'PUNCH', 'red button', true) +
       doRow('SPIN', 'hold the red button', armed) +
-      doRow('THROW', 'green button', true) +
+      doRow('THROW', 'green button', !!state.hasPouch) +
       doRow('BURN', 'lantern flame', !!state.hasLantern) +
       doRow('CROSS WATER', 'the small ladder', !!state.hasLadder);
   }
@@ -4397,7 +4401,7 @@ function loadOwScreen(){
     owFeatures.push({ kind:'npc', id:'eli', name:'ELI', x: 424, y: 296, w: 36, h: 40, pages: [
       'Well now — look who is awake. I am Eli. I keep an eye on the home place while you are out saving it.',
       'First thing, and hear me plain: you cannot rebuild this farm with bare fists. Your WOODEN WRENCH waits north of here, thrust into the old pedestal stone in the grove — four fields up the road.',
-      'The road is easy to keep: follow the wooden SIGNS and go NORTH at every one. Two fields up is Corn Village — Pearl, Hank, Fern, and Ruth at the inn will all help you. Two fields more and you are standing in the grove.',
+      'The road is easy to keep: follow the wooden SIGNS and go NORTH at every one. Two fields up is Corn Village — and hear this: an empty hand cannot throw a thing. Grandma Pearl keeps the KERNEL POUCH and will teach your throwing arm when you call on her. Pearl, Hank, Fern, and Ruth at the inn will all help you. Two fields more and you are standing in the grove.',
       'Pull the wrench from that stone and everything changes: the red button swings it, and holding the button down charges up a spin. Then it is the BARNS, one by one — the first stands EAST of here, on this very row: Sunny Field. The Lantern inside it lights the dark and burns the special bales.',
       'Lost later on? Open your MAP, and ask anybody you meet — folks out on the fields know every road on this farm. Now go on. The farm is waiting on you.'
     ] });
@@ -5080,14 +5084,14 @@ var HOUSES = {
   pearl: { title: "GRANDMA PEARL'S COTTAGE", rug: '#a33327', rug2: '#b8452f', deco: 'picture',
     furniture: [ [110, 40, 64, 54, 'stove'], [520, 52, 72, 24, 'shelf'], [620, 56, 54, 84, 'bed'], [330, 240, 96, 44, 'table'], [70, 440, 34, 40, 'barrel'], [660, 450, 26, 30, 'plant'] ],
     villagers: [
-      { kind:'villager', id:'pearl', name:'Grandma Pearl', x: 404, y: 176, w: 30, h: 40, pal: 3, gift: 'corn', pages: [
+      { kind:'villager', id:'pearl', name:'Grandma Pearl', x: 404, y: 176, w: 30, h: 40, pal: 3, gift: 'pouch', pages: [
         'GRANDMA PEARL: “Well, come on in out of that sun, hon. Mind the rug — your granddaddy braided it the winter the river froze.”',
         '“I was standing right in this room the night of the great storm. The wind took the Great Barn apart like it was made of playing cards. Eight pieces, scattered and locked away — one in every barn on this farm.”',
         '“Folks ask why an old woman keeps a house at the crossroads. Because everybody passes through, that is why. And everybody leaves knowing a little more than they came with.”',
-        '“Take this corn for the road. And you listen to Pearl: the greater the battle, the greater the victory. Now go on — that barn is not rebuilding itself.”' ] },
+        '“Take my KERNEL POUCH for the road, hon — an empty hand cannot throw a thing, and a farmer needs his throwing arm. Fill it with corn and that green button throws far as you can see. And you listen to Pearl: the greater the battle, the greater the victory. Now go on — that barn is not rebuilding itself.”' ] },
       { kind:'villager', id:'june', name:'June', x: 296, y: 330, w: 30, h: 40, pal: 2, kid: true, pages: [
         'JUNE: “Hi! I am June! I am seven and I know ALL the secrets. Well. Four secrets.”',
-        '“Secret one: out in the West Meadow there is a hay bale all by itself, and it is NOT just a hay bale. Secret two: a tombstone in the Old Graveyard slides if you lean on it right.”',
+        '“Secret one: out in the West Meadow there is a hay bale all by itself, and it is NOT just a hay bale. Secret two: a tombstone in the Old Graveyard slides if you PUSH on it and hold.”',
         '“Secret three: the tractors carry the rusty keys, and the crows carry the arrows they stole. Secret four—” she counts on her fingers “—the old silo is locked, but that is not a secret, that is just a fact.”',
         '“If you get lost, the grown-ups in the village know every road. Grandma knows the MOST roads. She will tell you. She tells everybody.”' ] }
     ] },
@@ -5217,7 +5221,7 @@ function houseTalkAdvance(){
     npcCd = 5; interactCd = 0.8;
     if (f && f.gift && !state.found['gift_' + f.id]){
       state.found['gift_' + f.id] = true;
-      if (f.gift === 'corn'){ state.corn += 10; showBanner('🌽 GRANDMA PEARL GIVES YOU 10 CORN — “FOR THE ROAD, HON.”', 2800); }
+      if (f.gift === 'pouch'){ state.hasPouch = true; playItem(false); showBanner('🌽 GRANDMA PEARL GIVES YOU THE KERNEL POUCH — YOU CAN THROW NOW! THE GREEN BUTTON IS YOUR THROWING ARM.', 3200); }
       if (f.gift === 'oil'){ state.oilUses += 1; showBanner('🛢️ BLACKSMITH HANK GIVES YOU A CAN OF TRACTOR OIL!', 2800); }
       sfx('piece'); updateHUD();
     }
@@ -5662,21 +5666,47 @@ function shoveSouthSafe(px){
     player.y = ny;
   }
 }
+function revealOwSecret(s){
+  state.found[s.id] = true; playSecret(); updateHUD();
+  if (s.id === 'maze'){ owFeatures.push({ kind:'dungeon', idx: dunIdxForField(2), style:'stairs', x: 98, y: 64, w: 48, h: 40 }); showBanner('🎉 SECRET FOUND! STAIRS HIDING IN THE CORN — LEVEL 3: DARK CORN MAZE! 🎉', 3000); }
+  if (s.id === 'hay'){ owFeatures.push({ kind:'dungeon', idx: dunIdxForField(7), style:'hatch', x: 362, y: 240, w: 48, h: 40 }); showBanner('🎉 SECRET FOUND! THE HAY BALE HID A CELLAR HATCH — LEVEL 8: MOONLIGHT MEADOW! 🎉', 3000); }
+  if (s.id === 'tomb'){ owFeatures.push({ kind:'dungeon', idx: dunIdxForField(5), style:'hatch', x: 350, y: 130, w: 48, h: 40 }); showBanner('🎉 SECRET FOUND! THE TOMBSTONE SLID ASIDE — LEVEL 6: SCARECROW RIDGE! 🎉', 3000); }
+  if (s.id === 'cache'){ pickups.push({ x: 612, y: 480, w: 20, h: 20, kind:'coin', val: 5, t: 0 }, { x: 644, y: 492, w: 20, h: 20, kind:'coin', val: 5, t: 0 }, { x: 620, y: 512, w: 20, h: 20, kind:'corn', val: 3, t: 0 }); showBanner('🎉 SECRET CACHE FOUND UNDER THE ROCK! 🎉', 2600); }
+  dlog('Secret revealed: ' + s.id);
+}
 function owUpdate(dt){
   if (interactCd > 0) interactCd -= dt;
   if (npcCd > 0) npcCd -= dt;
   var pb = { x: player.x, y: player.y, w: player.w, h: player.h };
-  /* secrets: leaning on / stepping close to the right thing reveals it */
+  /* secrets (Michael, 2026-11-18): a secret is EARNED, never
+     walked into — the maze stairs are a FIND (stand on the hidden
+     spot itself, no halo), and the tombstone, the lone bale and
+     the village rock are MOVES: push into them and hold */
   owSecrets.forEach(function(s){
     if (state.found[s.id]) return;
-    var near = { x: s.x - 8, y: s.y - 8, w: s.w + 16, h: s.h + 16 };
-    if (!rectsOverlap(pb, near)) return;
-    state.found[s.id] = true; playSecret(); updateHUD();
-    if (s.id === 'maze'){ owFeatures.push({ kind:'dungeon', idx: dunIdxForField(2), style:'stairs', x: 98, y: 64, w: 48, h: 40 }); showBanner('🎉 SECRET FOUND! STAIRS HIDING IN THE CORN — LEVEL 3: DARK CORN MAZE! 🎉', 3000); }
-    if (s.id === 'hay'){ var b = obstacles.filter(function(o){ return o.secretId === 'hay'; })[0]; if (b) b.x += 58; owFeatures.push({ kind:'dungeon', idx: dunIdxForField(7), style:'hatch', x: 362, y: 240, w: 48, h: 40 }); showBanner('🎉 SECRET FOUND! THE HAY BALE HID A CELLAR HATCH — LEVEL 8: MOONLIGHT MEADOW! 🎉', 3000); }
-    if (s.id === 'tomb'){ var t = obstacles.filter(function(o){ return o.secretId === 'tomb'; })[0]; if (t) t.x += 56; owFeatures.push({ kind:'dungeon', idx: dunIdxForField(5), style:'hatch', x: 350, y: 130, w: 48, h: 40 }); showBanner('🎉 SECRET FOUND! THE TOMBSTONE SLID ASIDE — LEVEL 6: SCARECROW RIDGE! 🎉', 3000); }
-    if (s.id === 'cache'){ pickups.push({ x: 596, y: 92, w: 20, h: 20, kind:'coin', val: 5, t: 0 }, { x: 628, y: 118, w: 20, h: 20, kind:'coin', val: 5, t: 0 }, { x: 596, y: 128, w: 20, h: 20, kind:'corn', val: 3, t: 0 }); showBanner('🎉 SECRET CACHE FOUND UNDER THE ROCK! 🎉', 2600); }
-    dlog('Secret revealed: ' + s.id);
+    if (s.id === 'maze'){
+      if (rectsOverlap(pb, s)) revealOwSecret(s);
+      return;
+    }
+    var ob = null;
+    for (var oi = 0; oi < obstacles.length; oi++) if (obstacles[oi].secretId === s.id){ ob = obstacles[oi]; break; }
+    if (!ob){ revealOwSecret(s); return; }
+    var nearOb = { x: ob.x - 4, y: ob.y - 4, w: ob.w + 8, h: ob.h + 8 };
+    var pushing = false;
+    if (rectsOverlap(pb, nearOb)){
+      var pcx = player.x + player.w / 2, pcy = player.y + player.h / 2;
+      var ocx = ob.x + ob.w / 2, ocy = ob.y + ob.h / 2;
+      if (Math.abs(ocx - pcx) > Math.abs(ocy - pcy)) pushing = ocx > pcx ? !!keys.right : !!keys.left;
+      else pushing = ocy > pcy ? !!keys.down : !!keys.up;
+    }
+    if (pushing){
+      s.pushT = (s.pushT || 0) + dt;
+      if (s.pushT >= 0.5){
+        ob.x += (s.id === 'hay' ? 58 : 56);
+        sfx('creak');
+        revealOwSecret(s);
+      }
+    } else s.pushT = 0;
   });
   if (bedLatch && !owFeatures.some(function(q){ return q.kind === 'innbed' && rectsOverlap(pb, q); })) bedLatch = false;
   /* features: shops, hints, barn entrances */
@@ -5684,6 +5714,7 @@ function owUpdate(dt){
     for (var fi = 0; fi < owFeatures.length; fi++){
       var f = owFeatures[fi];
       if (!rectsOverlap(pb, f)) continue;
+      if (f.kind === 'path') continue;   /* dirt paths are scenery: they must never eat the step — the village path hid Fern's door and the crossroads sign behind it (Michael, 2026-11-18) */
       if (f.kind === 'npc'){
         if (f.pages){ if (npcCd <= 0 && !houseTalk && !intro) startHouseTalk(f); }
         else if (npcCd <= 0){ showBanner(f.hint, 5000); npcCd = 5; sfx('corn'); }
@@ -6004,8 +6035,9 @@ function killEnemy(e){
     leaveDrop('corn', cx, cy, score);
     dlog('A ' + e.type + ' left ' + score + ' corn behind.');
   }
-  /* ...and sometimes a heart, too */
-  if (Math.random() < 0.14) pickups.push({ x: Math.max(28, Math.min(W - 52, cx - 11)), y: Math.max(28, Math.min(H - 52, cy - 24)), w: 22, h: 22, kind:'heart', t: 0 });
+  /* ...and sometimes a heart, too — chickens most of all
+     (Michael, 2026-11-18: the critters are supposed to drop hearts) */
+  if (Math.random() < (e.type === 'chicken' || e.type === 'boss_chicken' ? 0.35 : 0.22)) pickups.push({ x: Math.max(28, Math.min(W - 52, cx - 11)), y: Math.max(28, Math.min(H - 52, cy - 24)), w: 22, h: 22, kind:'heart', t: 0 });
   /* ...and every once in a while, a POWER HEART — a bigger, glowing
      heart (about 1 defeat in 12) that heals 1 full heart when Corn Man
      walks over it. Offset from the regular heart drop so both can sit
@@ -6808,8 +6840,14 @@ function tractorStep(e, dt){
   return [vx, vy];
 }
 
+function noThrowYet(){
+  showBanner('🌽 NO THROWING YET — AN EMPTY HAND CANNOT THROW. GRANDMA PEARL IN CORN VILLAGE KEEPS THE KERNEL POUCH AND TEACHES THE THROWING ARM.', 2600);
+}
 function doThrow(){
   if (throwCd > 0 || state.screen !== 'play' || gamePaused) return;
+  /* throwing is a SKILL, not a birthright (Michael, 2026-11-18):
+     nothing leaves his hand until Pearl's pouch teaches the arm */
+  if (!state.hasPouch){ throwCd = 0.38; noThrowYet(); return; }
   /* the Pack decides what THROW throws (Michael, 2026-11-18) */
   if (state.equipThrow === 'bow'){ doBow(); return; }
   if (state.equipThrow === 'gold'){ doGoldBow(); return; }
@@ -6827,6 +6865,7 @@ function dirVec(){
 }
 function doBow(){
   if (bowCd > 0 || state.screen !== 'play' || gamePaused) return;
+  if (!state.hasPouch){ noThrowYet(); return; }
   if (!state.hasBow){ showBanner('🏹 YOU NEED A BOW FIRST — ONE LIES WAITING IN THE FIELD BY THE CREEK & POND!', 2200); return; }
   if (state.arrows <= 0){ showBanner('🏹 OUT OF ARROWS! CROWS CARRY THE ARROWS THEY STOLE — FIGHT CROWS TO GET MORE!', 2200); return; }
   if (state.corn < 1){ showBanner('🌽 EACH ARROW COSTS 1 CORN TO SHOOT — YOU HAVE NO CORN!', 2200); return; }
@@ -6837,6 +6876,7 @@ function doBow(){
 }
 function doGoldBow(){
   if (goldCd > 0 || state.screen !== 'play' || gamePaused) return;
+  if (!state.hasPouch){ noThrowYet(); return; }
   if (!state.hasBow){ showBanner('🏹 YOU NEED A BOW FIRST — ONE LIES WAITING IN THE FIELD BY THE CREEK & POND!', 2200); return; }
   if (state.goldArrows <= 0){ showBanner('✨🏹 OUT OF GOLD ARROWS! A QUIVER OF THEM LIES HIDING IN THE WEST MEADOW.', 2400); return; }
   goldCd = 0.34; state.goldArrows -= 1; sfx('throw');
@@ -7047,6 +7087,7 @@ function update(dt){
   if (wrenchCd > 0) wrenchCd -= dt;
   if (lanternCd > 0) lanternCd -= dt;
   if (burnHintT > 0) burnHintT -= dt;
+  if (punchHintT > 0) punchHintT -= dt;
   if (shakeT > 0) shakeT -= dt;
 
   /* player movement */
@@ -7138,6 +7179,21 @@ function update(dt){
     if (player.dir === 'right') arc = { x: player.x + player.w - 2, y: player.y - 4, w: 48, h: 44 };
     enemies.forEach(function(e){ if (e.hitT <= 0 && rectsOverlap(arc, e)){ damageEnemy(e, swingDamage(), 'sword'); } });
     if (boss && boss.hitT <= 0 && rectsOverlap(arc, boss)){ damageBoss(swingDamage(), 'sword'); }
+    /* Hay bales answer to a BLADE only (Michael, 2026-11-18): the
+       wrench or the Corn Sword cuts plain hay, Zelda-grass style —
+       sometimes corn or a heart shakes loose. Fists never cut hay,
+       and the special bales (the lantern's, the secret one) are
+       not plain hay and never cut. */
+    obstacles.slice().forEach(function(o){
+      if (o.type === 'hay' && !o.burnId && !o.shedId && !o.ladderId && !o.secretId && rectsOverlap(arc, o)){
+        obstacles.splice(obstacles.indexOf(o), 1);
+        burst(o.x + o.w / 2, o.y + o.h / 2, '#e8b93a', 9); burst(o.x + o.w / 2, o.y + o.h / 2, '#fff3a0', 4); sfx('hit');
+        var roll = Math.random();
+        if (roll < 0.30) pickups.push({ x: o.x + 10, y: o.y + 10, w: 20, h: 20, kind:'corn', val: 1, t: 0 });
+        else if (roll < 0.40) pickups.push({ x: o.x + 9, y: o.y + 4, w: 22, h: 22, kind:'heart', t: 0 });
+        dlog('Cut a hay bale with the blade.');
+      }
+    });
   }
 
   /* spin attack hits — one full-circle strike as the spin gets
@@ -7162,6 +7218,9 @@ function update(dt){
     if (player.dir === 'right') parc = { x: player.x + player.w - 2, y: player.y + 2, w: 28, h: 28 };
     enemies.forEach(function(e){ if (e.hitT <= 0 && rectsOverlap(parc, e)){ damageEnemy(e, 1, 'punch'); } });
     if (boss && boss.hitT <= 0 && rectsOverlap(parc, boss)){ damageBoss(1, 'punch'); }
+    if (punchHintT <= 0 && obstacles.some(function(o){ return o.type === 'hay' && rectsOverlap(parc, o); })){
+      punchHintT = 5; showBanner('👊 FISTS CAN\'T CUT HAY — A HAY BALE NEEDS THE WRENCH OR THE CORN SWORD.', 2000);
+    }
   }
 
   /* kernels */
