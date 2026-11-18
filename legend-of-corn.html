@@ -895,6 +895,18 @@
   @media (max-width:560px){ #pauseBtn{ padding:6px 7px; } }
   #pauseScreen{ background:#000b; z-index:28; }
   #pauseScreen .pause-note{ font-size:13px; font-weight:800; color:var(--ink-dim); }
+  #pauseScreen .sub-sheet{ max-width:720px; width:min(720px,94vw); max-height:92vh; overflow-y:auto; text-align:left; }
+  .sub-panel{ background:#101408; border:3px solid #7c5a24; border-radius:10px; padding:8px; margin:10px 0; }
+  .sub-panel-title{ font-family:"Press Start 2P",monospace; font-size:10px; color:#ffe95e; margin:2px 2px 8px; line-height:1.6; }
+  #subMapCanvas{ width:100%; height:auto; display:block; border-radius:6px; }
+  .sub-panel .big-btn{ width:100%; margin-top:8px; }
+  .sub-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+  .sub-slot{ background:#1b2413; border:2px solid #3a4a2a; border-radius:8px; padding:6px 2px 4px; text-align:center; color:#fffbe8; font-size:9px; font-weight:800; line-height:1.3; min-height:58px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; }
+  .sub-slot .sub-ic{ font-size:21px; line-height:1.1; }
+  .sub-slot.locked{ opacity:.38; filter:grayscale(1); }
+  .sub-slot.equip{ cursor:pointer; border-color:#7c5a24; }
+  .sub-slot.sel{ border-color:#37c978; box-shadow:0 0 0 2px #37c978, inset 0 0 12px #37c97855; }
+  .sub-slot .sub-tag{ font-size:8px; color:#ffd91a; font-family:"Press Start 2P",monospace; }
   /* The button says MAP at EVERY width — the word is never hidden,
      not even on a narrow phone (an earlier phone rule hid it and left
      an icon-only button, which read as a mystery icon). Row 1 still
@@ -917,7 +929,10 @@
   #worldMapScreen.show{ display:flex; flex-direction:column; }
   #worldMapScreen h2{ flex:0 0 auto; font-family:"Press Start 2P",monospace; font-size:clamp(12px,2.8vw,17px); color:#ffe95e; margin:2px 0 2px; text-shadow:3px 3px 0 #0007; }
   #worldMapScreen .hint{ flex:0 1 auto; min-height:0; font-size:12px; color:#d8e6c3; margin:0 auto 4px; font-weight:800; max-width:760px; line-height:1.35; }
-  #farmGrid{ flex:1 1 auto; min-height:0; display:grid; grid-template-columns:repeat(16,1fr); grid-template-rows:repeat(8,minmax(0,1fr)); gap:3px; width:min(940px,100%); margin:0 auto; }
+  #farmGrid{ flex:0 1 auto; aspect-ratio:2/1; max-height:54vh; min-height:0; position:relative; overflow:hidden; width:min(940px,100%); margin:0 auto; border-radius:10px; background:#16280f; touch-action:none; box-shadow:inset 0 0 0 2px #0a1c0b; }
+  #farmMapCanvas{ position:absolute; left:0; top:0; transform-origin:0 0; border-radius:6px; }
+  .map-zoom-bar{ position:absolute; right:8px; bottom:8px; display:flex; gap:6px; z-index:3; }
+  .map-zoom-bar button{ width:40px; height:40px; border-radius:50%; border:2px solid #0a1c0b; background:#fffbe8e6; color:#21360f; font-size:20px; font-weight:900; line-height:1; cursor:pointer; box-shadow:0 2px 6px #0008; }
   .fm-cell{
     position:relative; border:1px solid #0a1c0b; border-radius:5px; padding:2px 0 1px;
     min-height:0; height:100%; text-align:center; color:#16290d; overflow:hidden; cursor:pointer;
@@ -1563,7 +1578,14 @@
       <div class="map-close-bar"><button class="big-btn green" id="worldMapCloseBtn">✔ CLOSE MAP — KEEP EXPLORING</button></div>
       <h2 id="worldMapTitle">🗺️ FARM MAP</h2>
       <p class="hint" id="worldMapHint">The whole farm, laid out just like you walk it — north is up. <b>128 fields in a grid, 16 across × 8 down</b>, like the original Zelda. Every barn is marked from the start: <b>L1–L8</b> hold the 8 barn pieces, the <b>Great Barn (L9)</b> opens once you have all 8. <b>Tap any field to see its name below.</b></p>
-      <div id="farmGrid" role="img" aria-label="Map of the farm showing all 128 fields in a 16 by 8 grid, where each level entrance is"></div>
+      <div id="farmGrid" role="img" aria-label="A drawn map of the farm: fields you have walked are charted, fields you have not are lost in fog. Pinch or scroll to zoom, drag to look around, tap a charted field to read about it.">
+        <canvas id="farmMapCanvas" width="1600" height="800"></canvas>
+        <div class="map-zoom-bar">
+          <button id="mapZoomOut" type="button" aria-label="Zoom the map out">−</button>
+          <button id="mapZoomFit" type="button" aria-label="Fit the whole map on screen">⌂</button>
+          <button id="mapZoomIn" type="button" aria-label="Zoom the map in">+</button>
+        </div>
+      </div>
       <p id="farmMapDetail"></p>
       <p class="legend" id="farmMapLegend"></p>
     </div>
@@ -1614,10 +1636,23 @@
          Corn Man, critters, timers and music (see gamePaused in
          update()) — until ▶ RESUME GAME is pressed. -->
     <div class="overlay" id="pauseScreen" role="alertdialog" aria-modal="true" aria-labelledby="pauseTitle">
-      <div class="col"><div class="sheet">
-        <div class="piece-big">⏸️</div>
-        <h2 id="pauseTitle">PAUSED</h2>
-        <p>The game is paused — Corn Man, the critters and the music are all holding still, right where you left them.</p>
+      <div class="col"><div class="sheet sub-sheet">
+        <h2 id="pauseTitle">⏸️ PAUSED — CORN MAN'S PACK</h2>
+        <p class="pause-note">The farm holds still — but the music plays on. This is your pack: the map as far as you've charted it, everything you carry, and what's in his hands.</p>
+        <div class="sub-panel">
+          <div class="sub-panel-title">🗺️ THE FARM — AS FAR AS YOU'VE WALKED IT</div>
+          <canvas id="subMapCanvas" width="1600" height="800"></canvas>
+          <button class="big-btn green" id="subFullMapBtn" type="button">🔍 OPEN THE FULL MAP — ZOOM &amp; EXPLORE</button>
+        </div>
+        <div class="sub-panel">
+          <div class="sub-panel-title">🎒 WEAPONS &amp; TOOLS — TAP TO EQUIP</div>
+          <div class="sub-grid" id="subGear"></div>
+          <p class="pause-note" id="subEquipNote"></p>
+        </div>
+        <div class="sub-panel">
+          <div class="sub-panel-title">🧩 THE GREAT BARN — PIECES &amp; HEARTS</div>
+          <div class="sub-grid" id="subPieces"></div>
+        </div>
         <div class="btn-row">
           <button class="big-btn green" id="pauseResumeBtn" type="button">▶ RESUME GAME</button>
         </div>
@@ -2040,6 +2075,9 @@ var state = {
   visitedRooms:{},           // Level Map progress, per hero: { levelIndex: [one boolean per room in that barn — 15 to 25 rooms, shaped like the level's boss] } — a room flips true the moment Corn Man steps into it, and its screen on the Level Map turns yellow (map only)
   hasLadder:false,           // the small ladder hidden under a hay bale — PERMANENT once picked up: carrying it makes ANY water walkable (touch water and Corn Man climbs over it). It is NEVER used up — not by crossing water, not by falling, not by restarting the quest — and it is saved with the hero (the Great Barn moat and every future water hazard)
   introsSeen: {},            // level-intro dialogues this hero has already watched (saved per hero)
+  visitedFields: {},         // Farm Map fog of war, per hero: { 'world:owIndex': true } — a field is charted the moment Corn Man stands on it (saved per hero)
+  equipMelee: 'wrench',      // the Pack (pause): what the red button does — 'wrench' (on) or 'fist' (taken off)
+  equipThrow: 'kernel',      // the Pack (pause): what THROW throws — 'kernel' | 'bow' | 'gold'
   ladderBurned:false,        // the ladder bale has been burned (the ladder then waits on the spot until picked up)
   mode:'overworld',          // overworld | dungeon
   owCol:7, owRow:6,          // overworld screen the hero is standing on (Home Farm, south-center of the 16×8 grid)
@@ -2099,16 +2137,18 @@ function pauseGame(){
   if (unlockPopupOpen || repeatPopupOpen) return;
   gamePaused = true;
   clearHeldKeys();
-  stopMusic();
+  renderSubscreen();
+  /* Zelda rules (Michael, 2026-11-18): the music KEEPS PLAYING on the
+     pause screen — the music is never stopped here, and resumeGame restarts none. */
   syncPauseUI();
-  dlog('Game paused with the PAUSE button — everything holds still until RESUME.');
+  dlog('Game paused — the Pack is open (map, gear, pieces). The music plays on.');
 }
 function resumeGame(){
   if (!gamePaused) return;
   gamePaused = false;
   clearHeldKeys();
   syncPauseUI();
-  if (soundOn && musicWasPlaying) startMusic();
+  /* the music never stopped for the Pack — nothing to restart */
   dlog('Game resumed from pause.');
 }
 function togglePause(){ if (gamePaused) resumeGame(); else pauseGame(); }
@@ -2124,6 +2164,7 @@ function resetRun(){
   state.bossHearts = [false,false,false,false,false,false,false,false,false];
   state.corn = 0; state.coins = 0; state.arrows = 25; state.goldArrows = 0; state.hasBow = false; state.hasSword = false;
   state.oilUses = 0; state.wrench = 0; state.armor = 0;
+  state.equipMelee = 'wrench'; state.equipThrow = 'kernel';   /* the Pack starts empty-handed too (map knowledge stays — like visitedRooms) */
   state.maxHp = 6; state.hp = state.maxHp; state.cheatAll = false; state.cheatCorn = false;
   state.hasLantern = false; state.keys = 0; state.found = {};
   state.burned = {}; state.superHearts = {};
@@ -2299,6 +2340,7 @@ function snapshotState(){
     hasLadder: state.hasLadder, ladderBurned: state.ladderBurned,
     visitedRooms: state.visitedRooms,
     introsSeen: state.introsSeen,
+    visitedFields: state.visitedFields, equipMelee: state.equipMelee, equipThrow: state.equipThrow,
     owCol: state.owCol, owRow: state.owRow,
     world: state.world, world2Unlocked: state.world2Unlocked
   };
@@ -2330,6 +2372,9 @@ function applySnapshot(d){
   state.hasLadder = !!d.hasLadder; state.ladderBurned = !!d.ladderBurned;
   state.visitedRooms = (d.visitedRooms && typeof d.visitedRooms === 'object') ? d.visitedRooms : {};
   state.introsSeen = (d.introsSeen && typeof d.introsSeen === 'object') ? d.introsSeen : {};
+  state.visitedFields = (d.visitedFields && typeof d.visitedFields === 'object') ? d.visitedFields : {};
+  state.equipMelee = d.equipMelee === 'fist' ? 'fist' : 'wrench';
+  state.equipThrow = (d.equipThrow === 'bow' || d.equipThrow === 'gold') ? d.equipThrow : 'kernel';
   state.owCol = Math.min(15, Math.max(0, (d.owCol == null ? 7 : d.owCol) | 0));
   state.owRow = Math.min(7, Math.max(0, (d.owRow == null ? 6 : d.owRow) | 0));
   /* World: old saves predate World 2 — a hero who had already beaten
@@ -2414,7 +2459,8 @@ function updateHUD(){
      appears the moment its item arrives and GOLD hides again when the
      last gold arrow is fired. Clearing the inline display ('' ) hands
      the button back to the .abtn stylesheet rule (display:flex). */
-  document.getElementById('swingBtn').textContent = state.hasSword ? 'SWING' : 'PUNCH';
+  document.getElementById('swingBtn').textContent = meleeArmed() ? 'SWING' : 'PUNCH';
+  document.getElementById('throwBtn').textContent = state.equipThrow === 'bow' ? 'BOW' : state.equipThrow === 'gold' ? 'GOLD' : 'THROW';
   document.getElementById('bowBtn').style.display = state.hasBow ? '' : 'none';
   document.getElementById('goldBtn').style.display = state.goldArrows > 0 ? '' : 'none';
   document.getElementById('lanternBtn').style.display = state.hasLantern ? '' : 'none';
@@ -3035,6 +3081,8 @@ function heroOwIndex(){
 }
 function farmCellDetail(i){
   var S = OW_SCREENS[i], c = i % OW_COLS, r = Math.floor(i / OW_COLS);
+  if (!warpMode && !(state.visitedFields && state.visitedFields[state.world + ':' + i]))
+    return '🌫️ Unexplored field — field ' + (c + 1) + ' across, ' + (r + 1) + ' down. Fog covers it: no name, no barn and no secrets show until Corn Man has stood on it. Walk there to chart it — and ask the farmers out on the fields, they know every road.';
   var txt = S.name + ' — field ' + (c + 1) + ' across, ' + (r + 1) + ' down.';
   getMapSpots().forEach(function(sp){
     if (sp.ow === i) txt += ' ⭐ LEVEL ' + (sp.lvl + 1) + ': ' + LEVELS[sp.lvl].name + ' — ' + sp.how + (state.completed[sp.lvl] ? ' ✔ DONE' : '');
@@ -3061,78 +3109,243 @@ function farmCellDetail(i){
     : ' 🌊 A moat rings the Great Barn all the way around, with no gap and no bridge — only carrying the small ladder lets you touch the water and climb over it.';
   if (MAP_NOTES[i]) txt += ' ' + MAP_NOTES[i];
   if (i === heroOwIndex()) txt += state.mode === 'dungeon' ? ' 📍 YOU ARE INSIDE THIS BARN!' : ' 📍 YOU ARE HERE!';
+  var heroI = heroOwIndex();
+  if (i !== heroI){
+    var dx = c - (heroI % OW_COLS), dy = r - Math.floor(heroI / OW_COLS), dirs = [];
+    if (dx > 0) dirs.push(dx + ' field' + (dx > 1 ? 's' : '') + ' EAST');
+    if (dx < 0) dirs.push((-dx) + ' field' + (dx < -1 ? 's' : '') + ' WEST');
+    if (dy > 0) dirs.push(dy + ' field' + (dy > 1 ? 's' : '') + ' SOUTH');
+    if (dy < 0) dirs.push((-dy) + ' field' + (dy < -1 ? 's' : '') + ' NORTH');
+    if (dirs.length) txt += ' 🧭 From where you stand: ' + dirs.join(', ') + '.';
+  }
   if (warpMode) txt += (i === warpSel)
     ? ' ⭐ Tap this field AGAIN to START Corn Man right here! ⭐'
     : ' 👆 Tap a field to pick it — tap it again to start there.';
   return txt;
 }
-function renderWorldMap(){
-  var grid = document.getElementById('farmGrid'); grid.innerHTML = '';
+/* ---------- The Farm Map, drawn (v7, Michael 2026-11-18) ----------
+   The old map was a grid of colored DOM squares and, in Michael's
+   words, "doesn't look like a map." This one is PAINTED on a canvas
+   from the game's own data: every field gets its real ground colors,
+   terrain glyphs from its own obstacle kind, fences with real gaps
+   where you can walk through (solid rock on the Lost Hills' east
+   edge), and its structures drawn as structures — barns with roofs
+   and level badges, the home farmhouse, the pedestal in the grove,
+   the silo, the pond, the maze rows, the graveyard stones. Fields
+   Corn Man has not stood on yet are lost in FOG: no name, no barn,
+   no secrets. Secret markers only show on charted fields. The same
+   painter draws the big zoomable map and the Pack's mini map. */
+var mapView = { s: 1, x: 0, y: 0, bw: 0, bh: 0 };
+function mapVisited(i){ return warpMode || !!(state.visitedFields && state.visitedFields[state.world + ':' + i]); }
+function drawFarmMap(cv, withLabels){
+  var mc = cv.getContext('2d');
+  var CW = 100, CH = 100;
+  mc.fillStyle = '#1d3016'; mc.fillRect(0, 0, 1600, 800);
+  var spots = {}; getMapSpots().forEach(function(sp){ spots[sp.ow] = sp; });
+  var baleFields = {}, shedFields = {};
+  effBurnBales().forEach(function(bb){ baleFields[bb.ow] = true; });
+  effBurnSheds().forEach(function(sd){ shedFields[sd.ow] = true; });
   var here = heroOwIndex();
-  OW_SCREENS.forEach(function(S, i){
-    var cell = document.createElement('div');
-    cell.className = 'fm-cell' + (i === here ? ' here' : '') + (warpMode && i === warpSel ? ' sel' : '') + (!warpMode && redBarnCheatArmed && i === farmTapCell && farmTapCount > 0 ? ' sel' : '');
-    cell.style.background = 'linear-gradient(180deg,' + S.ground + ',' + S.ground2 + ')';
-    cell.title = farmCellDetail(i);
-    var spot = null;
-    getMapSpots().forEach(function(sp){ if (sp.ow === i) spot = sp; });
-    if (spot){
-      var done = !!state.completed[spot.lvl];
-      var lv = document.createElement('span'); lv.className = 'fm-lvl' + (done ? ' done' : '');
-      lv.textContent = (done ? '✔' : '') + 'L' + (spot.lvl + 1);
-      cell.appendChild(lv);
-    } else if (i === 103){
-      var hm = document.createElement('span'); hm.className = 'fm-mark'; hm.textContent = '🏠';
-      cell.appendChild(hm);
+  mc.textAlign = 'center'; mc.textBaseline = 'middle';
+  for (var i = 0; i < OW_COLS * OW_ROWS; i++){
+    var S = OW_SCREENS[i], cx = (i % OW_COLS) * CW, cy = Math.floor(i / OW_COLS) * CH;
+    if (!mapVisited(i)){
+      mc.fillStyle = '#252e29'; mc.fillRect(cx, cy, CW, CH);
+      var fr = rng(i * 31 + 5);
+      mc.fillStyle = 'rgba(196,208,196,0.13)';
+      for (var fw = 0; fw < 3; fw++){ mc.beginPath(); mc.ellipse(cx + 20 + fr() * 60, cy + 20 + fr() * 60, 16 + fr() * 14, 7 + fr() * 5, 0, 0, Math.PI * 2); mc.fill(); }
+      mc.strokeStyle = '#121a13'; mc.lineWidth = 2; mc.strokeRect(cx + 1, cy + 1, CW - 2, CH - 2);
+      continue;
     }
-    /* Secret markers (Ryan): a 💖 heart on each of the 5 fields hiding
-       a secret Super Heart (BURN_BALES), a 🪙 on each field hiding the
-       100-coin stash under a burnable barn/shed (BURN_SHEDS coins:true),
-       and a 🪜 on the field hiding the small ladder (LADDER_BALE) —
-       one distinct mark per kind of secret. Shown from the start,
-       like the barn locations. */
-    if (effBurnBales().some(function(bb){ return bb.ow === i; })){
-      var ht = document.createElement('span'); ht.className = 'fm-secret'; ht.textContent = '💖';
-      cell.appendChild(ht);
+    var grd = mc.createLinearGradient(cx, cy, cx, cy + CH);
+    grd.addColorStop(0, S.ground); grd.addColorStop(1, S.ground2);
+    mc.fillStyle = grd; mc.fillRect(cx, cy, CW, CH);
+    /* terrain glyphs from the field's own obstacle kind, seeded per field */
+    var tr = rng(i * 77 + 3);
+    mc.save(); mc.beginPath(); mc.rect(cx, cy, CW, CH); mc.clip();
+    for (var tg = 0; tg < 6; tg++){
+      var gx = cx + 8 + tr() * 84, gy = cy + 8 + tr() * 84;
+      if (S.ob === 'tree'){ mc.fillStyle = '#7a4d16'; mc.fillRect(gx + 3, gy + 6, 3, 6); mc.fillStyle = '#2f7a1e'; mc.beginPath(); mc.arc(gx + 5, gy + 5, 7, 0, Math.PI * 2); mc.fill(); }
+      else if (S.ob === 'rock'){ mc.fillStyle = '#8a8f96'; mc.fillRect(gx, gy + 3, 10, 7); mc.fillStyle = '#a8adb2'; mc.fillRect(gx + 2, gy, 8, 4); }
+      else if (S.ob === 'hay'){ mc.fillStyle = '#e8b93a'; mc.fillRect(gx, gy + 2, 11, 8); mc.fillStyle = '#c79a24'; mc.fillRect(gx, gy + 5, 11, 2); }
+      else if (S.ob === 'corn'){ mc.strokeStyle = '#e8b93a'; mc.lineWidth = 2; mc.beginPath(); mc.moveTo(gx + 4, gy + 11); mc.lineTo(gx + 4, gy); mc.stroke(); mc.fillStyle = '#ffe95e'; mc.fillRect(gx + 2, gy + 3, 4, 5); }
+      else if (S.ob === 'pumpkin'){ mc.fillStyle = '#e07b24'; mc.beginPath(); mc.arc(gx + 5, gy + 6, 6, 0, Math.PI * 2); mc.fill(); mc.fillStyle = '#2f7a1e'; mc.fillRect(gx + 4, gy - 1, 2, 3); }
+      else { mc.fillStyle = 'rgba(20,40,16,0.35)'; mc.fillRect(gx, gy, 5, 5); }
     }
-    effBurnSheds().forEach(function(sd){
-      if (sd.ow === i && sd.coins){
-        var cn = document.createElement('span'); cn.className = 'fm-secret'; cn.textContent = '🪙';
-        cell.appendChild(cn);
-      }
-    });
-    if (i === LADDER_BALE.ow){
-      var ld = document.createElement('span'); ld.className = 'fm-secret'; ld.textContent = '🪜';
-      cell.appendChild(ld);
+    mc.restore();
+    /* ---- structures, drawn as structures ---- */
+    if (healPondFor(i)){ mc.fillStyle = '#2f7fc4'; mc.beginPath(); mc.ellipse(cx + 20, cy + 82, 15, 9, 0, 0, Math.PI * 2); mc.fill(); mc.fillStyle = '#7cc0ee'; mc.beginPath(); mc.ellipse(cx + 17, cy + 79, 7, 3, 0, 0, Math.PI * 2); mc.fill(); }
+    if (i === OW_L4){ mc.fillStyle = '#2f7fc4'; mc.beginPath(); mc.ellipse(cx + 50, cy + 50, 32, 23, 0, 0, Math.PI * 2); mc.fill(); mc.fillStyle = S.ground; mc.beginPath(); mc.ellipse(cx + 50, cy + 50, 17, 12, 0, 0, Math.PI * 2); mc.fill(); }
+    if (i === OW_L3){ mc.fillStyle = 'rgba(30,80,20,0.55)'; for (var mz = 0; mz < 4; mz++) mc.fillRect(cx + 12 + mz * 22, cy + 6, 9, 88); }
+    if (i === OW_L6){ mc.fillStyle = '#9aa0a6'; mc.fillRect(cx + 18, cy + 62, 10, 14); mc.fillRect(cx + 70, cy + 58, 10, 14); mc.fillRect(cx + 44, cy + 70, 10, 14); }
+    if (i === OW_GROVE){ mc.fillStyle = '#7d838a'; mc.fillRect(cx + 36, cy + 42, 28, 9); mc.fillStyle = '#5f6468'; mc.fillRect(cx + 41, cy + 51, 18, 11); if (state.wrench < 1){ mc.font = '20px serif'; mc.fillText('🔧', cx + 50, cy + 34); } }
+    var sp = spots[i];
+    if (sp && i === OW_L7){
+      mc.fillStyle = '#9aa0a6'; mc.fillRect(cx + 38, cy + 16, 24, 54); mc.beginPath(); mc.ellipse(cx + 50, cy + 16, 12, 5, 0, 0, Math.PI * 2); mc.fill();
+      mc.fillStyle = '#7d838a'; mc.fillRect(cx + 38, cy + 32, 24, 3); mc.fillRect(cx + 38, cy + 50, 24, 3);
+    } else if (sp){
+      mc.fillStyle = '#b03024'; mc.fillRect(cx + 26, cy + 34, 48, 34);
+      mc.fillStyle = '#7c1a12'; mc.beginPath(); mc.moveTo(cx + 19, cy + 35); mc.lineTo(cx + 81, cy + 35); mc.lineTo(cx + 50, cy + 15); mc.closePath(); mc.fill();
+      mc.fillStyle = '#fffbe8'; mc.fillRect(cx + 44, cy + 48, 12, 20);
+      mc.strokeStyle = '#7c1a12'; mc.lineWidth = 2; mc.beginPath(); mc.moveTo(cx + 44, cy + 48); mc.lineTo(cx + 56, cy + 68); mc.moveTo(cx + 56, cy + 48); mc.lineTo(cx + 44, cy + 68); mc.stroke();
     }
-    /* Water marker (Ryan): a 💧 on each field with a Water of Life
-       healing pond (HEAL_PONDS — fields 6-1 and 14-3), so a player
-       can tell from the map that those screens have water. */
-    if (healPondFor(i)){
-      var wd = document.createElement('span'); wd.className = 'fm-secret'; wd.textContent = '💧';
-      cell.appendChild(wd);
+    if (sp){
+      var done = state.completed[sp.lvl];
+      mc.beginPath(); mc.arc(cx + 79, cy + 21, 13, 0, Math.PI * 2);
+      mc.fillStyle = done ? '#37c978' : '#fffbe8'; mc.fill();
+      mc.lineWidth = 2.5; mc.strokeStyle = '#7c1a12'; mc.stroke();
+      mc.fillStyle = '#5d140d'; mc.font = 'bold 14px Nunito, sans-serif';
+      mc.fillText((done ? '✔' : '') + 'L' + (sp.lvl + 1), cx + 79, cy + 22);
+      if (sp.lvl === 8 && piecesGot() < 8){ mc.font = '17px serif'; mc.fillText('🔒', cx + 50, cy + 86); }
     }
+    if (i === OW_HOME){ mc.font = '38px serif'; mc.fillText('🏠', cx + 50, cy + 56); }
+    /* secret markers — charted fields only (this whole branch is) */
+    var sec = [];
+    if (baleFields[i]) sec.push('💖');
+    if (shedFields[i]) sec.push('🪙');
+    if (i === LADDER_BALE.ow) sec.push('🪜');
+    mc.font = '17px serif';
+    for (var si = 0; si < sec.length && si < 3; si++) mc.fillText(sec[si], cx + 13 + si * 20, cy + 14);
+    /* fences: gaps where you can walk through, solid where you cannot */
+    var cc = i % OW_COLS, rr = Math.floor(i / OW_COLS);
+    mc.strokeStyle = '#5d4023'; mc.lineWidth = 4; mc.lineCap = 'butt';
+    function fence(x1, y1, x2, y2, open){
+      mc.beginPath();
+      if (open){ mc.moveTo(x1, y1); mc.lineTo(x1 + (x2 - x1) * 0.32, y1 + (y2 - y1) * 0.32); mc.moveTo(x1 + (x2 - x1) * 0.68, y1 + (y2 - y1) * 0.68); mc.lineTo(x2, y2); }
+      else { mc.moveTo(x1, y1); mc.lineTo(x2, y2); }
+      mc.stroke();
+    }
+    fence(cx, cy, cx + CW, cy, rr > 0);
+    fence(cx, cy + CH, cx + CW, cy + CH, rr < OW_ROWS - 1);
+    fence(cx, cy, cx, cy + CH, cc > 0 && i !== OW_LOST + 1);
+    fence(cx + CW, cy, cx + CW, cy + CH, cc < OW_COLS - 1 && i !== OW_LOST);
     if (i === here){
-      var hb = document.createElement('span'); hb.className = 'fm-here'; hb.textContent = '📍';
-      cell.appendChild(hb);
+      mc.strokeStyle = '#ffd91a'; mc.lineWidth = 6; mc.strokeRect(cx + 3, cy + 3, CW - 6, CH - 6);
+      mc.font = '21px serif'; mc.fillText('📍', cx + 85, cy + 82);
     }
-    cell.addEventListener('click', function(){
-      if (warpMode){ warpCellTap(i); return; }
-      if (redBarnCheatArmed){ farmCellTap(i, cell); return; }
-      document.getElementById('farmMapDetail').textContent = farmCellDetail(i);
-      sfx('corn');
-    });
-    grid.appendChild(cell);
-  });
-  document.getElementById('farmMapDetail').textContent = farmCellDetail(here);
+    if ((warpMode && i === warpSel) || (!warpMode && redBarnCheatArmed && i === farmTapCell && farmTapCount > 0)){
+      mc.strokeStyle = '#ff9d1a'; mc.lineWidth = 5; mc.strokeRect(cx + 2, cy + 2, CW - 4, CH - 4);
+    }
+    if (withLabels){
+      mc.font = '700 19px Nunito, sans-serif';
+      var nm = S.name, tw = mc.measureText(nm).width;
+      if (tw > 94) mc.font = '700 ' + Math.max(11, Math.floor(19 * 94 / tw)) + 'px Nunito, sans-serif';
+      mc.lineWidth = 3; mc.strokeStyle = 'rgba(255,251,232,0.85)';
+      mc.strokeText(nm, cx + 50, cy + 93); mc.fillStyle = '#16290d'; mc.fillText(nm, cx + 50, cy + 93);
+    }
+  }
+  /* compass */
+  mc.beginPath(); mc.arc(1550, 50, 30, 0, Math.PI * 2);
+  mc.fillStyle = 'rgba(240,230,190,0.92)'; mc.fill(); mc.lineWidth = 3; mc.strokeStyle = '#7c5a24'; mc.stroke();
+  mc.fillStyle = '#7c1a12'; mc.font = '15px serif'; mc.fillText('▲', 1550, 36);
+  mc.fillStyle = '#3a2a10'; mc.font = 'bold 17px Nunito, sans-serif'; mc.fillText('N', 1550, 58);
+}
+function mapApplyView(){
+  var cv = document.getElementById('farmMapCanvas');
+  if (cv) cv.style.transform = 'translate(' + mapView.x + 'px,' + mapView.y + 'px) scale(' + mapView.s + ')';
+}
+function mapClampView(){
+  var view = document.getElementById('farmGrid');
+  if (!view || !mapView.bw) return;
+  var vw = view.clientWidth, vh = view.clientHeight;
+  var w = mapView.bw * mapView.s, h = mapView.bh * mapView.s;
+  mapView.x = w <= vw ? (vw - w) / 2 : Math.min(0, Math.max(vw - w, mapView.x));
+  mapView.y = h <= vh ? (vh - h) / 2 : Math.min(0, Math.max(vh - h, mapView.y));
+}
+function mapFitView(){
+  var view = document.getElementById('farmGrid'), cv = document.getElementById('farmMapCanvas');
+  if (!view || !cv) return;
+  var vw = view.clientWidth, vh = view.clientHeight;
+  if (!vw || !vh) return;
+  var bs = Math.min(vw / 1600, vh / 800);
+  mapView.bw = 1600 * bs; mapView.bh = 800 * bs;
+  cv.style.width = mapView.bw + 'px'; cv.style.height = mapView.bh + 'px';
+  mapView.s = 1; mapView.x = (vw - mapView.bw) / 2; mapView.y = (vh - mapView.bh) / 2;
+  mapApplyView();
+}
+function mapZoomAt(px, py, factor){
+  var ns = Math.min(4.5, Math.max(1, mapView.s * factor));
+  var k = ns / mapView.s;
+  mapView.x = px - (px - mapView.x) * k;
+  mapView.y = py - (py - mapView.y) * k;
+  mapView.s = ns; mapClampView(); mapApplyView();
+}
+function mapCellAt(clientX, clientY){
+  var view = document.getElementById('farmGrid');
+  if (!view || !mapView.bw) return -1;
+  var rect = view.getBoundingClientRect();
+  var mx = (clientX - rect.left - mapView.x) / mapView.s, my = (clientY - rect.top - mapView.y) / mapView.s;
+  if (mx < 0 || my < 0 || mx >= mapView.bw || my >= mapView.bh) return -1;
+  return Math.floor(my / mapView.bh * OW_ROWS) * OW_COLS + Math.floor(mx / mapView.bw * OW_COLS);
+}
+function mapTap(i){
+  if (i < 0) return;
+  if (warpMode){ warpCellTap(i); return; }
+  if (redBarnCheatArmed){ farmCellTap(i); return; }
+  document.getElementById('farmMapDetail').textContent = farmCellDetail(i);
+  sfx('corn');
+}
+function renderWorldMap(){
+  var cv = document.getElementById('farmMapCanvas');
+  if (cv) drawFarmMap(cv, mapView.s >= 1.6);
+  var sub = document.getElementById('subMapCanvas');
+  if (sub) drawFarmMap(sub, false);
+  document.getElementById('farmMapDetail').textContent = farmCellDetail(heroOwIndex());
   document.getElementById('farmMapLegend').textContent = warpMode
-    ? '⭐ CHEAT WARP ⭐ — tap a field to pick your START, tap it AGAIN to pop out on that field — Corn Man starts there with ALL the items. No walking!'
-    : (state.world === 2 ? '🔀 WORLD 2 MAP — the levels, Super Hearts and hidden coins are all switched around from World 1, and every end boss is 25% stronger. ' : '') +
-      'Barn pieces: ' + piecesGot() + ' / 8' +
-      (piecesGot() === 8 ? ' — the Great Barn on the north hill is OPEN!' : ' — the Great Barn (L9, north hill) opens at 8/8.') +
-      ' 💖 = a field hiding a secret Super Heart (5 in all). 🪙 = a field hiding 100 coins. 🪜 = a field hiding an item. 💧 = a Water of Life healing pond (fields 6 across 1 down, and 14 across 3 down) — touch its water to refill your hearts. The map shows where to go — you still walk there yourself. No shortcuts!';
+    ? '⭐ CHEAT WARP: tap any field ONCE to select it (it glows orange), then tap the SAME field again to warp straight there. Tap the red ✖ CLOSE button at the top to cancel the warp.'
+    : (state.world === 2 ? '⭐ WORLD 2: the switched-around farm! Same fields, new layout — barns, secrets and even Home Farm moved. Your World 1 map knowledge will betray you here. ' : '') +
+      'Barn pieces: ' + state.pieces.filter(Boolean).length + ' / 8' +
+      (state.world === 1 && piecesGot() >= 8 ? ' — the Great Barn stands open in the far north! ⭐' : '') +
+      ' 💖 = a special hay bale hides a Super Heart — burn it with the Lantern. 🪙 = a shed or little barn hides coins — burn it too. 🪜 = a ladder hides on this field. 💧 = a healing pond. 🌫️ Fog = a field you have not walked yet: its name, barn and secrets stay hidden until Corn Man stands on it. Pinch or scroll to zoom, drag to look around, tap a charted field to read about it — the note gives compass directions from where you stand. Lost? Farmers out on the fields know every road: walk up and talk to them. The map shows where to go — you still walk there yourself. No shortcuts!';
   updateHUD();
 }
+
+/* ---------- The Pack: what's in his hands (the pause subscreen) ---------- */
+function subSlot(ic, name, opts){
+  opts = opts || {};
+  var cls = 'sub-slot' + (opts.locked ? ' locked' : '') + (opts.equip ? ' equip' : '') + (opts.sel ? ' sel' : '');
+  return '<div class="' + cls + '"' + (opts.act ? ' data-act="' + opts.act + '"' : '') + '>' +
+    '<span class="sub-ic">' + ic + '</span><span>' + name + '</span>' +
+    (opts.tag ? '<span class="sub-tag">' + opts.tag + '</span>' : '') + '</div>';
+}
+function renderSubscreen(){
+  var gear = document.getElementById('subGear');
+  if (!gear) return;
+  var armed = meleeArmed(), g = '';
+  g += subSlot('👊', 'BARE FIST<br>1 dmg', { equip: true, sel: !armed, act: 'melee-fist', tag: 'RED BTN' });
+  g += state.wrench >= 1
+    ? subSlot('🔧', WRENCH_NAME[state.wrench] + '<br>' + WRENCH_SWING[state.wrench] + ' dmg', { equip: true, sel: armed, act: 'melee-wrench', tag: 'RED BTN' })
+    : subSlot('🔧', 'A WRENCH<br>not found yet', { locked: true });
+  g += subSlot('🌽', 'CORN KERNELS<br>×' + state.corn, { equip: true, sel: state.equipThrow === 'kernel', act: 'throw-kernel', tag: 'THROW' });
+  g += state.hasBow
+    ? subSlot('🏹', 'BOW &amp; ARROWS<br>×' + state.arrows, { equip: true, sel: state.equipThrow === 'bow', act: 'throw-bow', tag: 'THROW' })
+    : subSlot('🏹', 'A BOW<br>not found yet', { locked: true });
+  g += (state.hasBow && state.goldArrows > 0)
+    ? subSlot('✨🏹', 'GOLD ARROWS<br>×' + state.goldArrows, { equip: true, sel: state.equipThrow === 'gold', act: 'throw-gold', tag: 'THROW' })
+    : subSlot('✨🏹', 'GOLD ARROWS<br>none carried', { locked: true });
+  g += state.hasLantern ? subSlot('🔦', 'LANTERN<br>fire &amp; light', {}) : subSlot('🔦', 'A LANTERN<br>not found yet', { locked: true });
+  g += state.hasLadder ? subSlot('🪜', 'SMALL LADDER<br>cross any water', {}) : subSlot('🪜', 'A LADDER<br>hidden somewhere', { locked: true });
+  g += state.oilUses > 0 ? subSlot('🛢️', 'TRACTOR OIL<br>×' + state.oilUses + ' uses', {}) : subSlot('🛢️', 'TRACTOR OIL<br>none carried', { locked: true });
+  g += subSlot('🗝️', 'RUSTY KEYS<br>×' + state.keys, state.keys > 0 ? {} : { locked: true });
+  g += subSlot('🪙', 'COINS<br>×' + state.coins, {});
+  g += state.armor > 0 ? subSlot('🛡️', 'ARMOR<br>softens the knocks', {}) : subSlot('🛡️', 'ARMOR<br>not found yet', { locked: true });
+  g += subSlot('🌽', 'KERNELS ARE<br>endless in his pouch', {});
+  gear.innerHTML = g;
+  var note = document.getElementById('subEquipNote');
+  if (note) note.innerHTML = 'Red button: <b>' + (armed ? WRENCH_NAME[state.wrench] + ' SWING' : 'BARE FIST PUNCH') + '</b> · Throw button: <b>' + (state.equipThrow === 'bow' ? 'BOW &amp; ARROWS' : state.equipThrow === 'gold' ? 'GOLD ARROWS' : 'CORN KERNELS') + '</b>. Tap the fist or the wrench to take the wrench off or put it on; tap a throw item to load the THROW button.';
+  var pc = document.getElementById('subPieces');
+  if (pc){
+    var p = '';
+    for (var pi = 0; pi < 8; pi++)
+      p += subSlot('🧩', 'PIECE ' + (pi + 1) + '<br>' + LEVELS[pi].name, state.pieces[pi] ? { tag: 'GOT IT' } : { locked: true });
+    p += subSlot('❤️', 'HEARTS<br>' + (state.hp / 2) + ' of ' + (state.maxHp / 2), {});
+    p += subSlot('💖', 'SUPER HEARTS<br>×' + Object.keys(state.superHearts || {}).filter(function(k){ return state.superHearts[k]; }).length + ' found', {});
+    pc.innerHTML = p;
+  }
+  var sub = document.getElementById('subMapCanvas');
+  if (sub) drawFarmMap(sub, false);
+}
+
 function openWorldMap(){
   if (state.screen === 'worldmap') return;
   if (state.screen !== 'play' && state.screen !== 'map' && state.screen !== 'piece' && state.screen !== 'over' && state.screen !== 'win'){ dlog('Farm Map: not available from this screen yet.'); return; }
@@ -3145,10 +3358,10 @@ function openWorldMap(){
   warpMode = false; warpSel = -1; farmTapCell = -1; farmTapCount = 0;
   document.getElementById('worldMapTitle').textContent = state.world === 2 ? '🗺️ FARM MAP — WORLD 2' : '🗺️ FARM MAP';
   document.getElementById('worldMapHint').innerHTML = state.world === 2
-    ? 'The whole farm in <b>WORLD 2</b> — north is up, <b>128 fields in a grid, 16 across × 8 down</b>. Everything is <b>switched around</b> here: the <b>levels stand on different fields</b> than in World 1, and the <b>💖 Super Hearts</b> and <b>🪙 hidden coins</b> have moved too — this map shows World 2\'s layout. <b>L1–L8</b> hold the 8 barn pieces, the <b>Great Barn (L9)</b> opens once you have all 8. Every end boss in World 2 is <b>25% stronger</b>. <b>Tap any field to see its name below.</b>'
-    : 'The whole farm, laid out just like you walk it — north is up. <b>128 fields in a grid, 16 across × 8 down</b>, like the original Zelda. Every barn is marked from the start: <b>L1–L8</b> hold the 8 barn pieces, the <b>Great Barn (L9)</b> opens once you have all 8. Secrets are marked too: <b>💖</b> on the 5 fields hiding a secret Super Heart, <b>🪙</b> on fields hiding 100 coins, <b>🪜</b> on the field hiding an item, <b>💧</b> on the two fields with a Water of Life healing pond. <b>Tap any field to see its name below.</b>';
+    ? 'This is <b>World 2 — the switched-around farm!</b> The same 128 fields in a <b>new layout</b>: the barns, the secrets and even Home Farm moved. The map only shows what you have walked <b>here</b> — fields you have not stood on in World 2 are lost in fog, same as before. <b>Pinch or scroll to zoom, drag to look around, tap a charted field to read about it.</b> Farmers on the fields know the roads here too.'
+    : 'The whole farm, drawn the way you walk it — north is up, <b>128 fields in a grid, 16 across × 8 down</b>, like the original Zelda. But a map is only as good as the walking behind it: <b>fields you have not stood on yet are lost in fog</b> — their names, barns and secrets stay hidden until you chart them yourself. <b>Pinch or scroll to zoom in, drag to look around, tap a charted field to read about it</b> — the note below gives compass directions from where you stand. Lost? <b>Farmers out on the fields know every road</b> — walk up and talk to them.';
   document.getElementById('worldMapCloseBtn').textContent = '✔ CLOSE MAP — KEEP EXPLORING';
-  renderWorldMap(); showOverlay('worldMapScreen'); updateHUD();
+  showOverlay('worldMapScreen'); mapFitView(); renderWorldMap(); updateHUD();
   dlog('Farm Map opened — all 9 level locations shown. Hero on screen ' + heroOwIndex() + '.');
 }
 function closeWorldMap(){
@@ -3604,7 +3817,7 @@ function openWarpMap(){
   document.getElementById('worldMapTitle').textContent = '🗺️ FARM MAP — ⭐ PICK WHERE YOU START ⭐';
   document.getElementById('worldMapHint').innerHTML = '<b>⭐ CHEAT WARP + ALL ITEMS! ⭐</b> Farmer picked, game started — <b>now pick the field Corn Man starts on!</b> Tap any field to <b>pick it</b> — it glows orange — then tap it <b>again</b> and he pops out right there instead of the Home Farm, carrying <b>ALL the gear</b>: Bow 🏹, Arrows, Gold Arrows ✨, Overalls 👕, Oil Can 🛢️, Wooden Wrench 🔧 and the Lantern 🔦, with hearts full! All 128 fields are here, with the barns (L1–L9) marked.';
   document.getElementById('worldMapCloseBtn').textContent = '✖ NO WARP — START AT HOME FARM';
-  renderWorldMap(); showOverlay('worldMapScreen'); updateHUD();
+  showOverlay('worldMapScreen'); mapFitView(); renderWorldMap(); updateHUD();
   document.getElementById('farmMapDetail').textContent = '⭐ PICK YOUR STARTING FIELD! ⭐ Tap any field to pick it, tap it again to start there — ALL ITEMS in hand! ⭐';
   dlog('CHEAT: START GAME with the HOME cheat armed — start-spot picker open. All 128 fields selectable. All items pending.');
 }
@@ -3659,17 +3872,7 @@ function farmCellTap(i, cell){
   if (i === farmTapCell && now - farmTapTime < 3000) farmTapCount++;
   else { farmTapCell = i; farmTapCount = 1; }
   farmTapTime = now;
-  var grid = document.getElementById('farmGrid');
-  if (grid){
-    var prev = grid.querySelectorAll('.fm-cell.sel');
-    for (var k = 0; k < prev.length; k++) prev[k].classList.remove('sel');
-  }
-  if (cell){
-    cell.classList.add('sel');
-    cell.classList.remove('tapflash');
-    void cell.offsetWidth;   /* restart the flash on every tap */
-    cell.classList.add('tapflash');
-  }
+  renderWorldMap();   /* the canvas draws the picked field glowing orange */
   document.getElementById('farmMapDetail').textContent = farmCellDetail(i) + ' ⭐ ' + farmTapCount + ' of 3 taps to warp here.';
   sfx('corn');
   dlog('Farm Map (red-barn cheat): field ' + i + ' tapped — ' + farmTapCount + ' of 3 for the warp.');
@@ -4042,6 +4245,11 @@ function loadOwScreen(){
   clearField(); phase = 'field'; dunDark = false; dunSwitch = null; dunProps = [];
   owFeatures = []; owSecrets = [];
   owGaps = { N: state.owRow > 0, S: state.owRow < OW_ROWS - 1, W: state.owCol > 0, E: state.owCol < OW_COLS - 1 };
+  /* Farm Map fog of war: standing on a field charts it, for this
+     world (World 2 fogs separately). Home is always known. */
+  if (!state.visitedFields) state.visitedFields = {};
+  state.visitedFields[state.world + ':' + idx] = true;
+  state.visitedFields[state.world + ':' + OW_HOME] = true;
   if (idx === OW_LOST){ owGaps.N = true; owGaps.E = false; }  /* Lost Hills: north loops, east is solid rock */
   obstacles = borderObstacles(owGaps, 'fence');
   var avoid = [{ x: W/2, y: 40, r: 90 }, { x: W/2, y: H - 60, r: 90 }, { x: 40, y: H/2, r: 90 }, { x: W - 60, y: H/2, r: 90 }];
@@ -4134,6 +4342,14 @@ function loadOwScreen(){
       return !moat.some(function(m){ return rectsOverlap(o, m); });
     });
     moat.forEach(function(m){ obstacles.push(m); });
+  } else if (idx === owIdx(7, 5) || idx === owIdx(9, 6) || idx === owIdx(5, 6)){
+    /* Direction-givers (Michael, 2026-11-18): farmers at the crossroads
+       fields TALK — compass points, field counts, landmarks — so
+       nobody has to wander the farm and hope. */
+    if (idx === owIdx(7, 5)) owFeatures.push({ kind:'npc', x: 366, y: 268, w: 36, h: 40, hint:'🧑‍🌾 OLD FARMER: “Morning, son. NORTH one field is Middle Field; two more past it stands the Pedestal Grove, where your wrench waits in the stone. SOUTH is home. EAST along the bottom fields you will find the Sunny East Field and the first barn.”' });
+    if (idx === owIdx(9, 6)) owFeatures.push({ kind:'npc', x: 366, y: 268, w: 36, h: 40, hint:'🧑‍🌾 OLD FARMER: “Nearly there, traveler. One field EAST is the Sunny East Field — the first barn stands on it. WEST along this row takes you home. The Great Barn sits far NORTH, clean at the top of the farm.”' });
+    if (idx === owIdx(5, 6)) owFeatures.push({ kind:'npc', x: 366, y: 268, w: 36, h: 40, hint:'👵 OLD FARMER: “Westward bound, dearie? Four fields WEST is the West Meadow — mind the lone hay bale there, it is not what it seems. Middle Field is two EAST and two NORTH of here, and the old farmer there knows every road on this farm.”' });
+    scatterObstacles(R, S.ob, 5, avoid);
   } else if (idx === OW_GROVE){                              /* THE PEDESTAL GROVE — the Wooden Wrench waits thrust into the old stone (Michael, 2026-11-18, modeled on Zelda: the sword has a PLACE, and you earn the walk to it — fists only, four fields north). The stone is a real obstacle; the apron in front of it is the trigger (see the pedestal branch in the feature loop). */
     obstacles.push({ x: W/2 - 26, y: 222, w: 52, h: 36, type:'rock' });
     owFeatures.push({ kind:'pedestal', x: W/2 - 34, y: 226, w: 68, h: 34 });
@@ -5839,16 +6055,20 @@ bindHold(document.getElementById('goldBtn'), function(){ doGoldBow(); }, functio
 bindHold(document.getElementById('wrenchBtn'), function(){ doWrench(); }, function(){});
 bindHold(document.getElementById('lanternBtn'), function(){ doLantern(); }, function(){});
 
+/* What the red button does is the Pack's call (Michael, 2026-11-18):
+   the wrench can be TAKEN OFF — then Corn Man punches even though he
+   owns it — and put back on again. Ownership is state.hasSword. */
+function meleeArmed(){ return state.hasSword && state.equipMelee !== 'fist'; }
 function doSwing(){
   if (state.screen !== 'play' || gamePaused) return;
-  if (state.hasSword){
+  if (meleeArmed()){
     /* armed: the corn sword swing, exactly as before */
     if (swingT <= 0){ swingT = 0.32; sfx('swing'); }
   } else {
-    /* bare hands: no weapon yet, so the attack is a punch — shorter
-       reach than the sword, same honest 1 damage (see the punch hit
-       box in update()). The sword arrives with his first weapon, the
-       free Wooden Wrench at a Country Store (see shopBuy 'wrench'). */
+    /* bare hands: no weapon yet — or the wrench taken off in the
+       Pack — so the attack is a punch: shorter reach than the sword,
+       same honest 1 damage (see the punch hit box in update()). The
+       wrench itself waits in the Pedestal Grove (see the pull scene). */
     if (!(punchT > 0)){ punchT = 0.24; punchAlt = !punchAlt; sfx('punch'); }
   }
 }
@@ -5862,7 +6082,7 @@ function attackPress(){
   attackHeld = true; attackHoldT = 0;
 }
 function attackRelease(){
-  if (chargeReady && state.hasSword && state.screen === 'play' && !gamePaused) doSpin();
+  if (chargeReady && meleeArmed() && state.screen === 'play' && !gamePaused) doSpin();
   attackHeld = false; attackHoldT = 0; chargeReady = false;
 }
 function doSpin(){
@@ -5870,7 +6090,7 @@ function doSpin(){
 }
 function tickCharge(dt){
   if (spinT > 0) spinT -= dt;
-  if (attackHeld && state.hasSword && state.screen === 'play' && !gamePaused && spinT <= 0){
+  if (attackHeld && meleeArmed() && state.screen === 'play' && !gamePaused && spinT <= 0){
     attackHoldT += dt;
     if (attackHoldT >= 0.8 && !chargeReady){
       chargeReady = true; sfx('charge');
@@ -6093,6 +6313,9 @@ function tractorStep(e, dt){
 
 function doThrow(){
   if (throwCd > 0 || state.screen !== 'play' || gamePaused) return;
+  /* the Pack decides what THROW throws (Michael, 2026-11-18) */
+  if (state.equipThrow === 'bow'){ doBow(); return; }
+  if (state.equipThrow === 'gold'){ doGoldBow(); return; }
   throwCd = 0.38; sfx('throw');
   var dx = 0, dy = 0;
   if (player.dir === 'up') dy = -1; else if (player.dir === 'down') dy = 1;
@@ -6128,7 +6351,7 @@ function doGoldBow(){
 }
 function doWrench(){
   if (wrenchCd > 0 || state.screen !== 'play' || gamePaused) return;
-  if (state.wrench < 1){ showBanner('🔧 NO WRENCH YET — YOUR WOODEN WRENCH LIES ON THE HOME FARM, WHERE THE STORE USED TO STAND!', 2400); return; }
+  if (state.wrench < 1){ showBanner('🔧 NO WRENCH YET — IT WAITS IN THE PEDESTAL GROVE, FOUR FIELDS NORTH OF HOME!', 2400); return; }
   wrenchCd = 0.5; sfx('throw');
   var full = state.hp >= state.maxHp;
   var d = dirVec();
@@ -8349,6 +8572,70 @@ document.getElementById('mPause').addEventListener('click', function(){
   menu.classList.remove('open'); ac(); togglePause();
 });
 document.getElementById('worldMapCloseBtn').addEventListener('click', function(){ ac(); closeWorldMap(); });
+  /* The Farm Map: pinch to zoom, drag to pan, tap a field to read it —
+     mouse wheel and the +/−/⌂ buttons do the same for desktop hands. */
+  (function(){
+    var view = document.getElementById('farmGrid');
+    if (!view) return;
+    var pts = {}, pinchD = 0, dragId = null, lastX = 0, lastY = 0, downX = 0, downY = 0, moved = false, downT = 0;
+    view.addEventListener('pointerdown', function(ev){
+      if (ev.target.closest && ev.target.closest('.map-zoom-bar')) return;   /* the +/−/⌂ buttons keep their own clicks */
+      view.setPointerCapture(ev.pointerId);
+      pts[ev.pointerId] = { x: ev.clientX, y: ev.clientY };
+      if (Object.keys(pts).length === 1){ dragId = ev.pointerId; lastX = downX = ev.clientX; lastY = downY = ev.clientY; moved = false; downT = Date.now(); }
+      if (Object.keys(pts).length === 2){ var p = Object.values(pts); pinchD = Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y); moved = true; }
+      ev.preventDefault();
+    });
+    view.addEventListener('pointermove', function(ev){
+      if (!pts[ev.pointerId]) return;
+      pts[ev.pointerId] = { x: ev.clientX, y: ev.clientY };
+      var n = Object.keys(pts).length;
+      if (n === 2){
+        var p = Object.values(pts);
+        var d = Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y);
+        var rect = view.getBoundingClientRect();
+        if (pinchD > 0) mapZoomAt((p[0].x + p[1].x) / 2 - rect.left, (p[0].y + p[1].y) / 2 - rect.top, d / pinchD);
+        pinchD = d; moved = true;
+      } else if (n === 1 && ev.pointerId === dragId){
+        var dx = ev.clientX - lastX, dy = ev.clientY - lastY;
+        lastX = ev.clientX; lastY = ev.clientY;
+        if (Math.hypot(ev.clientX - downX, ev.clientY - downY) > 8) moved = true;
+        if (dx || dy){ mapView.x += dx; mapView.y += dy; mapClampView(); mapApplyView(); }
+      }
+    });
+    function endPt(ev){
+      var wasTap = ev.pointerId === dragId && !moved && Date.now() - downT < 600 && Object.keys(pts).length === 1;
+      delete pts[ev.pointerId];
+      if (Object.keys(pts).length < 2) pinchD = 0;
+      if (wasTap) mapTap(mapCellAt(ev.clientX, ev.clientY));
+      if (Object.keys(pts).length === 0){ dragId = null; if (!wasTap) renderWorldMap(); }
+    }
+    view.addEventListener('pointerup', endPt);
+    view.addEventListener('pointercancel', endPt);
+    view.addEventListener('wheel', function(ev){
+      ev.preventDefault();
+      var rect = view.getBoundingClientRect();
+      mapZoomAt(ev.clientX - rect.left, ev.clientY - rect.top, ev.deltaY < 0 ? 1.12 : 0.89);
+    }, { passive: false });
+    document.getElementById('mapZoomIn').addEventListener('click', function(){ var r = view.getBoundingClientRect(); mapZoomAt(r.width / 2, r.height / 2, 1.4); renderWorldMap(); });
+    document.getElementById('mapZoomOut').addEventListener('click', function(){ var r = view.getBoundingClientRect(); mapZoomAt(r.width / 2, r.height / 2, 0.72); renderWorldMap(); });
+    document.getElementById('mapZoomFit').addEventListener('click', function(){ mapFitView(); renderWorldMap(); });
+  })();
+  /* The Pack: tap a slot to equip — fist/wrench for the red button,
+     kernels/bow/gold for the THROW button. */
+  document.getElementById('subGear').addEventListener('click', function(ev){
+    var t = ev.target.closest ? ev.target.closest('[data-act]') : null;
+    if (!t) return;
+    var act = t.getAttribute('data-act');
+    if (act === 'melee-fist'){ state.equipMelee = 'fist'; sfx('corn'); }
+    else if (act === 'melee-wrench'){ if (state.wrench >= 1){ state.equipMelee = 'wrench'; sfx('unlock'); } }
+    else if (act === 'throw-kernel'){ state.equipThrow = 'kernel'; sfx('corn'); }
+    else if (act === 'throw-bow'){ if (state.hasBow){ state.equipThrow = 'bow'; sfx('unlock'); } }
+    else if (act === 'throw-gold'){ if (state.hasBow && state.goldArrows > 0){ state.equipThrow = 'gold'; sfx('unlock'); } }
+    else return;
+    renderSubscreen(); updateHUD(); saveActiveProfile();
+  });
+  document.getElementById('subFullMapBtn').addEventListener('click', function(){ ac(); resumeGame(); openWorldMap(); });
 document.getElementById('levelMapCloseBtn').addEventListener('click', function(){ ac(); closeLevelMap(); });
 document.getElementById('sideLevelFullBtn').addEventListener('click', function(){ ac(); openLevelMap(); });
 document.getElementById('levelMapBtn').addEventListener('click', function(){ ac(); toggleLevelMapPanel(); });

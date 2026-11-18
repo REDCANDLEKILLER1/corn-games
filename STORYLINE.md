@@ -69,6 +69,14 @@ Spin attack = double the swing. So a chicken (3 HP) takes 3 fists, 2 wooden
 hits, 1 silver hit — and from the silver upgrade on, it's one hit at any
 level, forever. Everything else on the farm is tougher than a chicken.
 
+## The map, the roads and the Pack (v7, Michael 2026-11-18)
+
+- **The Farm Map is drawn, not gridded**: painted from the game's own data — real ground colors, terrain, fences with gaps where you can walk through, barns with roofs and level badges, the farmhouse, the pedestal, the silo, the pond, the maze, the graveyard — with a compass, like the Zelda 1 map poster.
+- **Fog of war**: a field is charted only once Corn Man has stood on it. Unwalked fields are fog: no name, no barn, no secrets. World 2 fogs separately — it is a switched-around farm and must be learned fresh.
+- **The map moves**: pinch or scroll to zoom (field names fade in as you zoom), drag to look around, tap a charted field to read about it — the note gives compass directions from where you stand.
+- **Nobody wanders and hopes**: farmers stand on the crossroads fields and TALK — compass points, field counts, landmarks — on top of the Middle Field farmer who already knew every road.
+- **PAUSE is the Pack** (the Zelda subscreen): the charted map, an inventory grid of everything he carries, the eight Great Barn pieces and his hearts — and **equip**: take the wrench off and the red button punches again; put it on and it swings; choose whether THROW throws kernels, bow arrows or gold arrows. The music keeps playing while the Pack is open, like the original.
+
 ## The dialogue script (as shipped in the game)
 Zelda rules: short lines, plain words, one idea per page, tap NEXT to read
 on. The full text lives in the game file as `INTRO_TEXT` — opening, one
