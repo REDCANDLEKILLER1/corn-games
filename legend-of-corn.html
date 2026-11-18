@@ -2126,6 +2126,7 @@ var ENEMY_TYPES = {
   chicken:   { hp:3, speed:52,  dmg:1, score:1, ai:'chicken' },   /* 3 fist hits (Michael) — stronger weapons finish it faster; brain: chickenStep */
   pig:       { hp:5, speed:46,  dmg:1, score:2, ai:'pig' },       /* brain: pigStep — graze, stalk, paw the ground, CHARGE, pant */
   crow:      { hp:3, speed:74,  dmg:1, score:2, ai:'crow' },      /* brain: crowStep — circle, caw, DIVE, climb; drops the arrows it stole */
+  wraith:    { hp:5, speed:46,  dmg:1, score:3, ai:'wraith' },   /* v28: the unseen haunting — only the Storm Charm opens eyes to it */
   scarecrow: { hp:6, speed:34,  dmg:1, score:3, ai:'scarecrow' },/* brain: scarecrowStep — stands frozen, then LURCHES */
   goat:      { hp:5, speed:88,  dmg:1, score:3, ai:'goat' },      /* brain: goatStep — zigzag in, head down, HEADBUTT, dizzy */
   tractor:   { hp:8, speed:62,  dmg:2, score:5, ai:'tractor' },  /* brain: tractorStep — chug, REV, DRIVE, stall steaming; drops oil */
@@ -2201,7 +2202,7 @@ var state = {
   wrench:0,                  // 0 none · 1 wooden · 2 silver · 3 golden
   armor:0,                   // 0 none · 1 overalls · 2 silver overalls · 3 gold overalls
   maxHp:6, hp:6,             // 3 hearts to start; +1 heart per level beaten
-  hasLantern:false, hasPouch:false, hasSledge:false, hasBombs:false, bombs:0, hasWhistle:false,          // shop lantern (150 coin) — lights dark barn rooms
+  hasLantern:false, hasPouch:false, hasSledge:false, hasBombs:false, bombs:0, hasWhistle:false, hasCharm:false,          // shop lantern (150 coin) — lights dark barn rooms
   keys:0,                    // rusty keys — 1 opens 1 padlocked door, in any barn
   found:{},                  // secrets/entrances discovered: maze, hay, tomb
   burned:{},                 // designated hay bales burned with the lantern: burn1..burn5
@@ -2313,7 +2314,7 @@ function resetRun(){
   state.day = 1;
   state.equipMelee = 'wrench'; state.equipThrow = 'kernel';   /* the Pack starts empty-handed too (map knowledge stays — like visitedRooms) */
   state.maxHp = 6; state.hp = state.maxHp; state.cheatAll = false; state.cheatCorn = false;
-  state.hasLantern = false; state.hasPouch = false; state.hasSledge = false; state.hasBombs = false; state.hasWhistle = false; state.bombs = 0; state.keys = 0; state.found = {};
+  state.hasLantern = false; state.hasPouch = false; state.hasSledge = false; state.hasBombs = false; state.hasWhistle = false; state.hasCharm = false; state.bombs = 0; state.keys = 0; state.found = {};
   state.burned = {}; state.superHearts = {};
   state.shedBurned = {}; state.shedStashes = {};
   state.hasLadder = false; state.ladderBurned = false;
@@ -2481,7 +2482,7 @@ function snapshotState(){
     corn: state.corn, coins: state.coins, arrows: state.arrows, goldArrows: state.goldArrows,
     hasBow: state.hasBow, hasSword: state.hasSword, oilUses: state.oilUses, wrench: state.wrench, armor: state.armor,
     maxHp: state.maxHp, hp: state.hp, cheatAll: state.cheatAll, cheatCorn: state.cheatCorn,
-    hasLantern: state.hasLantern, hasPouch: state.hasPouch, hasSledge: state.hasSledge, hasBombs: state.hasBombs, hasWhistle: state.hasWhistle, bombs: state.bombs, keys: state.keys, found: state.found,
+    hasLantern: state.hasLantern, hasPouch: state.hasPouch, hasSledge: state.hasSledge, hasBombs: state.hasBombs, hasWhistle: state.hasWhistle, hasCharm: state.hasCharm, bombs: state.bombs, keys: state.keys, found: state.found,
     burned: state.burned, superHearts: state.superHearts,
     shedBurned: state.shedBurned, shedStashes: state.shedStashes,
     hasLadder: state.hasLadder, ladderBurned: state.ladderBurned,
@@ -2510,7 +2511,7 @@ function applySnapshot(d){
   state.maxHp = Math.max(2, d.maxHp | 0); state.hp = Math.min(state.maxHp, Math.max(0, d.hp | 0));
   if (state.hp <= 0) state.hp = state.maxHp;
   state.cheatAll = !!d.cheatAll; state.cheatCorn = !!d.cheatCorn;
-  state.hasLantern = !!d.hasLantern; state.hasPouch = !!d.hasPouch; state.hasSledge = !!d.hasSledge; state.hasBombs = !!d.hasBombs; state.hasWhistle = !!d.hasWhistle; state.bombs = d.bombs | 0; state.keys = d.keys | 0;
+  state.hasLantern = !!d.hasLantern; state.hasPouch = !!d.hasPouch; state.hasSledge = !!d.hasSledge; state.hasBombs = !!d.hasBombs; state.hasWhistle = !!d.hasWhistle; state.hasCharm = !!d.hasCharm; state.bombs = d.bombs | 0; state.keys = d.keys | 0;
   state.found = (d.found && typeof d.found === 'object') ? d.found : {};
   state.burned = (d.burned && typeof d.burned === 'object') ? d.burned : {};
   state.superHearts = (d.superHearts && typeof d.superHearts === 'object') ? d.superHearts : {};
@@ -3492,6 +3493,7 @@ function renderSubscreen(){
   g += state.hasWhistle
     ? subSlot('🎵', 'CORN WHISTLE<br>tap to blow it', { act: 'play-whistle' })
     : subSlot('🎵', 'A CORN WHISTLE<br>not found yet', { locked: true });
+  g += state.hasCharm ? subSlot('🌩️', 'STORM CHARM<br>the unseen shows', {}) : subSlot('🌩️', 'A STORM CHARM<br>not found yet', { locked: true });
   g += state.hasLantern ? subSlot('🔦', 'LANTERN<br>fire &amp; light', {}) : subSlot('🔦', 'A LANTERN<br>not found yet', { locked: true });
   g += state.hasLadder ? subSlot('🪜', 'SMALL LADDER<br>cross any water', {}) : subSlot('🪜', 'A LADDER<br>hidden somewhere', { locked: true });
   g += state.hasSledge ? subSlot('🔨', 'THE SLEDGE<br>smashes cracked rock', {}) : subSlot('🔨', 'A SLEDGE<br>not found yet', { locked: true });
@@ -3522,6 +3524,7 @@ function renderSubscreen(){
       doRow('SMASH', 'swing at cracked rock', !!state.hasSledge) +
       doRow('BLOW UP', 'bombs on cracked walls', !!state.hasBombs) +
       doRow('PLAY', 'the Corn Whistle', !!state.hasWhistle) +
+      doRow('SEE', 'what haunts unseen', !!state.hasCharm) +
       doRow(armed ? 'SWING' : 'PUNCH', 'red button', true) +
       doRow('SPIN', 'hold the red button', armed) +
       doRow('THROW', 'green button', !!state.hasPouch) +
@@ -4160,8 +4163,8 @@ for (var owr = 0; owr < OW_ROWS; owr++){
   }
 }
 var OW_SPECIAL_ENEMIES = {};
-OW_SPECIAL_ENEMIES[OW_L6] = [['crow',2],['goat',1]];
-OW_SPECIAL_ENEMIES[OW_L9] = [['crow',2],['pig',1]];
+OW_SPECIAL_ENEMIES[OW_L6] = [['crow',2],['goat',1],['wraith',3]];   /* v28: the graveyard is haunted */
+OW_SPECIAL_ENEMIES[OW_L9] = [['crow',2],['pig',1],['wraith',2]];   /* v28: and so is the Great Barn's field */
 OW_SPECIAL_ENEMIES[OW_LOST] = [['goat',2],['mole',2]];
 OW_SPECIAL_ENEMIES[OW_L5] = [['crow',3],['scarecrow',1]];
 OW_SPECIAL_ENEMIES[OW_L3] = [['crow',2],['pig',2],['mole',1]];
@@ -4593,7 +4596,7 @@ function loadOwScreen(){
     owSecrets.push({ id:'graveheart', x: 82, y: 462, w: 60, h: 58 });
     /* two dead trees keep the yard's bare corners */
     obstacles.push({ x: 660, y: 84, w: 40, h: 40, type:'deadtree' }, { x: 56, y: 96, w: 40, h: 40, type:'deadtree' });
-    owFeatures.push({ kind:'npc', x: 620, y: 452, w: 36, h: 40, hint:'👵 OLD FARMER: “Folks say a hatch sleeps under one of these stones. PUSH the big one, dearie — go on, lean on it. And down south-west stands a LOOSE one… they say a HEART sleeps under that. PUSH it too.”' });
+    owFeatures.push({ kind:'npc', x: 620, y: 452, w: 36, h: 40, hint:'👵 OLD FARMER: “Folks say a hatch sleeps under one of these stones. PUSH the big one, dearie — go on, lean on it. And down south-west stands a LOOSE one… they say a HEART sleeps under that. PUSH it too. And the cold drifts you feel but cannot see, dearie? WRAITHS. They say a STORM CHARM sleeps in the crypt barn below — carry it, and your eyes open.”' });
   } else if (idx === OW_L7){                                 /* Level 7 — padlocked silo; a tractor carries the key */
     owFeatures.push({ kind:'dungeon', idx: dunIdxForField(6), style:'silo', x: 356, y: 176, w: 56, h: 34, locked:'key', bx: 330, by: 36, bw: 108, bh: 150 });
     obstacles.push({ x: 330, y: 54, w: 108, h: 122, type:'housebody' });
@@ -5915,6 +5918,12 @@ function loadRoom(n, spawnSide){
       if (state.hasWhistle) seedAlready.push('Corn Whistle 🎵');
       else roomItems.push({ kind:'whistle', x: W/2 - 150, y: 108, w: 40, h: 40, emoji:'🎵', label:'THE CORN WHISTLE' });
     }
+    if (idx === 5){
+      /* v28: THE STORM CHARM — Level 6's item (Zelda II's
+         Cross), on the item pedestal beside the cob */
+      if (state.hasCharm) seedAlready.push('Storm Charm 🌩️');
+      else roomItems.push({ kind:'charm', x: W/2 - 150, y: 108, w: 40, h: 40, emoji:'🌩️', label:'THE STORM CHARM' });
+    }
     if (idx === 6){
       if (state.armor >= 3) seedAlready.push('Gold Overalls 🥇');
       else roomItems.push({ kind:'armor', armorTier: 3, x: W/2 - 150, y: 108, w: 40, h: 40, emoji:'🥇', label:'GOLD OVERALLS' });
@@ -6301,6 +6310,9 @@ function resistMsg(text){
   resistT = 2.2; showBanner(text, 1800); sfx('hit');
 }
 function damageEnemy(e, dmg, source){
+  /* the unseen cannot be hurt (v28): every weapon passes
+     through a wraith until the Storm Charm opens his eyes */
+  if (e.type === 'wraith' && !state.hasCharm) return false;
   if (e.big && e.weak && e.weak !== 'any'){
     var ok = (e.weak === 'arrow' && (source === 'arrow' || source === 'goldarrow')) ||
              (e.weak === 'kernel' && source === 'kernel');
@@ -6380,6 +6392,18 @@ function killEnemy(e){
   } else {
     leaveDrop('corn', cx, cy, score);
     dlog('A ' + e.type + ' left ' + score + ' corn behind.');
+  }
+  /* THE HAUNTING LIFTS (v28): the last wraith on the
+     graveyard field leaves a Super Heart where the haunting
+     broke. The heart's own burnId memory keeps it once-ever —
+     if he walks away from it, a later clear can drop it again */
+  if (e.type === 'wraith' && state.mode === 'overworld' && state.owRow * OW_COLS + state.owCol === OW_L6 && !state.superHearts.haunt && !pickups.some(function(q){ return q.burnId === 'haunt'; })){
+    var moreWraiths = enemies.some(function(q){ return q !== e && q.type === 'wraith' && q.hp > 0; });
+    if (!moreWraiths){
+      pickups.push({ x: Math.max(28, Math.min(W - 52, cx - 15)), y: Math.max(28, Math.min(H - 52, cy - 15)), w: 30, h: 30, kind:'superheart', burnId:'haunt', t: 0 });
+      showBanner('👻 THE HAUNTING LIFTS! SOMETHING GOLDEN SETTLES WHERE THE LAST WRAITH FELL…', 3000);
+      playSecret();
+    }
   }
   /* ...and sometimes a heart, too — chickens most of all
      (Michael, 2026-11-18: the critters are supposed to drop hearts) */
@@ -6509,6 +6533,10 @@ function enterRoom(){
   if (state.level === 4){
     if (state.hasWhistle) legacyAlready.push('Corn Whistle 🎵');
     else roomItems.push({ kind:'whistle', x: W/2 - 150, y: 108, w: 40, h: 40, emoji:'🎵', label:'THE CORN WHISTLE' });
+  }
+  if (state.level === 5){
+    if (state.hasCharm) legacyAlready.push('Storm Charm 🌩️');
+    else roomItems.push({ kind:'charm', x: W/2 - 150, y: 108, w: 40, h: 40, emoji:'🌩️', label:'THE STORM CHARM' });
   }
   if (state.level === 6){
     if (state.armor >= 3) legacyAlready.push('Gold Overalls 🥇');
@@ -7083,6 +7111,15 @@ function pigStep(e, dt){
   }
   e.walkT += dt * (Math.abs(vx) + Math.abs(vy)) * 0.09;
   return [vx, vy];
+}
+/* THE WRAITH'S BRAIN (v28): a slow drift straight at Corn Man
+   with a sideways sway, like a sheet caught on a storm wind.
+   It flies — no ground obstacle means anything to it. */
+function wraithStep(e, dt){
+  var cx = (player.x + 16) - (e.x + e.w / 2), cy = (player.y + 18) - (e.y + e.h / 2);
+  var d = Math.hypot(cx, cy) || 1;
+  var sway = Math.sin(e.t * 2.2) * 26;
+  return [cx / d * e.speed - cy / d * sway, cy / d * e.speed + cx / d * sway];
 }
 function crowStep(e, dt){
   if (e.cr === undefined){ e.cr = 'circle'; e.crT = 0; e.crCd = 1 + Math.random(); e.age = 0; e.walkT = 0; }
@@ -7936,6 +7973,15 @@ function update(dt){
       if (rectsOverlap(pb, e)) hurtPlayer(def.dmg, e);
       continue;
     }
+    if (def.ai === 'wraith'){
+      var wrv = wraithStep(e, dt);
+      e.x += wrv[0] * dt; e.y += wrv[1] * dt;
+      e.x = Math.max(8, Math.min(W - e.w - 8, e.x)); e.y = Math.max(8, Math.min(H - e.h - 8, e.y));
+      /* unseen, it cannot touch him — the haunting only bares
+         its teeth once the Storm Charm opens his eyes */
+      if (state.hasCharm && rectsOverlap(pb, e)) hurtPlayer(def.dmg, e);
+      continue;
+    }
     if (def.ai === 'wander'){
       if (e.t > 1.4){ e.t = 0; e.dir = Math.random() * Math.PI * 2; }
       vx = Math.cos(e.dir) * e.speed; vy = Math.sin(e.dir) * e.speed;
@@ -8168,6 +8214,15 @@ function update(dt){
           roomItems.splice(ri, 1); updateHUD(); saveActiveProfile();
           /* TWO-ITEM RULE, same as the Overalls: grabbing the last
              item in the room closes the level out */
+          if (!roomItems.length && state.pieces[state.level]){
+            phase = 'blink'; blinkT = pendingLevel9Unlock ? 1.7 : 1.1; playItem();
+            dlog('That was the last item in the seed room — the level closes out: golden flash, then back outside by the barn.');
+          }
+        } else if (it.kind === 'charm'){
+          state.hasCharm = true; playItem();
+          showBanner('🌩️ YOU GOT THE STORM CHARM! 🌩️ YOUR EYES ARE OPEN NOW — WHAT HAUNTS THE GRAVEYARD AND THE GREAT BARN’S FIELD WILL SHOW ITSELF TO YOU… 🌩️', 3600);
+          dlog('The Storm Charm collected in the Level 6 seed room.');
+          roomItems.splice(ri, 1); updateHUD(); saveActiveProfile();
           if (!roomItems.length && state.pieces[state.level]){
             phase = 'blink'; blinkT = pendingLevel9Unlock ? 1.7 : 1.1; playItem();
             dlog('That was the last item in the seed room — the level closes out: golden flash, then back outside by the barn.');
@@ -8608,6 +8663,29 @@ function drawCornMan(p){
 function drawEnemy(e){
   var x = e.x, y = e.y, flash = e.hitT > 0.12;
   if (flash) ctx.globalAlpha = 0.55;
+  if (e.type === 'wraith'){
+    /* THE WRAITH (v28): a storm-grey sheet ghost. Without the
+       Storm Charm, nothing draws at all — it is simply not
+       there to his eyes. With it: translucent sheet, wavy hem,
+       hollow eyes, drifting on the wind. */
+    if (!state.hasCharm){ ctx.globalAlpha = 1; return; }
+    var wb = Math.sin(e.t * 3) * 2.5;
+    ctx.save(); ctx.globalAlpha = 0.88;
+    ctx.fillStyle = 'rgba(0,0,0,0.18)'; ctx.beginPath(); ctx.ellipse(x + 17, y + 40 + wb * 0.4, 13, 4, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#dfe9f2';
+    ctx.beginPath();
+    ctx.moveTo(x + 4, y + 34 + wb);
+    ctx.quadraticCurveTo(x + 2, y + 8 + wb, x + 17, y + 4 + wb);
+    ctx.quadraticCurveTo(x + 32, y + 8 + wb, x + 30, y + 34 + wb);
+    for (var wv = 0; wv < 3; wv++) ctx.quadraticCurveTo(x + 25 - wv * 8, y + 28 + wb + Math.sin(e.t * 5 + wv) * 2, x + 21 - wv * 8, y + 34 + wb);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#232a33';
+    ctx.beginPath(); ctx.ellipse(x + 12, y + 16 + wb, 3, 4.4, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(x + 22, y + 16 + wb, 3, 4.4, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(x + 17, y + 24 + wb, 2.4, 3.4, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    return;
+  }
   if (e.type === 'chicken'){
     /* One bird, a pose for every beat of its pattern (chickenStep):
        pecking, walking, ALERT (!), wound-up (crouched, ruffled,
