@@ -5100,6 +5100,14 @@ function endIntro(){
    people too — no more emoji stand-ins. */
 var houseTalk = null, currentHouse = null;
 var pullFx = null;   /* the wrench-pull ceremony: { t, spark, x, y } while Corn Man holds it high */
+var prizeFx = null;   /* THE PRIZE CEREMONY (v31): { emoji, x, y, t, dur, spark, dir } — the pedestal
+   flashes, the world freezes, Corn Man turns to face you and holds the prize over his head */
+function startPrizeFx(emoji, x, y, dur){
+  if (!player) return;
+  prizeFx = { emoji: emoji, x: x, y: y, t: dur, dur: dur, spark: 0, dir: player.dir };
+  player.dir = 'down';   /* he turns around and faces you, prize held high */
+  if (typeof window !== 'undefined') window.__prizePose = true;
+}
 var sleepFx = null, sleepMusicEl = null, bedLatch = false, sleepBed = null, sleepBedVisual = null;   /* the inn blackout: { t, woke } paced by the bed sound itself */
 function rrPath(x, y, w, h, r){
   /* a rounded-rectangle path — the anti-squarey workhorse */
@@ -7496,6 +7504,13 @@ function update(dt){
     if (pullFx.t <= 0) pullFx = null;
     return;
   }
+  if (prizeFx){   /* THE PRIZE CEREMONY (v31): the world holds still while he holds it high */
+    prizeFx.t -= dt;
+    prizeFx.spark -= dt;
+    if (prizeFx.spark <= 0){ prizeFx.spark = 0.09; burst(player.x + 16 + (Math.random() * 64 - 32), player.y - 16 + (Math.random() * 34 - 17), Math.random() < 0.5 ? '#ffd700' : '#fffbe8', 3); }
+    if (prizeFx.t <= 0){ if (player) player.dir = prizeFx.dir; prizeFx = null; if (typeof window !== 'undefined') window.__prizePose = false; }
+    return;
+  }
   if (sleepFx){   /* the night at the Hayloft, paced by the bed sound (7.6s) */
     sleepFx.t += dt;
     if (!sleepFx.doused && sleepFx.t >= 2.6){ sleepFx.doused = true; hideBanner(); }
@@ -8097,6 +8112,7 @@ function update(dt){
       else if (p.kind === 'coin'){ state.coins += (p.val || 1); sfx('corn'); burst(p.x + 10, p.y + 10, '#ffd91a', 4); dlog('Picked up ' + (p.val || 1) + ' coin(s) an enemy left behind. Coins: ' + state.coins); }
       else if (p.kind === 'key'){
         state.keys += 1; sfx('unlock');
+        startPrizeFx('🗝️', p.x + 11, p.y + 4, 1.0);   /* v31: even the key gets its moment — a short one */
         showBanner('🗝️ RUSTY KEY! JUST WALK INTO A PADLOCKED DOOR 🔒 AND IT CLICKS OPEN — ONE KEY OPENS ONE DOOR, IN ANY BARN. KEYS: ' + state.keys, 3000);
         dlog('Rusty key picked up. Keys: ' + state.keys);
       }
@@ -8118,6 +8134,7 @@ function update(dt){
           dlog('Boss heart grabbed on a repeat run — hearts refilled, no extra max heart (this boss\'s super heart was already earned).');
         }
         state.hp = state.maxHp; sfx('piece');
+        startPrizeFx('💖', p.x + 15, p.y + 8, 1.6);   /* v31: the boss's heart is held high */
         if (state.mode === 'dungeon'){
           dunBossDone = true;
           obstacles = obstacles.filter(function(o){ return !o.sealed; });
@@ -8133,6 +8150,7 @@ function update(dt){
       else if (p.kind === 'superheart'){
         /* SUPER HEART — from a burned special bale: +1 MAX heart, so the
            hearts at the top left go 3 -> 4 (and the new heart is full) */
+        startPrizeFx('💖', p.x + 15, p.y + 8, 1.6);   /* v31: held high like every prize */
         state.superHearts[p.burnId] = true;
         state.maxHp += 2; state.hp = Math.min(state.maxHp, state.hp + 2);
         playItem();
@@ -8148,6 +8166,7 @@ function update(dt){
            he likes (the Great Barn moat — continuous, no gap, no
            bridge — the pond, and every future water hazard). */
         state.hasLadder = true;
+        startPrizeFx('🪜', p.x + 15, p.y + 8, 1.6);   /* v31: the Ladder is a prize, not a pebble */
         playItem();
         burst(p.x + 15, p.y + 15, '#ffd700', 12); burst(p.x + 15, p.y + 15, '#b07f3a', 8);
         showBanner('🪜 YOU FOUND THE SMALL LADDER — YOURS FOR GOOD, FOREVER! IT IS NEVER USED UP: JUST TOUCH ANY WATER AND CLIMB OVER IT, AGAIN AND AGAIN — THE GREAT BARN’S MOAT AND EVERY OTHER WATER ON THE FARM! 🪜', 3800);
@@ -8219,6 +8238,10 @@ function update(dt){
     for (var ri = roomItems.length - 1; ri >= 0; ri--){
       var it = roomItems[ri];
       if (rectsOverlap(pb, it)){
+        /* THE PRIZE CEREMONY (v31): a pedestal treasure is never
+           just walked over — the pedestal flashes, he turns,
+           and the prize goes over his head */
+        startPrizeFx(it.emoji || '🌽', it.x + (it.w || 40) / 2, it.y + 10, 1.6);
         if (it.kind === 'armor'){
           state.armor = it.armorTier; playItem();
           showBanner(it.armorTier === 3 ? '🥇 YOU GOT THE GOLD OVERALLS! SUPER PROTECTION! 🥇' : '🥈 YOU GOT THE SILVER OVERALLS! BIG PROTECTION! 🥈', 2600);
@@ -9579,6 +9602,39 @@ function drawPullFx(){
   ctx.fillText('🔧', cxp, cyp + 9 + Math.sin(runTime * 3) * 2);
   ctx.restore();
 }
+function drawPrizeFx(){
+  if (!prizeFx || !player) return;
+  var cxp = player.x + 16, cyp = player.y - 16;
+  var a = Math.min(1, prizeFx.t / 0.4);
+  var age = prizeFx.dur - prizeFx.t;
+  ctx.save();
+  /* the pedestal flash — the chest-opening beat: a white-gold
+     burst blooms where the prize stood and is gone in a third
+     of a second, leaving the held prize in the light */
+  if (age < 0.34){
+    var fp = age / 0.34;
+    ctx.globalAlpha = 0.95 * (1 - fp); ctx.fillStyle = '#fffbe8';
+    ctx.beginPath(); ctx.arc(prizeFx.x, prizeFx.y, 8 + fp * 46, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 0.7 * (1 - fp); ctx.fillStyle = '#ffd700';
+    ctx.beginPath(); ctx.arc(prizeFx.x, prizeFx.y, 4 + fp * 30, 0, Math.PI * 2); ctx.fill();
+  }
+  /* the halo: a breathing gold disc and eight turning rays */
+  ctx.globalAlpha = 0.30 * a; ctx.fillStyle = '#ffd700';
+  ctx.beginPath(); ctx.arc(cxp, cyp, 27 + Math.sin(runTime * 6) * 3, 0, Math.PI * 2); ctx.fill();
+  ctx.globalAlpha = 0.85 * a; ctx.strokeStyle = '#ffe95e'; ctx.lineWidth = 3;
+  for (var pr = 0; pr < 8; pr++){
+    var pang = runTime * 1.6 + pr * Math.PI / 4;
+    ctx.beginPath();
+    ctx.moveTo(cxp + Math.cos(pang) * 21, cyp + Math.sin(pang) * 21);
+    ctx.lineTo(cxp + Math.cos(pang) * 35, cyp + Math.sin(pang) * 35);
+    ctx.stroke();
+  }
+  /* the prize itself, held high and bobbing */
+  ctx.globalAlpha = 1;
+  ctx.font = '40px serif'; ctx.textAlign = 'center';
+  ctx.fillText(prizeFx.emoji, cxp, cyp + 9 + Math.sin(runTime * 3) * 2);
+  ctx.restore();
+}
 function drawSleepFx(){
   if (!sleepFx) return;
   var t = sleepFx.t, a = 0;
@@ -9948,6 +10004,7 @@ function draw(){
     ctx.strokeText(gotLbl, W/2, H/2 + 20); ctx.fillText(gotLbl, W/2, H/2 + 20);
   }
   drawPullFx();
+  drawPrizeFx();
   if (fogActive()) drawFog();
   if (state.mode === 'dungeon' && dunDark && !dunLit && phase !== 'blink') drawDarkness();
   drawSleepFx();
