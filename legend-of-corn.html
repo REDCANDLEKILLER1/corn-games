@@ -911,9 +911,12 @@
   .sub-col-main, .sub-col-side{ display:flex; flex-direction:column; gap:10px; min-width:0; }
   @media (max-width:560px){ .sub-layout{ grid-template-columns:1fr 158px; gap:7px; } .sub-col-main, .sub-col-side{ gap:7px; } }
   .sub-crystals{ display:grid; grid-template-columns:repeat(4, 1fr); gap:9px; padding:6px 4px 2px; }
-  .sub-gem{ aspect-ratio:1/1; transform:rotate(45deg); border:2px solid #37c978; background:#141c0c; border-radius:4px; display:flex; align-items:center; justify-content:center; }
-  .sub-gem span{ transform:rotate(-45deg); font-family:"Press Start 2P",monospace; font-size:9px; color:#5d7050; }
-  .sub-gem.got{ background:linear-gradient(135deg, #ffe95e, #e8a93a); border-color:#fff2b0; box-shadow:0 0 8px #ffe95e88; }
+  /* crystallized corn cobs standing in their sockets (Michael,
+     2026-11-18): tall and rounded like a cob; an unset socket is
+     husk-dark, a set cob is crystal gold with kernel facets */
+  .sub-gem{ aspect-ratio:3/5; border:2px solid #37c978; background:#141c0c; border-radius:9px; display:flex; align-items:center; justify-content:center; }
+  .sub-gem span{ font-family:"Press Start 2P",monospace; font-size:9px; color:#5d7050; }
+  .sub-gem.got{ background:radial-gradient(circle at 35% 28%, #fff8cf 2.2px, transparent 3px), radial-gradient(circle at 63% 46%, #fff8cf 2.2px, transparent 3px), radial-gradient(circle at 38% 66%, #fff8cf 2.2px, transparent 3px), radial-gradient(circle at 60% 84%, #fff8cf 2px, transparent 2.8px), linear-gradient(160deg, #ffe95e, #e8a93a); border-color:#fff2b0; box-shadow:0 0 8px #ffe95e88; }
   .sub-gem.got span{ color:#5d3405; }
   .sub-crystal-count{ grid-column:1 / -1; text-align:center; font-weight:800; font-size:12px; color:#d8e6c3; }
   .sub-do div{ display:flex; justify-content:space-between; gap:8px; padding:2.5px 2px; font-size:12.5px; font-weight:800; color:#eef5e0; }
@@ -926,8 +929,8 @@
   .sub-equip div span:first-child{ font-size:17px; width:24px; text-align:center; }
   #subMapCanvas{ width:100%; height:auto; display:block; border-radius:6px; }
   .sub-panel .big-btn{ width:100%; margin-top:8px; }
-  .sub-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
-  .sub-slot{ background:#1b2413; border:2px solid #3a4a2a; border-radius:8px; padding:6px 2px 4px; text-align:center; color:#fffbe8; font-size:9px; font-weight:800; line-height:1.3; min-height:58px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; }
+  .sub-grid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; }
+  .sub-slot{ background:#1b2413; border:2px solid #3a4a2a; border-radius:8px; padding:6px 2px 4px; text-align:center; color:#fffbe8; font-size:9px; font-weight:800; line-height:1.3; min-height:58px; min-width:0; overflow:hidden; overflow-wrap:break-word; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; }
   .sub-slot .sub-ic{ font-size:21px; line-height:1.1; }
   .sub-slot.locked{ opacity:.38; filter:grayscale(1); }
   .sub-slot.equip{ cursor:pointer; border-color:#7c5a24; }
@@ -1375,7 +1378,7 @@
     <div class="hud-chip" id="lanternChip" style="display:none;" title="Lantern — lights dark rooms">🔦 <span class="chip-word">Lantern</span></div>
     <div class="hud-chip" id="ladderChip" style="display:none;" title="Small Ladder — yours for good, never used up: touch any water and climb over it, as often as you like">🪜 <span class="chip-word">Ladder</span></div>
     <button class="hud-chip" id="oilBtn" style="display:none;" title="Use Oil Can — fills hearts to full">🛢️ <span class="chip-word">Oil</span> <b id="oilCount">0</b> USE</button>
-    <button class="hud-chip" id="barnChip" type="button" title="Tap to see your Barn Puzzle — pieces you have collected and levels still missing" aria-label="Open Barn Puzzle">🧩 Barn <b id="pieceCount">0/8</b></button>
+    <button class="hud-chip" id="barnChip" type="button" title="Tap to see the Great Barn Seal — crystallized corn cobs you have set, and barns still missing theirs" aria-label="Open Great Barn Seal">🌽 Cobs <b id="pieceCount">0/8</b></button>
     <!-- LEVEL MAP BUTTON: the ONLY way the Level Map appears. It
          sits up here in the HUD right beside the 🧩 Barn chip (not
          over the barn room). Shown by JS just while Corn Man is
@@ -1486,7 +1489,7 @@
         <div class="farm-strip top" aria-hidden="true">🌽 🚜 🐔 🌻 🌽 🐷 🌾 🚜 🌽 🐔 🌻 🌽</div>
         <div class="piece-big" id="homeHouse">🏠</div>
         <h2 id="homeTitle">HOME</h2>
-        <p class="home-intro">The storm blew the barn apart — <b>8 hidden barns, 8 barn pieces</b>, one Great Barn to raise again. Explore the farm and <b>find</b> each barn — there is no level list! Tap a farmer to pick them, or enter a new name:</p>
+        <p class="home-intro">Princess Poppy sleeps under the Storm Wizard's spell — <b>8 hidden barns, 8 crystallized corn cobs</b>, one Great Barn to open and a princess to wake. Explore the farm and <b>find</b> each barn — there is no level list! Tap a farmer to pick them, or enter a new name:</p>
         <div id="worldPick">
           <p class="wp-cap">🌍 PICK YOUR WORLD 🌍</p>
           <div class="wp-row">
@@ -1522,8 +1525,8 @@
 
     <!-- BARN PUZZLE / PROGRESS (no level list — the barns are found by exploring!) -->
     <div class="overlay" id="mapScreen">
-      <h2>🧩 BARN PUZZLE</h2>
-      <p class="hint">Tap the <b>🧩 Barn</b> chip up top any time to pop this up. Every piece you collect <b>adds 1/8 of the barn</b> to the picture below — the barn is the puzzle, and it fills in piece by piece. Each section of the barn is numbered <b>1–8</b> for its level: a missing piece stays grayed out with <b>dotted lines</b> and its level number inside, and a collected piece <b>fills in</b> in full colour. Collect all 8 pieces to open the Great Barn.</p>
+      <h2>🌽 THE GREAT BARN SEAL</h2>
+      <p class="hint">Tap the <b>🌽 Cobs</b> chip up top any time to pop this up. Every <b>crystallized corn cob</b> you set in its barn shrine <b>breaks 1/8 of the seal</b> on the Great Barn — the picture below is the Great Barn itself, shining through as the seal gives way. Each section is numbered <b>1–8</b> for its barn: a section still sealed stays grayed out with <b>dotted lines</b> and its number inside, and a broken section <b>fills in</b> in full colour. Set all 8 cobs to open the Great Barn.</p>
       <p id="welcomeLine"></p>
       <button class="big-btn green" id="mapExploreBtn" style="margin:2px 0 10px;">🌽 BACK TO THE FARM ▶</button>
       <div class="barn-box">
@@ -1597,7 +1600,7 @@
             <g data-num="7"><circle class="num-badge" cx="160" cy="41" r="12"/><text x="160" y="42">8</text></g>
           </g>
         </svg>
-        <div class="cap" id="barnCap">BARN PUZZLE: 0 / 8 PIECES</div>
+        <div class="cap" id="barnCap">GREAT BARN SEAL: 0 / 8 COBS SET</div>
       </div>
       <div id="levelGrid"></div>
     </div>
@@ -1632,13 +1635,13 @@
     <!-- PIECE WON -->
     <div class="overlay" id="pieceScreen">
       <div class="col"><div class="sheet">
-        <div class="piece-big" id="pieceEmoji">🪨</div>
-        <h2 id="pieceTitle">YOU GOT A BARN PIECE!</h2>
+        <div class="piece-big" id="pieceEmoji">🌽</div>
+        <h2 id="pieceTitle">YOU GOT A CRYSTALLIZED CORN COB!</h2>
         <p id="pieceText"></p>
         <div class="piece-list" id="pieceDots"></div>
         <p id="pieceProgress" style="font-weight:900;"></p>
         <div class="btn-row">
-          <button class="big-btn ghost" id="pieceMapBtn">🧩 BARN PUZZLE</button>
+          <button class="big-btn ghost" id="pieceMapBtn">🌽 THE GREAT BARN SEAL</button>
           <button class="big-btn green" id="pieceNextBtn">🌽 KEEP EXPLORING ▶</button>
         </div>
       </div></div>
@@ -1683,7 +1686,7 @@
               <div class="sub-detail" id="subDetail"></div>
             </div>
             <div class="sub-panel">
-              <div class="sub-panel-title">BARN PIECES</div>
+              <div class="sub-panel-title">CRYSTAL COBS</div>
               <div class="sub-crystals" id="subPieces"></div>
             </div>
             <div class="sub-panel">
@@ -1781,8 +1784,8 @@
         <p>🏚️ <b>Inside a barn:</b> each barn is the inside of a <b>rundown farmhouse or barn — connected rooms</b>, one screen each, with doors in the walls. Every barn is <b>much bigger than it used to be — 15 to 25 rooms</b> (never more than 25), winding through the shape of that level's big end guy. Clear every pest in the shutter room to open its <b>sliding shutter door</b>. <b>Padlocked doors</b> need a <b>rusty key 🗝️</b> (keys work in any barn). Push a <b>crate</b> onto a floor switch for a secret. The <b>gray stone blocks</b> set into the floor are <b>solid</b> — you can't walk through them, you have to walk <b>around</b> them. <b>No two rooms are laid out the same</b> — in every barn, Levels 1–9, each room has its <b>own layout</b> of stone blocks, crates and hay bales, so every room you step into looks and plays different from the last. At the end of each barn waits a <b>big tough enemy</b> — beat it and your <b>hearts refill to 100% full</b> right away, then grab the <b>heart</b> that appears and go on into the seed room and take that barn's <b>barn piece</b> — you step back outside at the end of every level with <b>full hearts</b>, Level 9 included. The screen blinks and you're back outside to search for the next barn. <b>Want out early?</b> Head back to the <b>entry room</b> — the room you came in — and walk out the <b>🚪 EXIT door in the south wall, right behind where you enter</b>: it takes you straight back out onto the farm, any time, no questions asked.</p>
         <p>🌑 <b>Dark rooms:</b> some barn rooms are <b>pitch black</b> — you can only see a little way around Corn Man, but the room holds things worth finding (like the key!). The <b>Lantern 🔦</b> — it lies waiting on the <b>Sunny East Field</b> — fixes that: press the orange <b>LANTERN</b> button (or <kbd>L</kbd>) and its <b>fire lights the whole room</b> for the rest of that barn visit. No lantern? You can still stumble through by memory… carefully!</p>
         <p>🔒 <b>Locks &amp; keys — the whole idea, step by step:</b> (1) Every barn hides <b>one rusty key 🗝️</b> in a <b>pitch-black dark room</b> about a third of the way through the barn — walk over it to pick it up. (2) Keep following the path: a couple of rooms past the dark room is a <b>padlocked door 🔒</b> (it says <b>PADLOCKED — NEEDS A KEY</b> right on it). (3) Just <b>walk into that door</b> while carrying the key — it clicks open and uses <b>one</b> key. That's all there is to it! Your <b>key count rides at the top of the screen</b>, and keys you don't spend <b>carry over</b> to every other barn. No key in your pocket? The dark room is always <b>a couple of rooms back along the path</b> from the padlocked door — head back and fetch it. The silver <b>silo</b> in the Level 7 yard is padlocked the same way — a tractor out in that yard carries its key.</p>
-        <p>🧩 <b>The puzzle piece &amp; the golden flash:</b> beat the big enemy at the end of a barn, grab the <b>heart</b>, then follow the path on into the <b>seed room</b> — the barn's <b>puzzle piece</b> sits <b>glowing on a golden pedestal</b> at the top of the room, labelled <b>★ PUZZLE PIECE ★</b>. <b>Walk into it</b> to take it: your <b>Barn count ticks up right away</b> (0/8 → 1/8), the screen flashes <b>gold</b> with sparkles for a second (that's the celebration, not a glitch!), your piece clicks into the barn puzzle — and Corn Man steps <b>back out onto the farm, right by that barn's entrance</b>, ready to hunt for the next one. Two seed rooms hide a <b>second treasure</b> beside the piece — the <b>Silver Overalls</b> in Level 3 and the <b>Gold Overalls</b> in Level 7: on those levels the barn does <b>not</b> close when you take the piece — it stays open until <b>both</b> treasures are collected, and only then does Corn Man step back out.</p>
-        <p>🧩 Collect all <b>8 barn pieces</b> to complete the barn puzzle — that unseals <b>The Great Barn</b> on the north hill, where <b>Super Corn Man</b> is waiting! The moment the <b>8th piece</b> lands, the screen <b>flashes</b> and a pop-up announces <b>LEVEL 9 UNLOCKED!</b> — press its <b>DISMISS</b> button to close it and keep exploring. Tap the <b>🧩 Barn chip</b> up top at any time to pop up the <b>Barn Puzzle</b>: a conquered level shows the <b>piece you collected</b>, and a level you have not beaten yet shows its <b>level number, marked MISSING</b>.</p>
+        <p>🌽 <b>The crystal cob &amp; the golden flash:</b> beat the big enemy at the end of a barn, grab the <b>heart</b>, then follow the path on into the <b>seed room</b> — the barn's <b>crystallized corn cob</b> sits <b>glowing on a golden pedestal</b> at the top of the room. <b>Walk into it</b> to take it: your <b>Cob count ticks up right away</b> (0/8 → 1/8), the screen flashes <b>gold</b> with sparkles for a second (that's the celebration, not a glitch!), and its light joins the seal on the Great Barn — and Corn Man steps <b>back out onto the farm, right by that barn's entrance</b>, ready to hunt for the next one. Two seed rooms hide a <b>second treasure</b> beside the cob — the <b>Silver Overalls</b> in Level 3 and the <b>Gold Overalls</b> in Level 7: on those levels the barn does <b>not</b> close when you take the cob — it stays open until <b>both</b> treasures are collected, and only then does Corn Man step back out.</p>
+        <p>🌽 Collect all <b>8 crystallized corn cobs</b> — that breaks the seal on <b>The Great Barn</b> on the north hill, where <b>Super Corn Man</b> is waiting! The moment the <b>8th cob</b> is set, the screen <b>flashes</b> and a pop-up announces <b>LEVEL 9 UNLOCKED!</b> — press its <b>DISMISS</b> button to close it and keep exploring. Tap the <b>🌽 Cobs chip</b> up top at any time to pop up the <b>Great Barn Seal</b>: a conquered barn shows its section <b>shining through the seal</b>, and a barn you have not beaten yet shows its <b>level number, marked MISSING</b>.</p>
         <p>💒 <b>The wedding &amp; World 2:</b> beat <b>Level 9</b> and Corn Man marries a beautiful woman in a white dress — they hold hands, kiss, and the screen flashes! Then a message sends you back to the <b>Home Screen</b>: your hero's <b>information and tools are reset</b> (fresh quest, empty pockets), and on Home you can now pick <b>World 1</b> to replay or <b>World 2</b>. In <b>World 2</b> all the levels are <b>switched around</b> on the farm — and the <b>Super Hearts</b> and <b>hidden coins</b> have moved too (the 🗺️ Farm Map shows World 2's layout) — and every level's <b>end boss is 25% stronger</b>. Beat World 2's Level 9 and the game is over: wedding, reset, and back Home, where you can pick <b>World 1 or World 2</b> again.</p>
         <p>🔁 <b>Repeating a level:</b> you can walk back into any barn you have already cleared. Beat its big end guy again and his <b>heart still appears and still refills every heart</b> — but the <b>+1 max heart (super heart) is granted only the FIRST time</b> you beat each level's boss. And in the <b>seed room</b>, anything you already collected — the <b>puzzle piece</b>, and the <b>Silver Overalls</b> or <b>Gold Overalls</b> — is <b>simply not there any more</b>. If everything that room held is already yours, you walk into the empty room and, after a couple of seconds, a <b>small message in the room</b> states <b>Puzzle Piece Collected</b> — press its <b>DISMISS — GO TO GAME</b> button and Corn Man steps back out onto the game screen by that level's barn. No piece is ever counted twice.</p>
         <p>🗺️ <b>Farm Map:</b> tap the green <b>🗺️ MAP</b> button up top (or press <kbd>M</kbd>) to see the whole farm laid out — all <b>128 fields in a 16 × 8 grid</b>, like the original Zelda's overworld, and where every level's entrance is: L1–L8 plus the Great Barn. Your field is outlined in gold with a <b>📍</b>. Tap any field on the map to see its name. The map only shows where to go — you still have to walk there and find the entrance yourself!</p>
@@ -2100,21 +2103,21 @@ var ENEMY_TYPES = {
 };
 var LEVELS = [
   { name:'Sunny Field',      ground:'#5db531', ground2:'#55a82c', ob:'hay',    deco:'flower',
-    piece:'Puzzle Piece', emoji:'🧩', enemies:[['chicken',3],['pig',2]] },
+    piece:'Golden Dawn Cob', emoji:'🌽', enemies:[['chicken',3],['pig',2]] },
   { name:'Pumpkin Patch',    ground:'#6aa832', ground2:'#619c2d', ob:'pumpkin', deco:'pumpkin',
-    piece:'Wooden Floor', emoji:'🪵', enemies:[['chicken',2],['pig',2],['crow',2]] },
+    piece:'Amber Cob', emoji:'🌽', enemies:[['chicken',2],['pig',2],['crow',2]] },
   { name:'Dark Corn Maze',   ground:'#3e7d26', ground2:'#376e21', ob:'corn',   deco:'corn',
-    piece:'Left Wall', emoji:'🧱', enemies:[['crow',3],['pig',2],['mole',2]] },
+    piece:'Moonshadow Cob', emoji:'🌽', enemies:[['crow',3],['pig',2],['mole',2]] },
   { name:'Orchard Rows',     ground:'#64b037', ground2:'#5aa330', ob:'tree',   deco:'apple',
-    piece:'Right Wall', emoji:'🧱', enemies:[['pig',3],['goat',2],['crow',2]] },
+    piece:'Orchard Cob', emoji:'🌽', enemies:[['pig',3],['goat',2],['crow',2]] },
   { name:'Muddy Pond',       ground:'#4f9e4d', ground2:'#478f45', ob:'rock',   deco:'lily',
-    piece:'Back Wall', emoji:'🟥', enemies:[['goat',3],['mole',3],['crow',2]] },
+    piece:'Rain Pearl Cob', emoji:'🌽', enemies:[['goat',3],['mole',3],['crow',2]] },
   { name:'Scarecrow Ridge',  ground:'#77a83a', ground2:'#6b9a33', ob:'hay',    deco:'flower',
-    piece:'Roof Beams', emoji:'🪜', enemies:[['scarecrow',3],['crow',3],['pig',2]] },
+    piece:'Storm Cob', emoji:'🌽', enemies:[['scarecrow',3],['crow',3],['pig',2]] },
   { name:'Stormy Silo',      ground:'#5b8f3e', ground2:'#527f36', ob:'rock',   deco:'corn',
-    piece:'Red Roof', emoji:'🔺', enemies:[['scarecrow',2],['tractor',2],['goat',2],['crow',2]] },
+    piece:'Ember Cob', emoji:'🌽', enemies:[['scarecrow',2],['tractor',2],['goat',2],['crow',2]] },
   { name:'Moonlight Meadow', ground:'#477a35', ground2:'#3f6e2f', ob:'tree',   deco:'star',
-    piece:'Big Red Door', emoji:'🚪', enemies:[['tractor',2],['scarecrow',3],['goat',3],['mole',2]] },
+    piece:'Harvest Cob', emoji:'🌽', enemies:[['tractor',2],['scarecrow',3],['goat',3],['mole',2]] },
   { name:'The Great Barn',   ground:'#8a6b35', ground2:'#7d6130', ob:'hay',    deco:'flower',
     piece:null, emoji:'🏆', boss:true, enemies:[['chicken',2],['pig',1]] }
 ];
@@ -2570,7 +2573,7 @@ function updateHUD(){
     state.screen === 'play' ? (state.mode === 'dungeon'
       ? ('LV ' + (state.level + 1) + ' · ' + LEVELS[state.level].name.toUpperCase() + ' · ROOM ' + (dunRoom + 1) + '/' + dunRoomCount(state.level))
       : OW_SCREENS[state.owRow * OW_COLS + state.owCol].name.toUpperCase()) :
-    state.screen === 'map' ? 'BARN PUZZLE' : state.screen === 'worldmap' ? 'FARM MAP' : state.screen === 'levelmap' ? 'LEVEL MAP' : state.screen === 'name' ? 'HOME' : 'TITLE';
+    state.screen === 'map' ? 'GREAT BARN SEAL' : state.screen === 'worldmap' ? 'FARM MAP' : state.screen === 'levelmap' ? 'LEVEL MAP' : state.screen === 'name' ? 'HOME' : 'TITLE';
   syncSideLevelMap();
   fitStage();
 }
@@ -2601,7 +2604,7 @@ function renderMap(){
     var i = parseInt(g.getAttribute('data-num'), 10);
     g.classList.toggle('got', !!state.pieces[i]);
   });
-  document.getElementById('barnCap').textContent = 'BARN PUZZLE: ' + piecesGot() + ' / 8 PIECES' + (piecesGot() === 8 ? ' — THE GREAT BARN IS OPEN!' : '');
+  document.getElementById('barnCap').textContent = 'GREAT BARN SEAL: ' + piecesGot() + ' / 8 COBS SET' + (piecesGot() === 8 ? ' — THE GREAT BARN IS OPEN!' : '');
   /* No slot grid anymore — the barn picture itself is the progress
      display: its numbered sections show what is collected and what
      is still missing, so a second list of level cards is not needed. */
@@ -4791,15 +4794,15 @@ function goOverworld(atHome){
    page. The full storyline lives in STORYLINE.md beside this file. */
 var INTRO_TEXT = {
   opening: [
-    'The storm came in the night.\nIt took the Great Barn apart, board by board,\nand scattered its eight pieces across the farm.',
-    'Every creature on the farm woke up bold.\nEvery machine woke up angry.\nThe fields are not safe anymore.',
-    'You are Corn Man. Your hands are empty —\nthe storm took everything, even your wrench.\nMorning fog still hugs the fields.',
-    'But the wrench survived. Word is it waits north —\nfour fields up the old road, past Corn Village,\nthrust into the pedestal stone in the grove.',
-    'Fight your way there with your fists.\nThen find the eight hidden barns, take back the pieces,\nand raise the Great Barn again. Take heart — and go.'
+    'Grandma Pearl takes your hand and turns it over.\nA golden kernel shines in your palm, bright as sunrise.\n"The mark," she says. "So it\'s you."',
+    '"A hundred harvests ago, Princess Poppy would not tell\nthe Storm Wizard where the Golden Cob of Courage lay.\nSo he laid an endless sleep on her — and she sleeps still."',
+    '"Before he died, the old Harvest King sealed the Great Barn\nand set a shrine in eight barns across the valley.\nEach shrine\'s socket waits for a crystallized corn cob."',
+    '"A keeper guards every cob. Set all eight shining and the\nGreat Barn opens — and the Golden Cob can wake her.\nBut the Blight King\'s crows are watching you, boy."',
+    '"If you fall, they\'ll scatter your seed on their master\'s ashes\nand he\'ll rise to wither every field. So don\'t fall.\nYour wrench waits in the grove stone, north. Go — take heart."'
   ],
   opening2: [
     'The farm has shifted in the night.\nNothing stands where it stood,\nand the storm\'s creatures remember you.',
-    'They have grown stronger. So have you.\nEight pieces. Eight barns. One wedding.\nGo again, hero.'
+    'They have grown stronger. So have you.\nEight cobs. Eight barns. One princess to wake.\nGo again, hero.'
   ],
   wrench: [
     '— THE PEDESTAL GROVE —',
@@ -4810,12 +4813,12 @@ var INTRO_TEXT = {
   lvl0: [
     '— LEVEL 1 —\nSUNNY FIELD',
     'The hens of this farm were gentle once.\nThen the storm got into the coop —\nand one of them kept growing.',
-    'She guards the first piece of the Great Barn.\nMind the beak. Mind the fire.\nTake back what the storm stole.'
+    'She guards the first crystallized corn cob.\nMind the beak. Mind the fire.\nWin it, and set it shining in its shrine.'
   ],
   lvl1: [
     '— LEVEL 2 —\nPUMPKIN PATCH',
     'Something old sleeps under the pumpkins.\nIt was old when this farm was young,\nand the storm woke it hungry.',
-    'Its neck reaches farther than it looks.\nStrike when it stretches for you.\nThe second piece waits below.'
+    'Its neck reaches farther than it looks.\nStrike when it stretches for you.\nThe second cob waits below.'
   ],
   lvl2: [
     '— LEVEL 3 —\nTHE DARK CORN MAZE',
@@ -5623,7 +5626,7 @@ function loadRoom(n, spawnSide){
     } else if (seedAlready.length){
       showDungeonHint('🌽 SEED ROOM! THE ' + seedAlready.join(' AND ').toUpperCase() + ' IS ALREADY COLLECTED — NOT HERE ANY MORE! 🌽', 2200);
     } else {
-      showDungeonHint(L.piece ? ('🌽 SEED ROOM! PUZZLE PIECE AT THE TOP — WALK INTO IT! 🌽') : '🌽 THE GREAT BARN VAULT!', 1600);
+      showDungeonHint(L.piece ? ('🌽 SEED ROOM! THE CRYSTAL COB GLOWS AT THE TOP — WALK INTO IT! 🌽') : '🌽 THE GREAT BARN VAULT!', 1600);
     }
   } else if (n > 0){
     /* an ordinary room along the winding path: pests from this
@@ -6291,7 +6294,7 @@ function dismissPieceAlreadyCollected(){
   repeatNames = [];
   stepOutByBarn(idx);
   showBanner(hadPiece
-    ? '🧩 PUZZLE PIECE COLLECTED — BACK ON THE GAME SCREEN BY THE LEVEL ' + (idx + 1) + ' BARN! 🧩'
+    ? '🌽 CRYSTAL COB SET SHINING — BACK ON THE GAME SCREEN BY THE LEVEL ' + (idx + 1) + ' BARN! 🧩'
     : '⭐ ALREADY COLLECTED — BACK ON THE GAME SCREEN BY THE LEVEL ' + (idx + 1) + ' BARN! ⭐', 2600);
   dlog('Already-collected note dismissed — back on the game screen by the Level ' + (idx + 1) + ' barn.');
 }
@@ -7637,7 +7640,7 @@ function update(dt){
           roomItems.splice(ri, 1);
           if (roomItems.length){
             sfx('piece'); updateHUD();
-            showBanner('🧩 THAT PUZZLE PIECE IS ALREADY IN YOUR BARN PUZZLE — THE ' + roomItems.map(function(r){ return r.label; }).join(' AND THE ') + ' IS STILL HERE TO TAKE! 🧩', 3000);
+            showBanner('🌽 THAT BARN\'S COB IS ALREADY SET SHINING — THE ' + roomItems.map(function(r){ return r.label; }).join(' AND THE ') + ' IS STILL HERE TO TAKE! 🧩', 3000);
             dlog('Repeat level: piece touched but already collected — other item(s) still in the seed room, so the level stays open.');
           } else {
             showPieceAlreadyCollected();
@@ -8624,17 +8627,37 @@ function draw(){
       /* pedestal */
       R(cx - 34, it.y + 44, 68, 10, '#8a8f96'); R(cx - 38, it.y + 54, 76, 7, '#6f757d');
       ctx.font = (it.kind === 'piece' ? 46 : 36) + 'px serif'; ctx.textAlign = 'center';
-      ctx.fillText(it.emoji, cx, it.y + 36 + bob);
+      if (it.kind === 'piece'){
+        /* the crystallized corn cob (Michael, 2026-11-18): drawn, not
+           an emoji — a golden cob standing upright on the pedestal,
+           kernel rows, crystal facet lines catching the light, and
+           two husk leaves at its foot */
+        var cby = it.y + 22 + bob;
+        ctx.save(); ctx.translate(cx, cby);
+        var cgrad = ctx.createLinearGradient(-11, 0, 11, 0);
+        cgrad.addColorStop(0, '#e8a93a'); cgrad.addColorStop(0.5, '#fff3a0'); cgrad.addColorStop(1, '#d98a1e');
+        ctx.fillStyle = cgrad; rrPath(-11, -24, 22, 48, 10); ctx.fill();
+        ctx.strokeStyle = '#a86a0c'; ctx.lineWidth = 1.4; rrPath(-11, -24, 22, 48, 10); ctx.stroke();
+        ctx.strokeStyle = 'rgba(168,106,12,0.6)'; ctx.lineWidth = 1;
+        [-14, -7, 0, 7, 14].forEach(function(ky){ ctx.beginPath(); ctx.moveTo(-9, ky); ctx.lineTo(9, ky); ctx.stroke(); });
+        [-5, 0, 5].forEach(function(kx){ ctx.beginPath(); ctx.moveTo(kx, -21); ctx.lineTo(kx, 21); ctx.stroke(); });
+        ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.moveTo(-6, -17); ctx.lineTo(2, -4); ctx.lineTo(-4, 9); ctx.stroke();
+        ctx.fillStyle = '#7fbf3f';
+        ctx.beginPath(); ctx.moveTo(-3, 20); ctx.lineTo(-14, 30); ctx.lineTo(-2, 30); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(3, 20); ctx.lineTo(14, 30); ctx.lineTo(2, 30); ctx.closePath(); ctx.fill();
+        ctx.restore();
+      } else {
+        ctx.fillText(it.emoji, cx, it.y + 36 + bob);
+      }
       ctx.font = '13px serif'; ctx.fillStyle = '#fff3a0';
       ctx.fillText('✨', cx - 34, it.y + 6 + Math.sin(runTime * 6) * 3);
       ctx.fillText('✨', cx + 34, it.y + 6 - Math.sin(runTime * 6) * 3);
       ctx.fillText('✨', cx - 28, it.y + 40 - Math.sin(runTime * 7) * 3);
       ctx.fillText('✨', cx + 28, it.y + 40 + Math.sin(runTime * 7) * 3);
       ctx.lineWidth = 3; ctx.strokeStyle = '#000a'; ctx.textAlign = 'center';
-      if (it.kind === 'piece'){
-        ctx.font = '11px "Press Start 2P", monospace'; ctx.fillStyle = '#ffd700';
-        ctx.strokeText('★ PUZZLE PIECE ★', cx, it.y - 16); ctx.fillText('★ PUZZLE PIECE ★', cx, it.y - 16);
-      }
+      /* no banner over the cob (no flying texts) — its name rides
+         on the label line below, like every other treasure */
       ctx.font = '11px "Press Start 2P", monospace'; ctx.fillStyle = '#ffe95e';
       ctx.strokeText(it.label, cx, it.y + 78); ctx.fillText(it.label, cx, it.y + 78);
       ctx.font = '9px "Press Start 2P", monospace'; ctx.fillStyle = '#fffbe8';
@@ -8842,7 +8865,7 @@ function draw(){
     ctx.font = '20px "Press Start 2P", monospace'; ctx.fillStyle = '#ffe95e';
     ctx.strokeText('🎉 YOU GOT IT! 🎉', W/2, H/2 - 8); ctx.fillText('🎉 YOU GOT IT! 🎉', W/2, H/2 - 8);
     ctx.font = '12px "Press Start 2P", monospace'; ctx.fillStyle = '#fffbe8';
-    var gotLbl = (LEVELS[state.level] && LEVELS[state.level].piece ? LEVELS[state.level].piece : 'PUZZLE PIECE').toUpperCase();
+    var gotLbl = (LEVELS[state.level] && LEVELS[state.level].piece ? LEVELS[state.level].piece : 'CRYSTAL COB').toUpperCase();
     ctx.strokeText(gotLbl, W/2, H/2 + 20); ctx.fillText(gotLbl, W/2, H/2 + 20);
   }
   drawPullFx();

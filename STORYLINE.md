@@ -3,24 +3,38 @@ _Written 2026-11-17 at Michael's direction: build the plot from the game's real
 material, Zelda-style. This is the script the in-game intro dialogues use._
 
 ## The theme
-**Rebuilding after the storm.** The farm was whole once. One night a great
-storm tore the Great Barn apart and scattered its eight pieces across the
-farm — and everything the storm touched woke up wrong: hens bold, machines
-angry, old things hungry. Corn Man's quest is not conquest; it is putting his
-home back together, piece by piece, with his bare hands if he has to. The
-final trial is the storm's last trick: a double of Corn Man himself. When the
-barn stands again, the story ends the way farm stories should — with a
-wedding.
+**The Sleeping Harvest** — the official story (rewritten 2026-11-18 at
+Michael's direction from Zelda II: The Adventure of Link, corn-grown;
+it supersedes the earlier storm-scattering telling). Long ago, the
+Harvest King ruled a valley so rich the corn grew taller than the silos.
+Hidden in the Great Barn he kept the **Golden Cob of Courage**, and only
+his daughter, **Princess Poppy**, knew its resting place. The Storm
+Wizard — a crow-hearted conjurer in the Blight King's service — demanded
+the secret; Poppy would not tell, so he laid an endless sleep on her, and
+she has not woken in a hundred harvests. Before he died, the old king
+sealed the Great Barn with a binding force and set a shrine in eight
+barns across the valley, each with an empty socket waiting for a
+**crystallized corn cob**, each cob guarded by a keeper. When all eight
+cobs are set and shining, the seal breaks and the Golden Cob can wake
+the princess — and the crows are watching: if the hero falls, the Blight
+King's followers will scatter his seed corn on their master's ashes and
+raise him to wither every field forever. This spring Grandma Pearl found
+the mark on a farm boy's hand — a single golden kernel, bright as
+sunrise. His name is Corn Man. The final trial inside the Great Barn is
+the Wizard's last trick: a double of Corn Man himself. And when Poppy
+wakes, the story ends the way farm stories should — with a wedding.
 
 Courage, in this telling, is not being unafraid. It is walking into the next
 field anyway.
 
 ## The plot
-1. **The storm.** It takes the Great Barn apart board by board and hides its
-   8 pieces inside 8 barns across the farm, each guarded by a storm-touched
-   keeper.
-2. **Empty hands.** The Country Stores are gone — the storm took them too.
-   Everything Corn Man needs must be *found* where the storm dropped it. And
+1. **The seal.** The old Harvest King sealed the Great Barn and set a
+   shrine with an empty socket in 8 barns across the valley. A crystallized
+   corn cob waits in each barn's seed room, guarded by a keeper the
+   Wizard's night woke up wrong: hens bold, machines angry, old things
+   hungry.
+2. **Empty hands.** The Country Stores are gone — the Wizard's night took them too.
+   Everything Corn Man needs must be *found* where the Wizard's night scattered it. And
    the first one is an adventure, not a pickup: early morning fog lies over
    the fields, and Corn Man must fight his way north with his bare fists —
    four fields, past Middle Field — to the Pedestal Grove, where his Wooden
@@ -95,6 +109,7 @@ level, forever. Everything else on the farm is tougher than a chicken.
 - **Being led (v15, Michael 2026-11-18):** "you gotta be led, you can't just [drop him in]." **Eli** the greeter stands on Home Farm by the spawn with a five-page conversation that lays out the whole road: the wrench in the grove stone, four fields north, signs to follow, the village folks, then the barns east-first for the Lantern. **Wooden signs** stand along the north road (Home Farm ×2 — north and east, the field above home, Corn Village crossroads, the field below the grove, the grove gate): step up to one and it reads itself out in the chat bubble, directions and distances both. The drawn farm map now paints the north road and the village's four houses on charted fields. Same round, Michael's clutter cuts: the **map screen lost all its writing** (no hint paragraph, no legend wall — just the map, grown to 68vh, and the one readout line), and the **top HUD bar shows only on the game screen** — hearts and chips before the game starts were clutter over the title art; hearts live in the Pack too.
 - **The pause menu is the Zelda subscreen (v16, Michael 2026-11-18):** rebuilt to his A Link to the Past reference, pretty much exactly — **ITEM** grid (tap to equip) with **DO** under it on the left (TALK / READ / PULL / PUSH / SWING-or-PUNCH / SPIN / THROW / BURN / CROSS WATER, greyed until he can do them); on the right, **IN HIS HANDS** (the reference's selected-item box), the **BARN PIECES** panel, and **EQUIPMENT** with his hearts. His question — "do we have anything similar to a crystal?" — answered in the build: **the barn pieces ARE our crystals** (collect all 8, the endgame opens), so they sit in the crystal panel as eight diamond slots that fill gold as they come home. The mini-map panel left the Pack (the full map is one tap away) and the note paragraphs went with the rest of the writing.
 - **No flying texts (v17, Michael 2026-11-18):** the house-name banners painted across the village houses and the name labels over people's heads are gone. Words live in the UI — the banner names a house when you walk in, the chat bubble carries every conversation — and the world itself stays clean.
+- **The Sleeping Harvest is the story now (v18, Michael 2026-11-18):** the opening pages are Grandma Pearl telling it over Corn Man's marked hand; the eight collectibles are **crystallized corn cobs** with their own names (Golden Dawn, Amber, Moonshadow, Orchard, Rain Pearl, Storm, Ember, Harvest), drawn as real crystal cobs on their seed-room pedestals; the pause menu's diamonds became cobs in sockets under a CRYSTAL COBS panel; and the old Barn Puzzle is **the Great Barn Seal** — every cob set breaks 1/8 of the seal and the Great Barn shines through.
 - **The Hayloft Inn** is the village's fourth house. Innkeeper Ruth keeps it. Step up to a bed and Corn Man sleeps: good night, then morning — **every heart full, and the farm's day counter turns**. Hurt all you like out there; the inn makes it right.
 
 ## The dialogue script (as shipped in the game)
