@@ -2198,7 +2198,7 @@ var state = {
   wrench:0,                  // 0 none · 1 wooden · 2 silver · 3 golden
   armor:0,                   // 0 none · 1 overalls · 2 silver overalls · 3 gold overalls
   maxHp:6, hp:6,             // 3 hearts to start; +1 heart per level beaten
-  hasLantern:false, hasPouch:false,          // shop lantern (150 coin) — lights dark barn rooms
+  hasLantern:false, hasPouch:false, hasSledge:false,          // shop lantern (150 coin) — lights dark barn rooms
   keys:0,                    // rusty keys — 1 opens 1 padlocked door, in any barn
   found:{},                  // secrets/entrances discovered: maze, hay, tomb
   burned:{},                 // designated hay bales burned with the lantern: burn1..burn5
@@ -2309,7 +2309,7 @@ function resetRun(){
   state.day = 1;
   state.equipMelee = 'wrench'; state.equipThrow = 'kernel';   /* the Pack starts empty-handed too (map knowledge stays — like visitedRooms) */
   state.maxHp = 6; state.hp = state.maxHp; state.cheatAll = false; state.cheatCorn = false;
-  state.hasLantern = false; state.hasPouch = false; state.keys = 0; state.found = {};
+  state.hasLantern = false; state.hasPouch = false; state.hasSledge = false; state.keys = 0; state.found = {};
   state.burned = {}; state.superHearts = {};
   state.shedBurned = {}; state.shedStashes = {};
   state.hasLadder = false; state.ladderBurned = false;
@@ -2477,7 +2477,7 @@ function snapshotState(){
     corn: state.corn, coins: state.coins, arrows: state.arrows, goldArrows: state.goldArrows,
     hasBow: state.hasBow, hasSword: state.hasSword, oilUses: state.oilUses, wrench: state.wrench, armor: state.armor,
     maxHp: state.maxHp, hp: state.hp, cheatAll: state.cheatAll, cheatCorn: state.cheatCorn,
-    hasLantern: state.hasLantern, hasPouch: state.hasPouch, keys: state.keys, found: state.found,
+    hasLantern: state.hasLantern, hasPouch: state.hasPouch, hasSledge: state.hasSledge, keys: state.keys, found: state.found,
     burned: state.burned, superHearts: state.superHearts,
     shedBurned: state.shedBurned, shedStashes: state.shedStashes,
     hasLadder: state.hasLadder, ladderBurned: state.ladderBurned,
@@ -2506,7 +2506,7 @@ function applySnapshot(d){
   state.maxHp = Math.max(2, d.maxHp | 0); state.hp = Math.min(state.maxHp, Math.max(0, d.hp | 0));
   if (state.hp <= 0) state.hp = state.maxHp;
   state.cheatAll = !!d.cheatAll; state.cheatCorn = !!d.cheatCorn;
-  state.hasLantern = !!d.hasLantern; state.hasPouch = !!d.hasPouch; state.keys = d.keys | 0;
+  state.hasLantern = !!d.hasLantern; state.hasPouch = !!d.hasPouch; state.hasSledge = !!d.hasSledge; state.keys = d.keys | 0;
   state.found = (d.found && typeof d.found === 'object') ? d.found : {};
   state.burned = (d.burned && typeof d.burned === 'object') ? d.burned : {};
   state.superHearts = (d.superHearts && typeof d.superHearts === 'object') ? d.superHearts : {};
@@ -3482,6 +3482,7 @@ function renderSubscreen(){
     : subSlot('✨🏹', 'GOLD ARROWS<br>none carried', { locked: true });
   g += state.hasLantern ? subSlot('🔦', 'LANTERN<br>fire &amp; light', {}) : subSlot('🔦', 'A LANTERN<br>not found yet', { locked: true });
   g += state.hasLadder ? subSlot('🪜', 'SMALL LADDER<br>cross any water', {}) : subSlot('🪜', 'A LADDER<br>hidden somewhere', { locked: true });
+  g += state.hasSledge ? subSlot('🔨', 'THE SLEDGE<br>smashes cracked rock', {}) : subSlot('🔨', 'A SLEDGE<br>not found yet', { locked: true });
   g += state.oilUses > 0 ? subSlot('🛢️', 'TRACTOR OIL<br>×' + state.oilUses + ' uses', {}) : subSlot('🛢️', 'TRACTOR OIL<br>none carried', { locked: true });
   g += subSlot('🗝️', 'RUSTY KEYS<br>×' + state.keys, state.keys > 0 ? {} : { locked: true });
   g += subSlot('🪙', 'COINS<br>×' + state.coins, {});
@@ -3506,6 +3507,7 @@ function renderSubscreen(){
       doRow('READ', 'step up to signs', true) +
       doRow('PULL', 'the grove stone', true) +
       doRow('PUSH', 'stones &amp; bales', true) +
+      doRow('SMASH', 'swing at cracked rock', !!state.hasSledge) +
       doRow(armed ? 'SWING' : 'PUNCH', 'red button', true) +
       doRow('SPIN', 'hold the red button', armed) +
       doRow('THROW', 'green button', !!state.hasPouch) +
@@ -4482,10 +4484,22 @@ function loadOwScreen(){
     scatterObstacles(R, 'rock', 3, avoid);
   } else if (idx === OW_LOST){                               /* Lost Hills — the looping screen */
     owFeatures.push({ kind:'npc', x: 366, y: 268, w: 36, h: 40, hint:'👵 OLD FARMER: “Lost, dearie? For the roost over the hills: GO UP, UP, UP, UP — four times north, no matter what your eyes tell you. 20 coin for the telling? …Fine, free today.”' });
+    /* THE CAVE MOUTH (v24): a dark little cave in the hillside,
+       its mouth plugged with a CRACKED BOULDER — the Sledge opens
+       it, and a Super Heart sleeps in the dark inside */
+    owFeatures.push({ kind:'cave', x: 96, y: 52, w: 68, h: 52 });
+    if (!state.found.smashed_lostcave) obstacles.push({ x: 110, y: 64, w: 40, h: 40, type:'cracked', smashId:'lostcave' });
     scatterObstacles(R, 'rock', 8, avoid);
   } else if (idx === OW_L5){                                 /* Level 5 — roost barn over the hills */
     owFeatures.push({ kind:'dungeon', idx: dunIdxForField(4), style:'barn', x: 358, y: 168, w: 52, h: 30, bx: 296, by: 62, bw: 176, bh: 116 });
     obstacles.push({ x: 296, y: 80, w: 176, h: 88, type:'housebody' });
+    /* THE OLD STONE RING (v24): a Super Heart sleeps inside a ring
+       of rocks on this shore field, and the ring's one weak stone
+       is CRACKED — only the Sledge opens the way in */
+    [[140,240],[220,240],[140,280],[220,280],[140,320],[180,320],[220,320]].forEach(function(rp){
+      obstacles.push({ x: rp[0], y: rp[1], w: 40, h: 40, type:'rock' });
+    });
+    if (!state.found.smashed_shore) obstacles.push({ x: 180, y: 240, w: 40, h: 40, type:'cracked', smashId:'shore' });
     scatterObstacles(R, 'tree', 6, avoid.concat([{ x: 384, y: 120, r: 130 }]));
   } else if (idx === OW_L6){                                 /* Level 6 — hatch under a graveyard tombstone */
     for (var gx = 0; gx < 4; gx++) for (var gy = 0; gy < 2; gy++)
@@ -4702,6 +4716,9 @@ function loadOwScreen(){
   if (idx === OW_L8 && !state.found.goldQuiver){
     obstacles = obstacles.filter(function(o){ return o.type === 'fence' || !rectsOverlap(o, { x: W/2 - 19, y: 232, w: 38, h: 38 }); });
     pickups.push({ x: W/2 - 13, y: 238, w: 26, h: 26, kind:'goldarrows', val: 6, t: 0 });
+  }
+  if (idx === OW_L5 && !state.superHearts.shore){
+    pickups.push({ x: 185, y: 285, w: 30, h: 30, kind:'superheart', burnId:'shore', t: 0 });
   }
 
   /* THE LITTLE HEALING PONDS — the Water of Life (see HEAL_PONDS):
@@ -5772,6 +5789,13 @@ function loadRoom(n, spawnSide){
       if (state.pieces[idx]) seedAlready.push('Puzzle Piece 🧩');
       else roomItems.push({ kind:'piece', x: W/2 - 20, y: 108, w: 40, h: 40, emoji: L.emoji, label: L.piece.toUpperCase() });
     }
+    if (idx === 1){
+      /* v24: THE SLEDGE — Level 2's item (Zelda II's Hammer), on
+         the item pedestal beside the cob, same two-treasure rule
+         as the Overalls: the level closes only when BOTH are his */
+      if (state.hasSledge) seedAlready.push('The Sledge 🔨');
+      else roomItems.push({ kind:'sledge', x: W/2 - 150, y: 108, w: 40, h: 40, emoji:'🔨', label:'THE SLEDGE' });
+    }
     if (idx === 2){
       if (state.armor >= 2) seedAlready.push('Silver Overalls 🥈');
       else roomItems.push({ kind:'armor', armorTier: 2, x: W/2 - 150, y: 108, w: 40, h: 40, emoji:'🥈', label:'SILVER OVERALLS' });
@@ -6343,6 +6367,10 @@ function enterRoom(){
   if (L.piece){
     if (state.pieces[state.level]) legacyAlready.push('Puzzle Piece 🧩');
     else roomItems.push({ kind:'piece', x: W/2 - 20, y: 108, w: 40, h: 40, emoji: L.emoji, label: L.piece.toUpperCase() });
+  }
+  if (state.level === 1){
+    if (state.hasSledge) legacyAlready.push('The Sledge 🔨');
+    else roomItems.push({ kind:'sledge', x: W/2 - 150, y: 108, w: 40, h: 40, emoji:'🔨', label:'THE SLEDGE' });
   }
   if (state.level === 2){
     if (state.armor >= 2) legacyAlready.push('Silver Overalls 🥈');
@@ -7397,6 +7425,28 @@ function update(dt){
         dlog('Cut a hay bale with the blade.');
       }
     });
+    /* Cracked boulders answer to the SLEDGE (v24): with it in
+       hand, a swing shatters the stone for good (the smash is
+       remembered in state.found, like a secret). Without it, the
+       stone itself teaches where its key sleeps. */
+    obstacles.slice().forEach(function(o){
+      if (o.type !== 'cracked' || !rectsOverlap(arc, o)) return;
+      if (state.hasSledge){
+        obstacles.splice(obstacles.indexOf(o), 1);
+        state.found['smashed_' + o.smashId] = true; saveActiveProfile();
+        burst(o.x + o.w / 2, o.y + o.h / 2, '#8a8f96', 10); burst(o.x + o.w / 2, o.y + o.h / 2, '#c3c9cf', 6); sfx('hit'); sfx('creak');
+        if (o.smashId === 'lostcave'){
+          pickups.push({ x: o.x + 5, y: o.y + 5, w: 30, h: 30, kind:'superheart', burnId:'lostcave', t: 0 });
+          showBanner('💥 THE SLEDGE CRACKS IT APART! A SUPER HEART WAS SLEEPING IN THE CAVE MOUTH! 💖', 2800);
+        } else {
+          showBanner('💥 THE SLEDGE CRACKS THE BOULDER APART! THE WAY IS OPEN! 💥', 2200);
+        }
+        dlog('Smashed the cracked boulder (' + o.smashId + ') with the Sledge.');
+      } else if (punchHintT <= 0){
+        punchHintT = 5;
+        showBanner('🪨 CRACKED BOULDER — FISTS AND BLADES JUST BOUNCE OFF. A SLEDGE WOULD SHATTER IT… THEY SAY ONE SLEEPS IN THE PUMPKIN PATCH BARN (LEVEL 2).', 2800);
+      }
+    });
   }
 
   /* spin attack hits — one full-circle strike as the spin gets
@@ -7423,6 +7473,9 @@ function update(dt){
     if (boss && boss.hitT <= 0 && rectsOverlap(parc, boss)){ damageBoss(1, 'punch'); }
     if (punchHintT <= 0 && obstacles.some(function(o){ return o.type === 'hay' && rectsOverlap(parc, o); })){
       punchHintT = 5; showBanner('👊 FISTS CAN\'T CUT HAY — A HAY BALE NEEDS THE WRENCH OR THE CORN SWORD.', 2000);
+    }
+    if (punchHintT <= 0 && obstacles.some(function(o){ return o.type === 'cracked' && rectsOverlap(parc, o); })){
+      punchHintT = 5; showBanner('🪨 CRACKED BOULDER — FISTS AND BLADES JUST BOUNCE OFF. A SLEDGE WOULD SHATTER IT… THEY SAY ONE SLEEPS IN THE PUMPKIN PATCH BARN (LEVEL 2).', 2800);
     }
   }
 
@@ -7889,6 +7942,17 @@ function update(dt){
             phase = 'blink'; blinkT = pendingLevel9Unlock ? 1.7 : 1.1; playItem();
             dlog('That was the last item in the seed room — the level closes out: golden flash, then back outside by the barn.');
           }
+        } else if (it.kind === 'sledge'){
+          state.hasSledge = true; playItem();
+          showBanner('🔨 YOU GOT THE SLEDGE! SWING AT A CRACKED BOULDER AND IT SHATTERS — WATCH FOR THE CRACK DOWN ITS FACE! 🔨', 3200);
+          dlog('The Sledge collected in the Level 2 seed room.');
+          roomItems.splice(ri, 1); updateHUD(); saveActiveProfile();
+          /* TWO-ITEM RULE, same as the Overalls: grabbing the last
+             item in the room closes the level out */
+          if (!roomItems.length && state.pieces[state.level]){
+            phase = 'blink'; blinkT = pendingLevel9Unlock ? 1.7 : 1.1; playItem();
+            dlog('That was the last item in the seed room — the level closes out: golden flash, then back outside by the barn.');
+          }
         } else if (state.pieces[state.level]){
           /* REPEAT LEVEL: this barn's puzzle piece is already in
              the Barn Puzzle — no second count, no golden flash.
@@ -8053,6 +8117,14 @@ function drawObstacle(o){
     ctx.moveTo(x + 56, y + 32); ctx.lineTo(x + 32, y + 62);
     ctx.stroke();
     R(x + 10, y + 32, 10, 10, '#ffe95e'); R(x + 68, y + 32, 10, 10, '#ffe95e');
+  }
+  else if (o.type === 'cracked'){
+    /* a CRACKED BOULDER (v24) — the plain rock, split by a dark
+       crack down its face: the Sledge's whole reason to exist */
+    R(x + 3, y + 8, 34, 28, '#8a8f96'); R(x + 8, y + 3, 20, 8, '#a7adb5'); R(x + 10, y + 18, 8, 4, '#6f757d');
+    ctx.strokeStyle = '#3c4043'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(x + 20, y + 4); ctx.lineTo(x + 17, y + 14); ctx.lineTo(x + 22, y + 22); ctx.lineTo(x + 18, y + 34); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x + 17, y + 14); ctx.lineTo(x + 10, y + 19); ctx.stroke();
   }
   else { R(x + 3, y + 8, 34, 28, '#8a8f96'); R(x + 8, y + 3, 20, 8, '#a7adb5'); R(x + 10, y + 18, 8, 4, '#6f757d'); }
 }
@@ -8850,6 +8922,21 @@ function paintStairs(f){
 function drawOwFeatures(){
   owFeatures.forEach(function(f){
     ctx.textAlign = 'center';
+    if (f.kind === 'cave'){
+      /* a cave mouth drawn as a FRAME (v24b): lintel + cheeks, so
+         the cracked boulder plugging it (an obstacle, painted
+         BEFORE features) shows through the middle. The dark arch
+         paints only once the boulder is smashed and gone. */
+      ctx.fillStyle = 'rgba(0,0,0,0.18)'; ctx.beginPath(); ctx.ellipse(f.x + f.w / 2, f.y + f.h + 2, f.w / 2 + 6, 5, 0, 0, Math.PI * 2); ctx.fill();
+      R(f.x, f.y, f.w, 13, '#8f887a'); R(f.x, f.y + 13, f.w, 4, '#6b6455');
+      R(f.x, f.y + 13, 9, f.h - 13, '#7d7668'); R(f.x + f.w - 9, f.y + 13, 9, f.h - 13, '#7d7668');
+      R(f.x + 2, f.y + 22, 5, 5, '#6b6455'); R(f.x + f.w - 7, f.y + 26, 5, 5, '#6b6455');
+      if (state.found.smashed_lostcave){
+        ctx.fillStyle = '#14100c'; ctx.beginPath(); ctx.arc(f.x + f.w / 2, f.y + f.h, 16, Math.PI, 0); ctx.fill();
+        R(f.x + f.w / 2 - 16, f.y + f.h - 4, 32, 5, '#14100c');
+      }
+      return;
+    }
     if (f.kind === 'npc'){
       /* a drawn farmer now, not an emoji (Michael, 2026-11-18) */
       drawVillager(f.x + 3, f.y, Math.abs(f.x * 7 + f.y) % 4, f.name || null, false);
