@@ -1908,6 +1908,7 @@ function sfx(name){
   else if (name === 'unlock'){ [523,659,784].forEach(function(f,i){ setTimeout(function(){ beep(f, .12, 'square', .07); }, i*90); }); }
   else if (name === 'piece'){ [523,659,784,1046,784,1046].forEach(function(f,i){ setTimeout(function(){ beep(f, .16, 'square', .08); }, i*110); }); }
   else if (name === 'boss'){ beep(98, .5, 'sawtooth', .12, 55); }
+  else if (name === 'boom'){ beep(92, .5, 'sawtooth', .16, 36); setTimeout(function(){ beep(54, .42, 'square', .12, 28); }, 40); }
   else if (name === 'win'){ [523,659,784,1046,1318,1568].forEach(function(f,i){ setTimeout(function(){ beep(f, .2, 'square', .08); }, i*130); }); }
   else if (name === 'flame'){ beep(280, .16, 'sawtooth', .06, 940); }
   else if (name === 'burn'){ [160,240,120,320,200].forEach(function(f,i){ setTimeout(function(){ beep(f, .1, 'sawtooth', .07, f * 0.6); }, i*55); }); }
@@ -2198,7 +2199,7 @@ var state = {
   wrench:0,                  // 0 none · 1 wooden · 2 silver · 3 golden
   armor:0,                   // 0 none · 1 overalls · 2 silver overalls · 3 gold overalls
   maxHp:6, hp:6,             // 3 hearts to start; +1 heart per level beaten
-  hasLantern:false, hasPouch:false, hasSledge:false,          // shop lantern (150 coin) — lights dark barn rooms
+  hasLantern:false, hasPouch:false, hasSledge:false, hasBombs:false, bombs:0,          // shop lantern (150 coin) — lights dark barn rooms
   keys:0,                    // rusty keys — 1 opens 1 padlocked door, in any barn
   found:{},                  // secrets/entrances discovered: maze, hay, tomb
   burned:{},                 // designated hay bales burned with the lantern: burn1..burn5
@@ -2227,6 +2228,7 @@ var flames = [], lanternCd = 0, burnHintT = 0, punchHintT = 0, dunLit = false, l
 var eprojectiles = [], resistT = 0;
 var phase = 'field';         // field | bigboss | doorwait | door | room | blink (dungeon sub-states reuse these)
 var bigRef = null, door = null, roomItems = [], blinkT = 0, shopReturn = 'map';
+var liveBombs = [];   /* v25: bombs Corn Man has set down, fuses burning */
 /* Level 9 unlock popup: pendingLevel9Unlock is set on the touch that
    takes the puzzle from 7/8 to 8/8, and unlockPopupOpen pauses play
    while the LEVEL 9 UNLOCKED pop-up is on screen awaiting DISMISS. */
@@ -2309,7 +2311,7 @@ function resetRun(){
   state.day = 1;
   state.equipMelee = 'wrench'; state.equipThrow = 'kernel';   /* the Pack starts empty-handed too (map knowledge stays — like visitedRooms) */
   state.maxHp = 6; state.hp = state.maxHp; state.cheatAll = false; state.cheatCorn = false;
-  state.hasLantern = false; state.hasPouch = false; state.hasSledge = false; state.keys = 0; state.found = {};
+  state.hasLantern = false; state.hasPouch = false; state.hasSledge = false; state.hasBombs = false; state.bombs = 0; state.keys = 0; state.found = {};
   state.burned = {}; state.superHearts = {};
   state.shedBurned = {}; state.shedStashes = {};
   state.hasLadder = false; state.ladderBurned = false;
@@ -2477,7 +2479,7 @@ function snapshotState(){
     corn: state.corn, coins: state.coins, arrows: state.arrows, goldArrows: state.goldArrows,
     hasBow: state.hasBow, hasSword: state.hasSword, oilUses: state.oilUses, wrench: state.wrench, armor: state.armor,
     maxHp: state.maxHp, hp: state.hp, cheatAll: state.cheatAll, cheatCorn: state.cheatCorn,
-    hasLantern: state.hasLantern, hasPouch: state.hasPouch, hasSledge: state.hasSledge, keys: state.keys, found: state.found,
+    hasLantern: state.hasLantern, hasPouch: state.hasPouch, hasSledge: state.hasSledge, hasBombs: state.hasBombs, bombs: state.bombs, keys: state.keys, found: state.found,
     burned: state.burned, superHearts: state.superHearts,
     shedBurned: state.shedBurned, shedStashes: state.shedStashes,
     hasLadder: state.hasLadder, ladderBurned: state.ladderBurned,
@@ -2506,7 +2508,7 @@ function applySnapshot(d){
   state.maxHp = Math.max(2, d.maxHp | 0); state.hp = Math.min(state.maxHp, Math.max(0, d.hp | 0));
   if (state.hp <= 0) state.hp = state.maxHp;
   state.cheatAll = !!d.cheatAll; state.cheatCorn = !!d.cheatCorn;
-  state.hasLantern = !!d.hasLantern; state.hasPouch = !!d.hasPouch; state.hasSledge = !!d.hasSledge; state.keys = d.keys | 0;
+  state.hasLantern = !!d.hasLantern; state.hasPouch = !!d.hasPouch; state.hasSledge = !!d.hasSledge; state.hasBombs = !!d.hasBombs; state.bombs = d.bombs | 0; state.keys = d.keys | 0;
   state.found = (d.found && typeof d.found === 'object') ? d.found : {};
   state.burned = (d.burned && typeof d.burned === 'object') ? d.burned : {};
   state.superHearts = (d.superHearts && typeof d.superHearts === 'object') ? d.superHearts : {};
@@ -2518,7 +2520,7 @@ function applySnapshot(d){
   state.visitedFields = (d.visitedFields && typeof d.visitedFields === 'object') ? d.visitedFields : {};
   state.day = (d.day | 0) >= 1 ? (d.day | 0) : 1;
   state.equipMelee = d.equipMelee === 'fist' ? 'fist' : 'wrench';
-  state.equipThrow = (d.equipThrow === 'bow' || d.equipThrow === 'gold') ? d.equipThrow : 'kernel';
+  state.equipThrow = (d.equipThrow === 'bow' || d.equipThrow === 'gold' || d.equipThrow === 'bomb') ? d.equipThrow : 'kernel';
   state.owCol = Math.min(15, Math.max(0, (d.owCol == null ? 7 : d.owCol) | 0));
   state.owRow = Math.min(7, Math.max(0, (d.owRow == null ? 6 : d.owRow) | 0));
   /* World: old saves predate World 2 — a hero who had already beaten
@@ -2604,8 +2606,8 @@ function updateHUD(){
      last gold arrow is fired. Clearing the inline display ('' ) hands
      the button back to the .abtn stylesheet rule (display:flex). */
   document.getElementById('swingBtn').textContent = 'B';
-  document.getElementById('throwBtn').textContent = state.equipThrow === 'bow' ? 'BOW' : state.equipThrow === 'gold' ? 'GOLD' : 'THROW';
-  document.getElementById('throwBtn').style.display = state.hasPouch ? '' : 'none';
+  document.getElementById('throwBtn').textContent = state.equipThrow === 'bow' ? 'BOW' : state.equipThrow === 'gold' ? 'GOLD' : state.equipThrow === 'bomb' ? '💣×' + state.bombs : 'THROW';
+  document.getElementById('throwBtn').style.display = (state.hasPouch || state.hasBombs) ? '' : 'none';
   document.getElementById('bowBtn').style.display = state.hasBow ? '' : 'none';
   document.getElementById('goldBtn').style.display = state.goldArrows > 0 ? '' : 'none';
   document.getElementById('lanternBtn').style.display = state.hasLantern ? '' : 'none';
@@ -3480,6 +3482,9 @@ function renderSubscreen(){
   g += (state.hasBow && state.goldArrows > 0)
     ? subSlot('✨🏹', 'GOLD ARROWS<br>×' + state.goldArrows, { equip: true, sel: state.equipThrow === 'gold', act: 'throw-gold', tag: 'THROW' })
     : subSlot('✨🏹', 'GOLD ARROWS<br>none carried', { locked: true });
+  g += state.hasBombs
+    ? subSlot('💣', 'BOMB BAG<br>×' + state.bombs + ' bombs', { equip: true, sel: state.equipThrow === 'bomb', act: 'throw-bomb', tag: 'THROW' })
+    : subSlot('💣', 'A BOMB BAG<br>not found yet', { locked: true });
   g += state.hasLantern ? subSlot('🔦', 'LANTERN<br>fire &amp; light', {}) : subSlot('🔦', 'A LANTERN<br>not found yet', { locked: true });
   g += state.hasLadder ? subSlot('🪜', 'SMALL LADDER<br>cross any water', {}) : subSlot('🪜', 'A LADDER<br>hidden somewhere', { locked: true });
   g += state.hasSledge ? subSlot('🔨', 'THE SLEDGE<br>smashes cracked rock', {}) : subSlot('🔨', 'A SLEDGE<br>not found yet', { locked: true });
@@ -3491,9 +3496,9 @@ function renderSubscreen(){
   gear.innerHTML = g;
   /* IN HIS HANDS — the reference's selected-item box: what the red
      button and the throw button will actually do right now */
-  var throwIc = state.equipThrow === 'bow' ? '🏹' : state.equipThrow === 'gold' ? '✨🏹' : '🌽';
-  var throwName = state.equipThrow === 'bow' ? 'BOW &amp; ARROWS' : state.equipThrow === 'gold' ? 'GOLD ARROWS' : 'CORN KERNELS';
-  if (!state.hasPouch){ throwIc = '🌽'; throwName = 'NO THROW YET'; }
+  var throwIc = state.equipThrow === 'bow' ? '🏹' : state.equipThrow === 'gold' ? '✨🏹' : state.equipThrow === 'bomb' ? '💣' : '🌽';
+  var throwName = state.equipThrow === 'bow' ? 'BOW &amp; ARROWS' : state.equipThrow === 'gold' ? 'GOLD ARROWS' : state.equipThrow === 'bomb' ? 'BOMB BAG ×' + state.bombs : 'CORN KERNELS';
+  if (!state.hasPouch && !(state.equipThrow === 'bomb' && state.hasBombs)){ throwIc = '🌽'; throwName = 'NO THROW YET'; }
   var det = document.getElementById('subDetail');
   if (det) det.innerHTML =
     '<div class="sub-detail-row"><span class="sub-detail-ic">' + (armed ? '🔧' : '👊') + '</span><span>' + (armed ? WRENCH_NAME[state.wrench] : 'BARE FIST') + '<br><small>' + (armed ? WRENCH_SWING[state.wrench] : 1) + ' DMG · RED BUTTON</small></span></div>' +
@@ -3508,6 +3513,7 @@ function renderSubscreen(){
       doRow('PULL', 'the grove stone', true) +
       doRow('PUSH', 'stones &amp; bales', true) +
       doRow('SMASH', 'swing at cracked rock', !!state.hasSledge) +
+      doRow('BLOW UP', 'bombs on cracked walls', !!state.hasBombs) +
       doRow(armed ? 'SWING' : 'PUNCH', 'red button', true) +
       doRow('SPIN', 'hold the red button', armed) +
       doRow('THROW', 'green button', !!state.hasPouch) +
@@ -4351,7 +4357,7 @@ function makePlayer(x, y){
   return { x: x, y: y, w: 32, h: 36, speed: 185, dir:'up', invuln:0, walkT:0, slowT:0 };
 }
 function clearField(){
-  enemies = []; pickups = []; kernels = []; bolts = []; wrenches = []; particles = []; obstacles = [];
+  enemies = []; pickups = []; kernels = []; liveBombs = []; bolts = []; wrenches = []; particles = []; obstacles = [];
   eprojectiles = []; boss = null; bigRef = null; door = null; roomItems = [];
   swingT = 0; punchT = 0; spinT = 0; attackHeld = false; attackHoldT = 0; chargeReady = false; spinHitDone = false; throwCd = 0; bowCd = 0; goldCd = 0; wrenchCd = 0; shakeT = 0; resistT = 0;
   flames = []; lanternCd = 0;
@@ -4509,10 +4515,24 @@ function loadOwScreen(){
     if (state.found.tomb){ tomb.x += 56; owFeatures.push({ kind:'dungeon', idx: dunIdxForField(5), style:'hatch', x: 350, y: 130, w: 48, h: 40 }); }
     obstacles.push(tomb);
     owSecrets.push({ id:'tomb', x: 344, y: 120, w: 60, h: 58 });
+    /* THE SEALED CRYPT POCKET (v25): a little stone pocket in the
+       graveyard, a heart sleeping inside, its mouth a CRACKED
+       WALL — bombs only */
+    [[460,380],[500,380],[540,380],[460,420],[540,420],[460,460],[540,460]].forEach(function(rp){
+      obstacles.push({ x: rp[0], y: rp[1], w: 40, h: 40, type:'stone' });
+    });
+    if (!state.found.blown_cryptpocket) obstacles.push({ x: 500, y: 460, w: 40, h: 40, type:'crackedwall', smashId:'cryptpocket' });
     owFeatures.push({ kind:'npc', x: 620, y: 452, w: 36, h: 40, hint:'👵 OLD FARMER: “Folks say a hatch sleeps under one of these stones. PUSH the big one, dearie — go on, lean on it.”' });
   } else if (idx === OW_L7){                                 /* Level 7 — padlocked silo; a tractor carries the key */
     owFeatures.push({ kind:'dungeon', idx: dunIdxForField(6), style:'silo', x: 356, y: 176, w: 56, h: 34, locked:'key', bx: 330, by: 36, bw: 108, bh: 150 });
     obstacles.push({ x: 330, y: 54, w: 108, h: 122, type:'housebody' });
+    /* THE BROKEN RING (v25): a ring of rocks in the silo yard,
+       its south side a CRACKED WALL and a 100-coin stash in the
+       middle — no blade or sledge opens stonework; a bomb does */
+    [[560,380],[600,380],[640,380],[560,420],[640,420],[560,460],[640,460]].forEach(function(rp){
+      obstacles.push({ x: rp[0], y: rp[1], w: 40, h: 40, type:'rock' });
+    });
+    if (!state.found.blown_silostash) obstacles.push({ x: 600, y: 460, w: 40, h: 40, type:'crackedwall', smashId:'silostash' });
     scatterObstacles(R, 'rock', 5, avoid.concat([{ x: 384, y: 110, r: 150 }]));
   } else if (idx === OW_L8){                                 /* Level 8 — hatch under the lone hay bale */
     var bale = { x: 364, y: 238, w: 40, h: 40, type:'hay', secretId:'hay' };
@@ -4719,6 +4739,12 @@ function loadOwScreen(){
   }
   if (idx === OW_L5 && !state.superHearts.shore){
     pickups.push({ x: 185, y: 285, w: 30, h: 30, kind:'superheart', burnId:'shore', t: 0 });
+  }
+  if (idx === OW_L7 && !state.shedStashes.silostash){
+    pickups.push({ x: 605, y: 425, w: 30, h: 30, kind:'stash', shedId:'silostash', t: 0 });
+  }
+  if (idx === OW_L6){
+    pickups.push({ x: 509, y: 429, w: 22, h: 22, kind:'heart', t: 0 });
   }
 
   /* THE LITTLE HEALING PONDS — the Water of Life (see HEAL_PONDS):
@@ -5800,6 +5826,13 @@ function loadRoom(n, spawnSide){
       if (state.armor >= 2) seedAlready.push('Silver Overalls 🥈');
       else roomItems.push({ kind:'armor', armorTier: 2, x: W/2 - 150, y: 108, w: 40, h: 40, emoji:'🥈', label:'SILVER OVERALLS' });
     }
+    if (idx === 2){
+      /* v25: BOMBS — Level 3's item, on the third pedestal. The
+         room holds three treasures now and closes only when all
+         of them are his (the same roomItems rule) */
+      if (state.hasBombs) seedAlready.push('Bomb Bag 💣');
+      else roomItems.push({ kind:'bombs', x: W/2 + 110, y: 108, w: 40, h: 40, emoji:'💣', label:'BOMB BAG' });
+    }
     if (idx === 6){
       if (state.armor >= 3) seedAlready.push('Gold Overalls 🥇');
       else roomItems.push({ kind:'armor', armorTier: 3, x: W/2 - 150, y: 108, w: 40, h: 40, emoji:'🥇', label:'GOLD OVERALLS' });
@@ -6081,7 +6114,7 @@ function startLevelLegacy(idx){
   document.getElementById('stageWrap').classList.remove('tall');
   var L = LEVELS[idx], R = rng(idx * 777 + 42);
   player = { x: W/2 - 16, y: H - 96, w: 32, h: 36, speed: 185, dir:'up', invuln:0, walkT:0, slowT:0 };
-  enemies = []; pickups = []; kernels = []; bolts = []; wrenches = []; particles = []; obstacles = [];
+  enemies = []; pickups = []; kernels = []; liveBombs = []; bolts = []; wrenches = []; particles = []; obstacles = [];
   eprojectiles = []; resistT = 0;
   swingT = 0; punchT = 0; spinT = 0; attackHeld = false; attackHoldT = 0; chargeReady = false; spinHitDone = false; throwCd = 0; bowCd = 0; goldCd = 0; wrenchCd = 0; shakeT = 0; runTime = 0; boss = null;
   phase = 'field'; bigRef = null; door = null; roomItems = []; blinkT = 0;
@@ -6283,6 +6316,12 @@ function killEnemy(e){
     pickups.push({ x: Math.max(28, Math.min(W - 50, cx - 11)), y: Math.max(28, Math.min(H - 50, cy - 11)), w: 22, h: 22, kind:'oil', t: 0 });
     dlog('The tractor dropped an oil can!');
   }
+  /* ...and once he carries the bag, now and then a critter was
+     carrying bombs of its own (v25) */
+  if (state.hasBombs && Math.random() < 0.12){
+    pickups.push({ x: Math.max(28, Math.min(W - 50, cx - 11)), y: Math.max(28, Math.min(H - 50, cy - 11)), w: 22, h: 22, kind:'bombs', val: 2, t: 0 });
+    dlog('A ' + e.type + ' was carrying 2 bombs!');
+  }
   updateHUD();
   if (e.big){
     if (enemies.some(function(x){ return x.big; })){
@@ -6352,7 +6391,7 @@ function checkWrenchUpgrade(){
 }
 function enterRoom(){
   phase = 'room'; door = null;
-  enemies = []; kernels = []; bolts = []; wrenches = []; pickups = []; eprojectiles = [];
+  enemies = []; kernels = []; liveBombs = []; bolts = []; wrenches = []; pickups = []; eprojectiles = [];
   obstacles = [
     {x:0,y:0,w:W,h:20,type:'fence'},{x:0,y:H-20,w:W,h:20,type:'fence'},
     {x:0,y:0,w:20,h:H,type:'fence'},{x:W-20,y:0,w:20,h:H,type:'fence'}
@@ -6375,6 +6414,10 @@ function enterRoom(){
   if (state.level === 2){
     if (state.armor >= 2) legacyAlready.push('Silver Overalls 🥈');
     else roomItems.push({ kind:'armor', armorTier: 2, x: W/2 - 150, y: 108, w: 40, h: 40, emoji:'🥈', label:'SILVER OVERALLS' });
+  }
+  if (state.level === 2){
+    if (state.hasBombs) legacyAlready.push('Bomb Bag 💣');
+    else roomItems.push({ kind:'bombs', x: W/2 + 110, y: 108, w: 40, h: 40, emoji:'💣', label:'BOMB BAG' });
   }
   if (state.level === 6){
     if (state.armor >= 3) legacyAlready.push('Gold Overalls 🥇');
@@ -7078,6 +7121,9 @@ function doThrow(){
   if (throwCd > 0 || state.screen !== 'play' || gamePaused) return;
   /* throwing is a SKILL, not a birthright (Michael, 2026-11-18):
      nothing leaves his hand until Pearl's pouch teaches the arm */
+  /* bombs are SET, not thrown — the bag is its own skill and
+     does not wait on the pouch (v25) */
+  if (state.equipThrow === 'bomb'){ doBomb(); return; }
   if (!state.hasPouch){ throwCd = 0.38; noThrowYet(); return; }
   /* the Pack decides what THROW throws (Michael, 2026-11-18) */
   if (state.equipThrow === 'bow'){ doBow(); return; }
@@ -7087,6 +7133,17 @@ function doThrow(){
   if (player.dir === 'up') dy = -1; else if (player.dir === 'down') dy = 1;
   else if (player.dir === 'left') dx = -1; else dx = 1;
   kernels.push({ x: player.x + 12, y: player.y + 12, w: 9, h: 9, vx: dx * 420, vy: dy * 420, life: 0.9 });
+}
+function doBomb(){
+  if (!state.hasBombs){ showBanner('💣 NO BOMB BAG — THEY SAY A BAG OF BOMBS SLEEPS IN THE DARK CORN MAZE BARN (LEVEL 3).', 2600); return; }
+  if (state.bombs <= 0){ throwCd = 0.38; sfx('hit'); showBanner('💣 THE BOMB BAG IS EMPTY! BEAT CRITTERS — NOW AND THEN ONE IS CARRYING BOMBS.', 2200); return; }
+  throwCd = 0.38; state.bombs--;
+  var dv = dirVec();
+  var spot = { x: player.x + 6 + dv.x * 36, y: player.y + 8 + dv.y * 36, w: 20, h: 20 };
+  if (obstacles.some(function(o){ return rectsOverlap(spot, o); })){ spot.x = player.x + 6; spot.y = player.y + 8; }
+  liveBombs.push(spot); spot.fuse = 1.6;
+  sfx('throw'); updateHUD();
+  dlog('Set a bomb down. Bombs left in the bag: ' + state.bombs);
 }
 function dirVec(){
   if (player.dir === 'up') return { x: 0, y: -1 };
@@ -7447,6 +7504,12 @@ function update(dt){
         showBanner('🪨 CRACKED BOULDER — FISTS AND BLADES JUST BOUNCE OFF. A SLEDGE WOULD SHATTER IT… THEY SAY ONE SLEEPS IN THE PUMPKIN PATCH BARN (LEVEL 2).', 2800);
       }
     });
+    /* a cracked WALL is not a boulder (v25): the Sledge bounces
+       off and the stone names the tool that works — a bomb */
+    if (punchHintT <= 0 && obstacles.some(function(o){ return o.type === 'crackedwall' && rectsOverlap(arc, o); })){
+      punchHintT = 5;
+      showBanner('🧱 CRACKED WALL — THE SLEDGE JUST BOUNCES OFF STONEWORK. A BOMB WOULD BLOW IT OPEN… THEY SAY BOMBS SLEEP IN THE DARK CORN MAZE BARN (LEVEL 3).', 2800);
+    }
   }
 
   /* spin attack hits — one full-circle strike as the spin gets
@@ -7490,6 +7553,36 @@ function update(dt){
       if (!dead && boss && rectsOverlap(k, boss)){ damageBoss(1, 'kernel'); dead = true; }
     }
     if (dead) kernels.splice(i, 1);
+  }
+
+  /* placed bombs (v25): the fuse burns down, then the blast —
+     it breaks cracked stone (WALLS and boulders alike), hurts
+     everything standing close, Corn Man included, and the
+     weapon-only keepers shrug it off like any other source */
+  for (var mbi = liveBombs.length - 1; mbi >= 0; mbi--){
+    var mb = liveBombs[mbi]; mb.fuse -= dt;
+    if (mb.fuse > 0) continue;
+    liveBombs.splice(mbi, 1);
+    sfx('boom');
+    var bcx = mb.x + 10, bcy = mb.y + 10;
+    burst(bcx, bcy, '#ff8a2d', 16); burst(bcx, bcy, '#ffd23e', 12); burst(bcx, bcy, '#3c4043', 8);
+    obstacles.slice().forEach(function(o){
+      if ((o.type !== 'cracked' && o.type !== 'crackedwall') || !rectsOverlap({ x: bcx - 62, y: bcy - 62, w: 124, h: 124 }, o)) return;
+      obstacles.splice(obstacles.indexOf(o), 1);
+      if (o.type === 'cracked'){
+        state.found['smashed_' + o.smashId] = true;
+        if (o.smashId === 'lostcave') pickups.push({ x: o.x + 5, y: o.y + 5, w: 30, h: 30, kind:'superheart', burnId:'lostcave', t: 0 });
+        showBanner('💥 THE BOMB BLOWS THE CRACKED BOULDER APART! 💥', 2200);
+      } else {
+        state.found['blown_' + o.smashId] = true;
+        showBanner('💥 THE BOMB BLOWS THE CRACKED WALL OPEN! 💥', 2200);
+      }
+      saveActiveProfile();
+      dlog('A bomb blew ' + o.type + ' (' + o.smashId + ') open.');
+    });
+    enemies.slice().forEach(function(e){ if (Math.hypot(e.x + e.w / 2 - bcx, e.y + e.h / 2 - bcy) < 66) damageEnemy(e, 3, 'bomb'); });
+    if (boss && Math.hypot(boss.x + boss.w / 2 - bcx, boss.y + boss.h / 2 - bcy) < 70) damageBoss(3, 'bomb');
+    if (player && Math.hypot(player.x + 16 - bcx, player.y + 18 - bcy) < 52) hurtPlayer(1, mb);
   }
 
   /* arrows (bow) */
@@ -7866,6 +7959,11 @@ function update(dt){
         showBanner('🪜 YOU FOUND THE SMALL LADDER — YOURS FOR GOOD, FOREVER! IT IS NEVER USED UP: JUST TOUCH ANY WATER AND CLIMB OVER IT, AGAIN AND AGAIN — THE GREAT BARN’S MOAT AND EVERY OTHER WATER ON THE FARM! 🪜', 3800);
         dlog('Picked up the SMALL LADDER — permanent: any water is now walkable, touch it and climb over, as often as he likes.');
       }
+      else if (p.kind === 'bombs'){
+        state.bombs = Math.min(20, state.bombs + (p.val || 2)); sfx('piece');
+        burst(p.x + 11, p.y + 11, '#ffd700', 6);
+        dlog('Picked up ' + (p.val || 2) + ' bombs. In the bag: ' + state.bombs);
+      }
       else if (p.kind === 'stash'){
         /* 100-COIN STASH — hidden under a burned little barn/shed:
            pocket the whole pile at once */
@@ -7949,6 +8047,15 @@ function update(dt){
           roomItems.splice(ri, 1); updateHUD(); saveActiveProfile();
           /* TWO-ITEM RULE, same as the Overalls: grabbing the last
              item in the room closes the level out */
+          if (!roomItems.length && state.pieces[state.level]){
+            phase = 'blink'; blinkT = pendingLevel9Unlock ? 1.7 : 1.1; playItem();
+            dlog('That was the last item in the seed room — the level closes out: golden flash, then back outside by the barn.');
+          }
+        } else if (it.kind === 'bombs'){
+          state.hasBombs = true; state.bombs = Math.min(20, state.bombs + 8); playItem();
+          showBanner('💣 YOU GOT THE BOMB BAG! 8 BOMBS INSIDE. EQUIP BOMBS IN THE PACK, SET ONE DOWN WITH THROW — IT BLOWS CRACKED WALLS AND BOULDERS… AND ANYTHING STANDING CLOSE. 💣', 3600);
+          dlog('The Bomb Bag collected in the Level 3 seed room — 8 bombs.');
+          roomItems.splice(ri, 1); updateHUD(); saveActiveProfile();
           if (!roomItems.length && state.pieces[state.level]){
             phase = 'blink'; blinkT = pendingLevel9Unlock ? 1.7 : 1.1; playItem();
             dlog('That was the last item in the seed room — the level closes out: golden flash, then back outside by the barn.');
@@ -8117,6 +8224,15 @@ function drawObstacle(o){
     ctx.moveTo(x + 56, y + 32); ctx.lineTo(x + 32, y + 62);
     ctx.stroke();
     R(x + 10, y + 32, 10, 10, '#ffe95e'); R(x + 68, y + 32, 10, 10, '#ffe95e');
+  }
+  else if (o.type === 'crackedwall'){
+    /* a CRACKED WALL (v25) — fitted stone blocks with a crack
+       splitting the courses: a bomb's work, never the Sledge's */
+    R(x, y + 4, o.w, o.h - 4, '#7d7668'); R(x, y + 4, o.w, 3, '#9a958c');
+    R(x + 3, y + 16, o.w - 6, 2, 'rgba(0,0,0,0.30)'); R(x + 3, y + 28, o.w - 6, 2, 'rgba(0,0,0,0.30)');
+    R(x + o.w / 2 - 1, y + 4, 2, 12, 'rgba(0,0,0,0.30)'); R(x + 8, y + 18, 2, 10, 'rgba(0,0,0,0.30)'); R(x + o.w - 12, y + 18, 2, 10, 'rgba(0,0,0,0.30)');
+    ctx.strokeStyle = '#33302b'; ctx.lineWidth = 2.2;
+    ctx.beginPath(); ctx.moveTo(x + o.w / 2 - 4, y + 5); ctx.lineTo(x + o.w / 2 + 2, y + 15); ctx.lineTo(x + o.w / 2 - 5, y + 24); ctx.lineTo(x + o.w / 2 + 1, y + 35); ctx.stroke();
   }
   else if (o.type === 'cracked'){
     /* a CRACKED BOULDER (v24) — the plain rock, split by a dark
@@ -9367,6 +9483,11 @@ function draw(){
       ctx.strokeStyle = '#000a'; ctx.lineWidth = 3;
       ctx.strokeText('100', p.x + 17, p.y + 47 + bob);
       ctx.fillText('100', p.x + 17, p.y + 47 + bob);
+    } else if (p.kind === 'bombs'){
+      ctx.globalAlpha = 0.35 + Math.sin(p.t * 5) * 0.12;
+      ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(p.x + 11, p.y + 11 + bob, 13, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 1; ctx.font = '19px serif';
+      ctx.fillText('💣', p.x + 11, p.y + 17 + bob);
     } else {
       /* soft glow so a drop an enemy left behind is easy to spot on the grass */
       ctx.globalAlpha = 0.35 + Math.sin(p.t * 5) * 0.12;
@@ -9394,6 +9515,14 @@ function draw(){
   });
   if (boss) drawBoss(boss);
   kernels.forEach(function(k){ R(k.x, k.y, 9, 9, '#ffd91a'); R(k.x + 2, k.y + 2, 3, 3, '#fff3a0'); });
+  liveBombs.forEach(function(mb){
+    /* a set bomb (v25): black ball, sparking fuse, and a white
+       blink as the fuse runs out — time to step back */
+    var flash = mb.fuse < 0.55 && Math.sin(runTime * 26) > 0;
+    ctx.fillStyle = flash ? '#fffbe8' : '#26221f'; ctx.beginPath(); ctx.arc(mb.x + 10, mb.y + 11, 9, 0, Math.PI * 2); ctx.fill();
+    R(mb.x + 8, mb.y - 2, 4, 4, '#8a8f96');
+    ctx.fillStyle = '#ffd23e'; ctx.beginPath(); ctx.arc(mb.x + 10 + Math.sin(runTime * 31) * 2, mb.y - 5, 2.2, 0, Math.PI * 2); ctx.fill();
+  });
   bolts.forEach(function(b){
     var shaft = b.gold ? '#e0aa00' : '#8a5a2b', tip = b.gold ? '#ffd91a' : '#cfd8dc';
     if (b.gold){ ctx.font = '11px serif'; ctx.textAlign = 'center'; ctx.fillText('✨', b.x + 6, b.y + 2 + Math.sin(runTime * 12) * 2); }
@@ -9836,6 +9965,7 @@ document.getElementById('worldMapCloseBtn').addEventListener('click', function()
     else if (act === 'melee-wrench'){ if (state.wrench >= 1){ state.equipMelee = 'wrench'; sfx('unlock'); } }
     else if (act === 'throw-kernel'){ state.equipThrow = 'kernel'; sfx('corn'); }
     else if (act === 'throw-bow'){ if (state.hasBow){ state.equipThrow = 'bow'; sfx('unlock'); } }
+    else if (act === 'throw-bomb'){ if (state.hasBombs){ state.equipThrow = 'bomb'; sfx('unlock'); } }
     else if (act === 'throw-gold'){ if (state.hasBow && state.goldArrows > 0){ state.equipThrow = 'gold'; sfx('unlock'); } }
     else return;
     renderSubscreen(); updateHUD(); saveActiveProfile();
