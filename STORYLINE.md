@@ -1,0 +1,72 @@
+# Legend of Corn — Storyline & Theme
+_Written 2026-11-17 at Michael's direction: build the plot from the game's real
+material, Zelda-style. This is the script the in-game intro dialogues use._
+
+## The theme
+**Rebuilding after the storm.** The farm was whole once. One night a great
+storm tore the Great Barn apart and scattered its eight pieces across the
+farm — and everything the storm touched woke up wrong: hens bold, machines
+angry, old things hungry. Corn Man's quest is not conquest; it is putting his
+home back together, piece by piece, with his bare hands if he has to. The
+final trial is the storm's last trick: a double of Corn Man himself. When the
+barn stands again, the story ends the way farm stories should — with a
+wedding.
+
+Courage, in this telling, is not being unafraid. It is walking into the next
+field anyway.
+
+## The plot
+1. **The storm.** It takes the Great Barn apart board by board and hides its
+   8 pieces inside 8 barns across the farm, each guarded by a storm-touched
+   keeper.
+2. **Empty hands.** The Country Stores are gone — the storm took them too.
+   Everything Corn Man needs must be *found* where the storm dropped it: his
+   Wooden Wrench on the Home Farm, a Lantern on the Sunny East Field, a Bow
+   by the Creek & Pond, golden arrows in the West Meadow. Crows carry off
+   arrows — take them back from crows.
+3. **The eight barns.** Beat each keeper, take its heart, follow the path to
+   the seed room, and claim the barn piece. His wrench grows with his heart:
+   5 hearts earns the Silver Wrench, 10 the Golden.
+4. **The Great Barn (Level 9).** With 8 pieces in place the barn rises — but
+   the storm left SUPER CORN MAN inside: Corn Man's own shadow, hurtable
+   only by his own weapons (the corn thrower and golden arrows).
+5. **The wedding.** The barn stands, the farm is whole, and Corn Man marries
+   the woman in the white dress.
+6. **World 2.** The farm switches around in the night; every keeper is 25%
+   stronger. Same wedding at the end — some things the storm can't move.
+
+## The keepers (barn bosses, in order)
+| Level | Place | Keeper | Note |
+|---|---|---|---|
+| 1 | Sunny Field | GIANT CHICKEN | the hen that kept growing |
+| 2 | Pumpkin Patch | SNAPPING TURTLE | old, and woken hungry |
+| 3 | Dark Corn Maze | RUNAWAY TRACTOR | no driver, no mercy |
+| 4 | Orchard Rows | FARMER WIFE | guards out of fear, not hate |
+| 5 | Muddy Pond | GIANT OWL | strikes from above, silent |
+| 6 | Scarecrow Ridge | GIANT SPIDER | only arrows bite it |
+| 7 | Stormy Silo | SUPER TRACTOR | the storm, poured into iron |
+| 8 | Moonlight Meadow | TWO ANGRY FARMERS | only their own corn hurts them |
+| 9 | The Great Barn | SUPER CORN MAN | the storm wearing your face |
+
+## The field creatures (storm-touched, all stronger than they look)
+- **Chicken** — pecks, stalks, and lunges. 3 hits with a fist, 2 with the
+  Wooden Wrench, 1 with anything better.
+- **Pig** — grazes, paws the ground, and charges like a battering ram.
+- **Crow** — circles, caws, and dives. Carries stolen arrows.
+- **Goat** — zigzags in, lowers its head, and headbutts; dizzy afterward.
+- **Scarecrow** — stands still as death, then lurches. Swipes at arm's reach.
+- **Mole** — travels underground as a moving mound; pops up to swipe.
+- **Tractor** — chugs, revs, and drives straight through anything.
+
+## The damage law (Michael's algorithm)
+Fist = 1 · Wooden Wrench = 2 · Silver Wrench = 3 · Golden Wrench = 4.
+Spin attack = double the swing. So a chicken (3 HP) takes 3 fists, 2 wooden
+hits, 1 silver hit — and from the silver upgrade on, it's one hit at any
+level, forever. Everything else on the farm is tougher than a chicken.
+
+## The dialogue script (as shipped in the game)
+Zelda rules: short lines, plain words, one idea per page, tap NEXT to read
+on. The full text lives in the game file as `INTRO_TEXT` — opening, one
+intro per level (played on first entry: Corn Man walks in, then the words
+come), and a World 2 opening. Level intros are story, not instructions —
+the keeper's own hint banner still fires at the boss door.

@@ -508,6 +508,9 @@
 
   /* ---------- Shop ---------- */
   #shopScreen{ background:#000a; }
+  #dlgScreen{ background:transparent; pointer-events:none; }
+  #dlgScreen .dlg-sheet{ pointer-events:auto; position:absolute; left:50%; transform:translateX(-50%); bottom:16px; width:min(680px, 94%); border:4px solid #ffd91a; background:#101408f5; color:#fff8dc; box-shadow:0 12px 34px #000c; }
+  #dlgText{ font-size:19px; line-height:1.55; white-space:pre-line; min-height:88px; margin:2px 2px 12px; font-weight:700; text-align:left; }
   .shop-list{ display:flex; flex-direction:column; gap:8px; margin-top:10px; text-align:left; }
   .shop-item{ display:flex; align-items:center; gap:10px; background:var(--chrome-panel2); border:2px solid var(--line); border-radius:12px; padding:8px 10px; }
   .shop-item .ic{ font-size:26px; line-height:1; }
@@ -858,7 +861,7 @@
      Zelda overworld — with every level's entrance marked from the very
      start (the player still has to walk there — no tap-to-warp). With
      128 fields the cells are markers, not name plates: L1–L9 badges for
-     the barns, 🏪 for the 16 Country Stores, 🏠 for the home farm, and a
+     the barns, 🏠 for the home farm, and a
      gold outline + 📍 on the field you're standing on. Tapping any cell
      names that field in the detail line under the grid. It reuses the
      same full-height sheet sizing as Home / Barn Puzzle so it fits on
@@ -1334,7 +1337,6 @@
       <button class="menu-btn" id="mWorldMap">🗺️ Farm Map — Where the Levels Are</button>
       <button class="menu-btn" id="mLevelMap">🧭 Level Map — Rooms of This Barn</button>
       <button class="menu-btn" id="mHow">❓ How to Play</button>
-      <button class="menu-btn" id="mShop">🏪 Country Store (Shop)</button>
       <button class="menu-btn" id="mSound">🔊 Sound: On</button>
       <button class="menu-btn" id="mMap">🌽 Back to the Farm (Explore)</button>
       <button class="menu-btn" id="mHome">🏠 Switch Hero (Home)</button>
@@ -1465,7 +1467,6 @@
       <p class="hint">Tap the <b>🧩 Barn</b> chip up top any time to pop this up. Every piece you collect <b>adds 1/8 of the barn</b> to the picture below — the barn is the puzzle, and it fills in piece by piece. Each section of the barn is numbered <b>1–8</b> for its level: a missing piece stays grayed out with <b>dotted lines</b> and its level number inside, and a collected piece <b>fills in</b> in full colour. Collect all 8 pieces to open the Great Barn.</p>
       <p id="welcomeLine"></p>
       <button class="big-btn green" id="mapExploreBtn" style="margin:2px 0 10px;">🌽 BACK TO THE FARM ▶</button>
-      <button class="big-btn" id="shopBtn" style="margin:2px 0 10px;">🏪 COUNTRY STORE</button>
       <div class="barn-box">
         <svg id="barnSvg" width="300" height="210" viewBox="0 0 200 140" xmlns:xlink="http://www.w3.org/1999/xlink" aria-label="Barn puzzle progress: the barn is divided into 8 equal pieces, and each collected level adds one piece — 1/8 of the barn">
           <defs>
@@ -1547,8 +1548,8 @@
     <div class="overlay" id="worldMapScreen">
       <div class="map-close-bar"><button class="big-btn green" id="worldMapCloseBtn">✔ CLOSE MAP — KEEP EXPLORING</button></div>
       <h2 id="worldMapTitle">🗺️ FARM MAP</h2>
-      <p class="hint" id="worldMapHint">The whole farm, laid out just like you walk it — north is up. <b>128 fields in a grid, 16 across × 8 down</b>, like the original Zelda. Every barn is marked from the start: <b>L1–L8</b> hold the 8 barn pieces, the <b>Great Barn (L9)</b> opens once you have all 8, and <b>🏪 marks the 16 Country Stores</b> spread all over the farm. <b>Tap any field to see its name below.</b></p>
-      <div id="farmGrid" role="img" aria-label="Map of the farm showing all 128 fields in a 16 by 8 grid, where each level entrance is, and where the 16 Country Stores are"></div>
+      <p class="hint" id="worldMapHint">The whole farm, laid out just like you walk it — north is up. <b>128 fields in a grid, 16 across × 8 down</b>, like the original Zelda. Every barn is marked from the start: <b>L1–L8</b> hold the 8 barn pieces, the <b>Great Barn (L9)</b> opens once you have all 8. <b>Tap any field to see its name below.</b></p>
+      <div id="farmGrid" role="img" aria-label="Map of the farm showing all 128 fields in a 16 by 8 grid, where each level entrance is"></div>
       <p id="farmMapDetail"></p>
       <p class="legend" id="farmMapLegend"></p>
     </div>
@@ -1676,12 +1677,23 @@
     </div>
 
     <!-- HELP -->
+    <!-- LEVEL INTRO DIALOGUE: the story box (Zelda-style). Corn Man
+         walks in, then the words come a page at a time — NEXT turns
+         the page. Driven by startIntro / dlgAdvance in the script. -->
+    <div class="overlay" id="dlgScreen">
+      <div class="col sheet dlg-sheet">
+        <p id="dlgText"></p>
+        <div class="btn-row">
+          <button class="big-btn green" id="dlgNext" type="button">▶ NEXT</button>
+        </div>
+      </div>
+    </div>
     <div class="overlay" id="helpScreen">
       <div class="col"><div class="sheet">
         <h2>❓ HOW TO PLAY</h2>
         <p>🌽 You are <b>Corn Man</b>. A storm scattered the barn across the farm. This is an <b>adventure</b> — like the original 8-bit Zelda, there is <b>no level list</b>. You explore the farm one screen at a time and must <b>find each of the 8 barns yourself</b>: a barn door at the far end of a field, a cellar hatch across the creek, stairs hidden in the corn maze, a hatch under a tombstone, a door in the silo… Walk up to a farmer or a sign for a cryptic hint, and try things — pushing a tombstone or a hay bale can reveal a secret!</p>
         <p>🏚️ <b>Inside a barn:</b> each barn is the inside of a <b>rundown farmhouse or barn — connected rooms</b>, one screen each, with doors in the walls. Every barn is <b>much bigger than it used to be — 15 to 25 rooms</b> (never more than 25), winding through the shape of that level's big end guy. Clear every pest in the shutter room to open its <b>sliding shutter door</b>. <b>Padlocked doors</b> need a <b>rusty key 🗝️</b> (keys work in any barn). Push a <b>crate</b> onto a floor switch for a secret. The <b>gray stone blocks</b> set into the floor are <b>solid</b> — you can't walk through them, you have to walk <b>around</b> them. <b>No two rooms are laid out the same</b> — in every barn, Levels 1–9, each room has its <b>own layout</b> of stone blocks, crates and hay bales, so every room you step into looks and plays different from the last. At the end of each barn waits a <b>big tough enemy</b> — beat it and your <b>hearts refill to 100% full</b> right away, then grab the <b>heart</b> that appears and go on into the seed room and take that barn's <b>barn piece</b> — you step back outside at the end of every level with <b>full hearts</b>, Level 9 included. The screen blinks and you're back outside to search for the next barn. <b>Want out early?</b> Head back to the <b>entry room</b> — the room you came in — and walk out the <b>🚪 EXIT door in the south wall, right behind where you enter</b>: it takes you straight back out onto the farm, any time, no questions asked.</p>
-        <p>🌑 <b>Dark rooms:</b> some barn rooms are <b>pitch black</b> — you can only see a little way around Corn Man, but the room holds things worth finding (like the key!). The <b>Lantern 🔦 — 150 coin</b> at the Country Store fixes that: press the orange <b>LANTERN</b> button (or <kbd>L</kbd>) and its <b>fire lights the whole room</b> for the rest of that barn visit. No lantern? You can still stumble through by memory… carefully!</p>
+        <p>🌑 <b>Dark rooms:</b> some barn rooms are <b>pitch black</b> — you can only see a little way around Corn Man, but the room holds things worth finding (like the key!). The <b>Lantern 🔦</b> — it lies waiting on the <b>Sunny East Field</b> — fixes that: press the orange <b>LANTERN</b> button (or <kbd>L</kbd>) and its <b>fire lights the whole room</b> for the rest of that barn visit. No lantern? You can still stumble through by memory… carefully!</p>
         <p>🔒 <b>Locks &amp; keys — the whole idea, step by step:</b> (1) Every barn hides <b>one rusty key 🗝️</b> in a <b>pitch-black dark room</b> about a third of the way through the barn — walk over it to pick it up. (2) Keep following the path: a couple of rooms past the dark room is a <b>padlocked door 🔒</b> (it says <b>PADLOCKED — NEEDS A KEY</b> right on it). (3) Just <b>walk into that door</b> while carrying the key — it clicks open and uses <b>one</b> key. That's all there is to it! Your <b>key count rides at the top of the screen</b>, and keys you don't spend <b>carry over</b> to every other barn. No key in your pocket? The dark room is always <b>a couple of rooms back along the path</b> from the padlocked door — head back and fetch it. The silver <b>silo</b> in the Level 7 yard is padlocked the same way — a tractor out in that yard carries its key.</p>
         <p>🧩 <b>The puzzle piece &amp; the golden flash:</b> beat the big enemy at the end of a barn, grab the <b>heart</b>, then follow the path on into the <b>seed room</b> — the barn's <b>puzzle piece</b> sits <b>glowing on a golden pedestal</b> at the top of the room, labelled <b>★ PUZZLE PIECE ★</b>. <b>Walk into it</b> to take it: your <b>Barn count ticks up right away</b> (0/8 → 1/8), the screen flashes <b>gold</b> with sparkles for a second (that's the celebration, not a glitch!), your piece clicks into the barn puzzle — and Corn Man steps <b>back out onto the farm, right by that barn's entrance</b>, ready to hunt for the next one. Two seed rooms hide a <b>second treasure</b> beside the piece — the <b>Silver Overalls</b> in Level 3 and the <b>Gold Overalls</b> in Level 7: on those levels the barn does <b>not</b> close when you take the piece — it stays open until <b>both</b> treasures are collected, and only then does Corn Man step back out.</p>
         <p>🧩 Collect all <b>8 barn pieces</b> to complete the barn puzzle — that unseals <b>The Great Barn</b> on the north hill, where <b>Super Corn Man</b> is waiting! The moment the <b>8th piece</b> lands, the screen <b>flashes</b> and a pop-up announces <b>LEVEL 9 UNLOCKED!</b> — press its <b>DISMISS</b> button to close it and keep exploring. Tap the <b>🧩 Barn chip</b> up top at any time to pop up the <b>Barn Puzzle</b>: a conquered level shows the <b>piece you collected</b>, and a level you have not beaten yet shows its <b>level number, marked MISSING</b>.</p>
@@ -1689,14 +1701,14 @@
         <p>🔁 <b>Repeating a level:</b> you can walk back into any barn you have already cleared. Beat its big end guy again and his <b>heart still appears and still refills every heart</b> — but the <b>+1 max heart (super heart) is granted only the FIRST time</b> you beat each level's boss. And in the <b>seed room</b>, anything you already collected — the <b>puzzle piece</b>, and the <b>Silver Overalls</b> or <b>Gold Overalls</b> — is <b>simply not there any more</b>. If everything that room held is already yours, you walk into the empty room and, after a couple of seconds, a <b>small message in the room</b> states <b>Puzzle Piece Collected</b> — press its <b>DISMISS — GO TO GAME</b> button and Corn Man steps back out onto the game screen by that level's barn. No piece is ever counted twice.</p>
         <p>🗺️ <b>Farm Map:</b> tap the green <b>🗺️ MAP</b> button up top (or press <kbd>M</kbd>) to see the whole farm laid out — all <b>128 fields in a 16 × 8 grid</b>, like the original Zelda's overworld, and where every level's entrance is: L1–L8 plus the Great Barn. Your field is outlined in gold with a <b>📍</b>. Tap any field on the map to see its name. The map only shows where to go — you still have to walk there and find the entrance yourself!</p>
         <p>🧭 <b>Level Map:</b> the Level Map <b>only appears when you ask for it</b> — it never pops up on its own. While you are <b>inside a barn</b>, press the green <b>🧭 LEVEL MAP</b> button up top, right beside the <b>🧩 Barn</b> chip, and a small live copy of the map opens, filling in room by room as you walk — on a big screen it opens <b>right beside the barn</b>, and on a phone it opens <b>right on top of the game screen</b>. When you're done studying it, press its <b>✖ DISMISS</b> button and it goes away — on a phone the game screen comes right back, just as it was. Its <b>FULL MAP</b> button opens the big version (the ☰ menu and <kbd>N</kbd> open that big one too, and its green button at the top closes it) — and here's the fun part: <b>the rooms are laid out in the shape of that level's big end guy!</b> Level 1's map is a giant chicken 🐔, Level 2's a snapping turtle 🐢, the tractor levels are tractors 🚜, and the Great Barn's map is Super Corn Man 🌽 himself. Every barn holds <b>15 to 25 rooms</b>. Every room starts <b>grayed out</b>; the moment you step into a room, that room turns <b>yellow</b> on the map (just on the map — the room itself looks the same). A <b>blinking red light 🔴</b> marks the room where the level's big end guy waits. Your rooms stay marked for that farmer, so you can check the map on your next visit and see where you've already been.</p>
-        <p>🏪 <b>16 Country Stores:</b> the farm is BIG now, so there are <b>16 Country Stores</b> spread all through the grid — one on your home farm and 15 more out in the fields, each marked 🏪 on the Farm Map. Every store sells the same goods at the same prices; walk into any store building to shop.</p>
+        <p>🔎 <b>No stores anymore:</b> the storm took every Country Store — there is <b>nowhere to buy anything</b>. Everything Corn Man needs is <b>hidden out on the farm</b> where the storm dropped it: his <b>Wooden Wrench</b> on the Home Farm, a <b>Lantern</b> on the Sunny East Field, a <b>Bow</b> by the Creek &amp; Pond, <b>gold arrows</b> in the West Meadow. <b>Crows</b> carry off arrows — beat crows to get arrows back — and <b>tractors</b> sometimes drop oil cans.</p>
         <p>👹 <b>The end guys:</b> L1 🐔 Giant Chicken (pecks at you and spits fireballs 🔥) · L2 🐢 Snapping Turtle (stretches its neck out to bite, and spits fireballs 🔥) · L3 🚜 Runaway Tractor (drives straight at you) · L4 👩‍🌾 Farmer Wife (swings a rolling pin) · L5 🦉 Giant Owl (flies at you) · L6 🕷️ Giant Spider (spits webs — <b>only arrows can hurt it!</b>) · L7 🚜 Super Tractor on treads (tries to run you over) · L8 👨‍🌾👨‍🌾 Two Farmers with pitchforks (<b>only the corn thrower can hurt them!</b>) · L9 🌽 Super Corn Man (<b>only the corn thrower and gold arrows can hurt him!</b>)</p>
         <p>🧑‍🌾 <b>Farmers:</b> the Home screen always shows your <b>5 farmer slots</b> — <b>Farmer 1</b> through <b>Farmer 5</b> — each labeled with the name in that slot. Tap a filled slot (or type its name) and press <b>START GAME</b>; an empty slot fills with the next new name you enter. Every farmer keeps their <b>own</b> items, coins, hearts and barn pieces — pick a farmer again and they start with the gear from their previous play. To free a slot, tap <b>🗑 DELETE</b> on that farmer — the game asks <b>"Are you sure?"</b> first, and nothing is removed until you tap <b>YES, DELETE</b>. Switch farmers any time from the ☰ menu.</p>
         <p>🚶 <b>Move:</b> <kbd>↑←↓→</kbd> or <kbd>W A S D</kbd>, or the touch pad.</p>
         <p>⏸️ <b>Pause:</b> tap the orange <b>⏸ PAUSE</b> button up top while playing (or the ☰ menu's <b>Pause Game</b> entry, or press <kbd>P</kbd> or <kbd>Esc</kbd>) and the whole game holds still — Corn Man, the critters and the music too. Tap <b>▶ RESUME</b> (the same button, or the paused screen's <b>RESUME GAME</b> button) to pick up right where you left off.</p>
-        <p>👊 <b>Punch / Swing corn sword:</b> <kbd>SPACE</kbd> or <kbd>J</kbd> — or the red attack button. <b>Corn Man starts with no weapon</b>, so at first that button is <b>PUNCH</b>: a bare fist, short reach. Pick up his first weapon — the free <b>Wooden Wrench</b> at any Country Store — and the <b>Corn Sword</b> comes with it: from then on the button is <b>SWING</b>, with the sword's longer reach. <b>Hold</b> the button with the sword and he raises it, charged and sparkling — <b>release</b> and he <b>SPINS</b>: one full whirl that hits everything around him for double damage.</p>
+        <p>👊 <b>Punch / Swing:</b> <kbd>SPACE</kbd> or <kbd>J</kbd> — or the red attack button. <b>Corn Man starts with no weapon</b>, so at first that button is <b>PUNCH</b>: a bare fist, short reach, <b>1 damage</b>. Find his <b>Wooden Wrench</b> lying on the Home Farm and the <b>Corn Sword</b> comes with it: from then on the button is <b>SWING</b>, with longer reach and <b>2 damage</b>. The <b>Silver Wrench</b> does <b>3</b> and the <b>Golden Wrench 4</b> — a chicken (3 HP) takes <b>3 fists, 2 wooden hits, or 1 hit</b> from anything better, and everything else on the farm is tougher than a chicken. <b>Hold</b> the button with the sword and he raises it, charged and sparkling — <b>release</b> and he <b>SPINS</b>: one full whirl that hits everything around him for double damage. Solid hits knock critters back a full square — and getting hit knocks Corn Man back too.</p>
         <p>🌽 <b>Throw a kernel:</b> <kbd>K</kbd> or <kbd>X</kbd> — or the orange THROW button.</p>
-        <p>🪙 <b>Drops:</b> when you defeat an enemy, it <b>leaves corn 🌽 or coins 🪙 behind on the field</b> — walk over the drop to pick it up (tougher critters leave more, and the big end guys leave a coin pile <i>and</i> a corn pile). <b>Sometimes</b> an enemy drops a shiny <b>gold coin ✨ worth 5 coins</b> instead — it sparkles gold with a ×5 label, so grab it before it fades! <b>Every once in a while</b> a defeated enemy drops a glowing <b>Power Heart 💖</b> — a big pink-and-gold heart with a POWER label — walk over it to <b>heal 1 heart</b>. Spend coins at a <b>🏪 Country Store</b> — walk into any of the 16 store buildings spread across the farm (or use the ☰ menu): Hearts 10, Arrows 25, Bow 50, Overalls 100, Oil Can 100, Lantern 150, Gold Arrows 200.</p>
+        <p>🪙 <b>Drops:</b> when you defeat an enemy, it <b>leaves corn 🌽 or coins 🪙 behind on the field</b> — walk over the drop to pick it up (tougher critters leave more, and the big end guys leave a coin pile <i>and</i> a corn pile). <b>Sometimes</b> an enemy drops a shiny <b>gold coin ✨ worth 5 coins</b> instead — it sparkles gold with a ×5 label, so grab it before it fades! <b>Every once in a while</b> a defeated enemy drops a glowing <b>Power Heart 💖</b> — a big pink-and-gold heart with a POWER label — walk over it to <b>heal 1 heart</b>. Coins are keepsakes now — the storm took the stores, so there is nothing left to buy; everything you need is out there to be found.</p>
         <p>🏹 <b>Bow &amp; arrows:</b> you start with 25 arrows. Buy the Bow at the store, then shoot with <kbd>F</kbd> or the BOW button. Every arrow shot uses 1 arrow and costs 1 corn.</p>
         <p>✨🏹 <b>Gold arrows:</b> a pack of 10 costs <b>200 coin</b> at the store. Shoot one with <kbd>G</kbd> or the GOLD button (you still need the Bow). Gold arrows are the only arrows that can hurt <b>Super Corn Man</b> on Level 9 — stock up before you go in!</p>
         <p>🔧 <b>Wrenches:</b> get the free <b>Wooden Wrench</b> (the corn thrower and the Corn Sword come with it) at the first shop visit. Throw it with <kbd>T</kbd> or the WREN button. With <b>full hearts</b> it flies across the whole screen; with hurt hearts it only flies a few feet. It <b>stuns</b> an enemy, then destroys it. At <b>5 hearts</b> your wrench turns <b>Silver (4× power)</b>; at <b>10 hearts</b> it turns <b>Golden (8× power)</b>. You gain +1 heart every time you beat a level!</p>
@@ -1806,6 +1818,13 @@ function sfx(name){
   else if (name === 'win'){ [523,659,784,1046,1318,1568].forEach(function(f,i){ setTimeout(function(){ beep(f, .2, 'square', .08); }, i*130); }); }
   else if (name === 'flame'){ beep(280, .16, 'sawtooth', .06, 940); }
   else if (name === 'burn'){ [160,240,120,320,200].forEach(function(f,i){ setTimeout(function(){ beep(f, .1, 'sawtooth', .07, f * 0.6); }, i*55); }); }
+  else if (name === 'squawk'){ beep(880, .16, 'sawtooth', .07, 240); setTimeout(function(){ beep(1150, .1, 'square', .05, 420); }, 55); }
+  else if (name === 'chirp'){ beep(540, .05, 'square', .06, 320); }
+  else if (name === 'chickendie'){ [740, 560, 420].forEach(function(f, i){ setTimeout(function(){ beep(f, .11, 'sawtooth', .07, f * 0.35); }, i * 95); }); setTimeout(function(){ beep(150, .22, 'square', .06, 55); }, 300); }
+  else if (name === 'oink'){ beep(170, .09, 'square', .07, 80); setTimeout(function(){ beep(150, .08, 'square', .06, 70); }, 95); }
+  else if (name === 'baa'){ beep(430, .18, 'sawtooth', .045, 300); }
+  else if (name === 'caw'){ beep(660, .15, 'sawtooth', .06, 260); }
+  else if (name === 'rev'){ beep(85, .42, 'sawtooth', .08, 210); }
   else if (name === 'creak'){ doorCreak(); }
 }
 /* A small wooden door creak, synthesized (no file): a low sawtooth
@@ -1844,9 +1863,9 @@ function doorCreak(){
    (data:application/octet-stream;base64,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VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//sQxPABw2AbT8xh4OBhg+m5jDwcVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVX/+xDE8YDDiB1PzOHhIGeDqfmcPCRVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/7EMTwgMN0HUnM4eBgZYPpeYw8TFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//sQxOcBw1wbMcxh4GgcAWLgkQQFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU=, the <audio id="barnMusic">
    element) — the SAME 10-second loop in every barn, Levels 1–9. */
 var titleAudio = document.getElementById('titleMusic');
-if (titleAudio) titleAudio.volume = 0.9;
+if (titleAudio) titleAudio.volume = 0.55;
 var barnAudio = document.getElementById('barnMusic');
-if (barnAudio) barnAudio.volume = 0.85;
+if (barnAudio) barnAudio.volume = 0.5;
 function onTitleFlow(){
   var t = document.getElementById('titleScreen'), n = document.getElementById('nameScreen');
   return !!((t && t.classList.contains('show')) || (n && n.classList.contains('show')));
@@ -1922,12 +1941,12 @@ document.addEventListener('pointerdown', function(){
 /* ---------- Level data ---------- */
 var ENEMY_TYPES = {
   chicken:   { hp:3, speed:52,  dmg:1, score:1, ai:'chicken' },   /* 3 fist hits (Michael) — stronger weapons finish it faster; brain: chickenStep */
-  pig:       { hp:2, speed:46,  dmg:1, score:2, ai:'charge' },
-  crow:      { hp:1, speed:74,  dmg:1, score:2, ai:'fly' },
-  scarecrow: { hp:3, speed:34,  dmg:1, score:3, ai:'chase' },
-  goat:      { hp:2, speed:88,  dmg:1, score:3, ai:'zigzag' },
-  tractor:   { hp:4, speed:62,  dmg:2, score:5, ai:'chase' },
-  mole:      { hp:1, speed:100, dmg:1, score:2, ai:'chase' },
+  pig:       { hp:5, speed:46,  dmg:1, score:2, ai:'pig' },       /* brain: pigStep — graze, stalk, paw the ground, CHARGE, pant */
+  crow:      { hp:3, speed:74,  dmg:1, score:2, ai:'crow' },      /* brain: crowStep — circle, caw, DIVE, climb; drops the arrows it stole */
+  scarecrow: { hp:6, speed:34,  dmg:1, score:3, ai:'scarecrow' },/* brain: scarecrowStep — stands frozen, then LURCHES */
+  goat:      { hp:5, speed:88,  dmg:1, score:3, ai:'goat' },      /* brain: goatStep — zigzag in, head down, HEADBUTT, dizzy */
+  tractor:   { hp:8, speed:62,  dmg:2, score:5, ai:'tractor' },  /* brain: tractorStep — chug, REV, DRIVE, stall steaming; drops oil */
+  mole:      { hp:4, speed:100, dmg:1, score:2, ai:'mole' },      /* brain: moleStep — burrows as a mound, POPS UP, swipes */
   /* end guys (big bosses) */
   boss_chicken:      { hp:16, speed:66, dmg:1, score:5, ai:'peck' },
   boss_turtle:       { hp:18, speed:48, dmg:1, score:5, ai:'turtle' },
@@ -1972,6 +1991,12 @@ var BIGS = [
 ];
 var WRENCH_POWER = [0, 1, 4, 8];
 var WRENCH_NAME = ['No Wrench', 'Wooden Wrench', 'Silver Wrench', 'Golden Wrench'];
+/* Swing damage by wrench tier (Michael's law, 2026-11-17): the fist
+   does 1, the Wooden Wrench 2, the Silver 3, the Golden 4 — so a
+   3-HP chicken takes 3 fists, 2 wooden hits, then 1 hit at any
+   level, forever. The spin attack hits for double the swing. */
+var WRENCH_SWING = [0, 2, 3, 4];
+function swingDamage(){ return state.wrench >= 1 ? WRENCH_SWING[state.wrench] : 1; }
 
 /* ---------- Game state (session only) ---------- */
 var state = {
@@ -2002,6 +2027,7 @@ var state = {
   shedStashes:{},            // 100-coin stashes collected from under burned sheds/barns
   visitedRooms:{},           // Level Map progress, per hero: { levelIndex: [one boolean per room in that barn — 15 to 25 rooms, shaped like the level's boss] } — a room flips true the moment Corn Man steps into it, and its screen on the Level Map turns yellow (map only)
   hasLadder:false,           // the small ladder hidden under a hay bale — PERMANENT once picked up: carrying it makes ANY water walkable (touch water and Corn Man climbs over it). It is NEVER used up — not by crossing water, not by falling, not by restarting the quest — and it is saved with the hero (the Great Barn moat and every future water hazard)
+  introsSeen: {},            // level-intro dialogues this hero has already watched (saved per hero)
   ladderBurned:false,        // the ladder bale has been burned (the ladder then waits on the spot until picked up)
   mode:'overworld',          // overworld | dungeon
   owCol:7, owRow:6,          // overworld screen the hero is standing on (Home Farm, south-center of the 16×8 grid)
@@ -2260,6 +2286,7 @@ function snapshotState(){
     shedBurned: state.shedBurned, shedStashes: state.shedStashes,
     hasLadder: state.hasLadder, ladderBurned: state.ladderBurned,
     visitedRooms: state.visitedRooms,
+    introsSeen: state.introsSeen,
     owCol: state.owCol, owRow: state.owRow,
     world: state.world, world2Unlocked: state.world2Unlocked
   };
@@ -2290,6 +2317,7 @@ function applySnapshot(d){
   state.shedStashes = (d.shedStashes && typeof d.shedStashes === 'object') ? d.shedStashes : {};
   state.hasLadder = !!d.hasLadder; state.ladderBurned = !!d.ladderBurned;
   state.visitedRooms = (d.visitedRooms && typeof d.visitedRooms === 'object') ? d.visitedRooms : {};
+  state.introsSeen = (d.introsSeen && typeof d.introsSeen === 'object') ? d.introsSeen : {};
   state.owCol = Math.min(15, Math.max(0, (d.owCol == null ? 7 : d.owCol) | 0));
   state.owRow = Math.min(7, Math.max(0, (d.owRow == null ? 6 : d.owRow) | 0));
   /* World: old saves predate World 2 — a hero who had already beaten
@@ -2437,7 +2465,7 @@ function renderMap(){
   updateHUD();
 }
 function showOverlay(id){
-  ['titleScreen','nameScreen','mapScreen','worldMapScreen','levelMapScreen','pieceScreen','overScreen','winScreen','weddingScreen','helpScreen','shopScreen','unlockScreen','pauseScreen'].forEach(function(o){
+  ['titleScreen','nameScreen','mapScreen','worldMapScreen','levelMapScreen','pieceScreen','overScreen','winScreen','weddingScreen','helpScreen','shopScreen','dlgScreen','unlockScreen','pauseScreen'].forEach(function(o){
     document.getElementById(o).classList.toggle('show', o === id);
   });
   /* A real screen change also ends a button pause: the paused overlay
@@ -2893,7 +2921,7 @@ var MAP_SPOTS = [
   { lvl:7, ow:97,  how:'🕳️ Hatch — push the lone hay bale' },
   { lvl:8, ow:7,   how:'🔒 Great Barn — opens at 8/8 pieces' }
 ];
-var MAP_NOTES = { 103:'🏠 Start here · 🏪 Country Store', 71:'💬 Hint farmer · secret rock', 26:'⛰️ Go UP, UP, UP, UP to climb to Owl Roost' };
+var MAP_NOTES = { 103:'🏠 Start here — your wrench lies in the grass', 71:'💬 Hint farmer · secret rock', 26:'⛰️ Go UP, UP, UP, UP to climb to Owl Roost' };
 /* ---------- World 2: everything switched around ----------
    In World 2 the LEVELS trade fields: each barn entrance on the
    farm hosts a different level (L1–L8 are shuffled among their 8
@@ -2999,7 +3027,6 @@ function farmCellDetail(i){
   getMapSpots().forEach(function(sp){
     if (sp.ow === i) txt += ' ⭐ LEVEL ' + (sp.lvl + 1) + ': ' + LEVELS[sp.lvl].name + ' — ' + sp.how + (state.completed[sp.lvl] ? ' ✔ DONE' : '');
   });
-  if (SHOP_SCREENS.indexOf(i) >= 0) txt += ' 🏪 Country Store here.';
   effBurnSheds().forEach(function(sd){
     if (sd.ow === i) txt += state.shedBurned[sd.id]
       ? ' 🏚️ The little ' + (sd.type === 'barnlet' ? 'barn' : 'shed') + ' that stood here was burned down.'
@@ -3046,10 +3073,6 @@ function renderWorldMap(){
       var hm = document.createElement('span'); hm.className = 'fm-mark'; hm.textContent = '🏠';
       cell.appendChild(hm);
     }
-    if (SHOP_SCREENS.indexOf(i) >= 0 && i !== 103){
-      var sh = document.createElement('span'); sh.className = 'fm-shop'; sh.textContent = '🏪';
-      cell.appendChild(sh);
-    }
     /* Secret markers (Ryan): a 💖 heart on each of the 5 fields hiding
        a secret Super Heart (BURN_BALES), a 🪙 on each field hiding the
        100-coin stash under a burnable barn/shed (BURN_SHEDS coins:true),
@@ -3095,7 +3118,7 @@ function renderWorldMap(){
     : (state.world === 2 ? '🔀 WORLD 2 MAP — the levels, Super Hearts and hidden coins are all switched around from World 1, and every end boss is 25% stronger. ' : '') +
       'Barn pieces: ' + piecesGot() + ' / 8' +
       (piecesGot() === 8 ? ' — the Great Barn on the north hill is OPEN!' : ' — the Great Barn (L9, north hill) opens at 8/8.') +
-      ' 🏪 = one of the 16 Country Stores. 💖 = a field hiding a secret Super Heart (5 in all). 🪙 = a field hiding 100 coins. 🪜 = a field hiding an item. 💧 = a Water of Life healing pond (fields 6 across 1 down, and 14 across 3 down) — touch its water to refill your hearts. The map shows where to go — you still walk there yourself. No shortcuts!';
+      ' 💖 = a field hiding a secret Super Heart (5 in all). 🪙 = a field hiding 100 coins. 🪜 = a field hiding an item. 💧 = a Water of Life healing pond (fields 6 across 1 down, and 14 across 3 down) — touch its water to refill your hearts. The map shows where to go — you still walk there yourself. No shortcuts!';
   updateHUD();
 }
 function openWorldMap(){
@@ -3110,8 +3133,8 @@ function openWorldMap(){
   warpMode = false; warpSel = -1; farmTapCell = -1; farmTapCount = 0;
   document.getElementById('worldMapTitle').textContent = state.world === 2 ? '🗺️ FARM MAP — WORLD 2' : '🗺️ FARM MAP';
   document.getElementById('worldMapHint').innerHTML = state.world === 2
-    ? 'The whole farm in <b>WORLD 2</b> — north is up, <b>128 fields in a grid, 16 across × 8 down</b>. Everything is <b>switched around</b> here: the <b>levels stand on different fields</b> than in World 1, and the <b>💖 Super Hearts</b> and <b>🪙 hidden coins</b> have moved too — this map shows World 2\'s layout. <b>L1–L8</b> hold the 8 barn pieces, the <b>Great Barn (L9)</b> opens once you have all 8, and <b>🏪 marks the 16 Country Stores</b>. Every end boss in World 2 is <b>25% stronger</b>. <b>Tap any field to see its name below.</b>'
-    : 'The whole farm, laid out just like you walk it — north is up. <b>128 fields in a grid, 16 across × 8 down</b>, like the original Zelda. Every barn is marked from the start: <b>L1–L8</b> hold the 8 barn pieces, the <b>Great Barn (L9)</b> opens once you have all 8, and <b>🏪 marks the 16 Country Stores</b> spread all over the farm. Secrets are marked too: <b>💖</b> on the 5 fields hiding a secret Super Heart, <b>🪙</b> on fields hiding 100 coins, <b>🪜</b> on the field hiding an item, <b>💧</b> on the two fields with a Water of Life healing pond. <b>Tap any field to see its name below.</b>';
+    ? 'The whole farm in <b>WORLD 2</b> — north is up, <b>128 fields in a grid, 16 across × 8 down</b>. Everything is <b>switched around</b> here: the <b>levels stand on different fields</b> than in World 1, and the <b>💖 Super Hearts</b> and <b>🪙 hidden coins</b> have moved too — this map shows World 2\'s layout. <b>L1–L8</b> hold the 8 barn pieces, the <b>Great Barn (L9)</b> opens once you have all 8. Every end boss in World 2 is <b>25% stronger</b>. <b>Tap any field to see its name below.</b>'
+    : 'The whole farm, laid out just like you walk it — north is up. <b>128 fields in a grid, 16 across × 8 down</b>, like the original Zelda. Every barn is marked from the start: <b>L1–L8</b> hold the 8 barn pieces, the <b>Great Barn (L9)</b> opens once you have all 8. Secrets are marked too: <b>💖</b> on the 5 fields hiding a secret Super Heart, <b>🪙</b> on fields hiding 100 coins, <b>🪜</b> on the field hiding an item, <b>💧</b> on the two fields with a Water of Life healing pond. <b>Tap any field to see its name below.</b>';
   document.getElementById('worldMapCloseBtn').textContent = '✔ CLOSE MAP — KEEP EXPLORING';
   renderWorldMap(); showOverlay('worldMapScreen'); updateHUD();
   dlog('Farm Map opened — all 9 level locations shown. Hero on screen ' + heroOwIndex() + '.');
@@ -3567,7 +3590,7 @@ function openWarpMap(){
   document.getElementById('stageWrap').classList.add('tall');
   document.getElementById('bossBar').classList.remove('show');
   document.getElementById('worldMapTitle').textContent = '🗺️ FARM MAP — ⭐ PICK WHERE YOU START ⭐';
-  document.getElementById('worldMapHint').innerHTML = '<b>⭐ CHEAT WARP + ALL ITEMS! ⭐</b> Farmer picked, game started — <b>now pick the field Corn Man starts on!</b> Tap any field to <b>pick it</b> — it glows orange — then tap it <b>again</b> and he pops out right there instead of the Home Farm, carrying <b>ALL the shop items</b>: Bow 🏹, Arrows, Gold Arrows ✨, Overalls 👕, Oil Can 🛢️, Wooden Wrench 🔧 and the Lantern 🔦, with hearts full! All 128 fields are here, with the barns (L1–L9) and the 16 🏪 Country Stores marked.';
+  document.getElementById('worldMapHint').innerHTML = '<b>⭐ CHEAT WARP + ALL ITEMS! ⭐</b> Farmer picked, game started — <b>now pick the field Corn Man starts on!</b> Tap any field to <b>pick it</b> — it glows orange — then tap it <b>again</b> and he pops out right there instead of the Home Farm, carrying <b>ALL the gear</b>: Bow 🏹, Arrows, Gold Arrows ✨, Overalls 👕, Oil Can 🛢️, Wooden Wrench 🔧 and the Lantern 🔦, with hearts full! All 128 fields are here, with the barns (L1–L9) marked.';
   document.getElementById('worldMapCloseBtn').textContent = '✖ NO WARP — START AT HOME FARM';
   renderWorldMap(); showOverlay('worldMapScreen'); updateHUD();
   document.getElementById('farmMapDetail').textContent = '⭐ PICK YOUR STARTING FIELD! ⭐ Tap any field to pick it, tap it again to start there — ALL ITEMS in hand! ⭐';
@@ -3736,7 +3759,6 @@ OW_SPECIAL_ENEMIES[OW_L2] = [['chicken',2],['pig',2],['crow',1]];
 var OW_ENEMIES = [];
 for (var oei = 0; oei < OW_COLS * OW_ROWS; oei++){
   if (OW_SPECIAL_ENEMIES[oei]){ OW_ENEMIES.push(OW_SPECIAL_ENEMIES[oei]); continue; }
-  if (SHOP_SCREENS.indexOf(oei) >= 0){ OW_ENEMIES.push([['chicken',2],['pig',1]]); continue; }
   var oec = oei % OW_COLS, oer = Math.floor(oei / OW_COLS);
   var distHome = Math.abs(oec - 7) + Math.abs(oer - 6);
   if (distHome <= 2) OW_ENEMIES.push([['chicken',3],['pig',1]]);
@@ -4009,9 +4031,8 @@ function loadOwScreen(){
   if (idx === OW_LOST){ owGaps.N = true; owGaps.E = false; }  /* Lost Hills: north loops, east is solid rock */
   obstacles = borderObstacles(owGaps, 'fence');
   var avoid = [{ x: W/2, y: 40, r: 90 }, { x: W/2, y: H - 60, r: 90 }, { x: 40, y: H/2, r: 90 }, { x: W - 60, y: H/2, r: 90 }];
-  if (idx === OW_HOME){                                      /* HOME FARM — store + hint farmer */
-    owFeatures.push({ kind:'shop', x: W/2 - 26, y: 118, w: 52, h: 30, bx: W/2 - 78, by: 34, bw: 156, bh: 96 });
-    owFeatures.push({ kind:'npc', x: 132, y: 300, w: 36, h: 40, hint:'🧑‍🌾 OLD FARMER: “The nearest barn stands a few fields EAST of here, where the sun hits the field. There are 16 stores all over the farm now — and they sell a LANTERN. Dark barn rooms are no joke, young ’un.”' });
+  if (idx === OW_HOME){                                      /* HOME FARM — a clear field now (Michael, 2026-11-17): no store, no farmer standing on it. The storm took the store; Corn Man's wrench lies in the grass where it stood. */
+    if (state.wrench < 1) pickups.push({ x: W/2 - 15, y: 158, w: 30, h: 30, kind:'wrench', t: 0 });
     scatterObstacles(R, 'hay', 4, avoid);
   } else if (idx === OW_L1){                                 /* Level 1 — visible barn, far end of the field */
     owFeatures.push({ kind:'dungeon', idx: dunIdxForField(0), style:'barn', x: 592, y: 158, w: 52, h: 30, bx: 520, by: 52, bw: 176, bh: 116 });
@@ -4103,14 +4124,10 @@ function loadOwScreen(){
   } else {
     scatterObstacles(R, S.ob, 6, avoid);
   }
-  /* 16 Country Stores spread through the grid: the Home Farm store is
-     added above; every other store screen gets the same store building. */
-  if (idx !== OW_HOME && SHOP_SCREENS.indexOf(idx) >= 0){
-    owFeatures.push({ kind:'shop', x: W/2 - 26, y: 118, w: 52, h: 30, bx: W/2 - 78, by: 34, bw: 156, bh: 96 });
-    /* keep scattered obstacles clear of the store building and its door */
-    var shopZone = { x: W/2 - 92, y: 20, w: 184, h: 150 };
-    obstacles = obstacles.filter(function(o){ return o.type === 'fence' || !rectsOverlap(o, shopZone); });
-  }
+  /* The Country Stores are GONE (Michael, 2026-11-17): no store
+     buildings anywhere on the farm and nowhere to buy anything —
+     the gear the quest needs lies out in the fields where the
+     storm dropped it (see the storm-scattered gear below). */
   /* More hay bales to maneuver around on every screen, plus a few
      bushes — scattered after all entrances, secrets and stores are
      placed, so the extras dress the field without ever blocking a
@@ -4215,6 +4232,24 @@ function loadOwScreen(){
       obstacles.push({ x: LADDER_BALE.x, y: LADDER_BALE.y, w: 40, h: 40, type:'hay', ladderId:'ladder' });
     }
   }
+  /* STORM-SCATTERED GEAR (no stores anymore — Michael, 2026-11-17):
+     the gear the quest needs lies out on the fields where the storm
+     dropped it, each piece waiting until Corn Man takes it, with
+     the scatter cleared off its spot so it is always reachable. */
+  if (idx === OW_L1 && !state.hasLantern){
+    obstacles = obstacles.filter(function(o){ return o.type === 'fence' || !rectsOverlap(o, { x: W/2 - 21, y: 202, w: 42, h: 42 }); });
+    pickups.push({ x: W/2 - 15, y: 208, w: 30, h: 30, kind:'lantern', t: 0 });
+  }
+  if (idx === OW_L4 && !state.hasBow){
+    obstacles = obstacles.filter(function(o){ return o.type === 'fence' || !rectsOverlap(o, { x: W/2 - 50, y: 292, w: 42, h: 42 }); });
+    pickups.push({ x: W/2 - 44, y: 298, w: 30, h: 30, kind:'bow', t: 0 });
+    if (!state.found.bowArrows) pickups.push({ x: W/2 + 14, y: 300, w: 26, h: 26, kind:'arrows', val: 10, t: 0 });
+  }
+  if (idx === OW_L8 && !state.found.goldQuiver){
+    obstacles = obstacles.filter(function(o){ return o.type === 'fence' || !rectsOverlap(o, { x: W/2 - 19, y: 232, w: 38, h: 38 }); });
+    pickups.push({ x: W/2 - 13, y: 238, w: 26, h: 26, kind:'goldarrows', val: 6, t: 0 });
+  }
+
   /* THE LITTLE HEALING PONDS — the Water of Life (see HEAL_PONDS):
      on fields 6-1 and 14-3, a little pond sits in the field's
      BOTTOM-LEFT corner. Like the ladder bale and the little sheds,
@@ -4346,6 +4381,118 @@ function goOverworld(atHome){
     dlog('CHEAT: title level jump — straight into Level ' + (lj + 1) + ' (' + ljName + ')' + (titleItemsGranted ? ' with all items (no Super Hearts)' : '') + '. No extra cheat banner inside the barn — enterDungeon already names the level, and a second pop-up here hid the first room\'s critters.');
   }
 }
+/* ---------- Level intros: the story, told Zelda-style ----------
+   (Michael, 2026-11-17: "like CODED — it doesn't start with you
+   standing there; it shows you walk in, then a text dialogue comes
+   up and you click NEXT to get past it.") The first time Corn Man
+   enters a barn — and the first time he stands on the Home Farm —
+   he walks in on his own, the world holds still, and the story is
+   told a page at a time. Short lines, plain words, one idea per
+   page. The full storyline lives in STORYLINE.md beside this file. */
+var INTRO_TEXT = {
+  opening: [
+    'The storm came in the night.\nIt took the Great Barn apart, board by board,\nand scattered its eight pieces across the farm.',
+    'Every creature on the farm woke up bold.\nEvery machine woke up angry.\nThe fields are not safe anymore.',
+    'You are Corn Man. Your hands are empty —\nbut your old wrench survived the storm.\nIt lies in the grass where the store used to stand.',
+    'Find the eight hidden barns.\nTake back the pieces. Raise the Great Barn again.\nIt is dangerous to go alone — take heart, and go.'
+  ],
+  opening2: [
+    'The farm has shifted in the night.\nNothing stands where it stood,\nand the storm\'s creatures remember you.',
+    'They have grown stronger. So have you.\nEight pieces. Eight barns. One wedding.\nGo again, hero.'
+  ],
+  lvl0: [
+    '— LEVEL 1 —\nSUNNY FIELD',
+    'The hens of this farm were gentle once.\nThen the storm got into the coop —\nand one of them kept growing.',
+    'She guards the first piece of the Great Barn.\nMind the beak. Mind the fire.\nTake back what the storm stole.'
+  ],
+  lvl1: [
+    '— LEVEL 2 —\nPUMPKIN PATCH',
+    'Something old sleeps under the pumpkins.\nIt was old when this farm was young,\nand the storm woke it hungry.',
+    'Its neck reaches farther than it looks.\nStrike when it stretches for you.\nThe second piece waits below.'
+  ],
+  lvl2: [
+    '— LEVEL 3 —\nTHE DARK CORN MAZE',
+    'The maze went dark when the storm passed.\nRow upon row of corn —\nand something in the rows still has its engine running.',
+    'No driver. No mercy.\nIt charges at anything that moves.\nStep aside, and strike as it passes.'
+  ],
+  lvl3: [
+    '— LEVEL 4 —\nORCHARD ROWS',
+    'The orchard keeper\'s wife held this farm together\nthrough every hard year there ever was.\nThe storm turned her worry into fury.',
+    'She does not guard the piece out of hate.\nShe guards it because she is afraid.\nEndure the rolling pin — and set her mind at rest.'
+  ],
+  lvl4: [
+    '— LEVEL 5 —\nMUDDY POND',
+    'By day, the pond is quiet.\nBut something hunts over the water now —\nwings like sails, eyes like lanterns.',
+    'It falls from above without a sound.\nKeep moving. Keep your eyes up.\nThe fifth piece sleeps in the mud.'
+  ],
+  lvl5: [
+    '— LEVEL 6 —\nSCARECROW RIDGE',
+    'The scarecrows were built to frighten birds.\nSomething else moved in among them —\nsomething with eight legs and a weaver\'s patience.',
+    'No blade can bite its hide. Only arrows can.\nIf your quiver runs dry, remember:\nthe crows carry what they stole.'
+  ],
+  lvl6: [
+    '— LEVEL 7 —\nSTORMY SILO',
+    'The storm never truly left this place.\nIt poured itself into iron and diesel\nand taught the big machine to hate.',
+    'Faster than the tractor in the maze.\nHeavier, and twice as mean.\nDodge the charge. Chip the beast down.'
+  ],
+  lvl7: [
+    '— LEVEL 8 —\nMOONLIGHT MEADOW',
+    'Two brothers kept this meadow for fifty years.\nThe storm took their piece of the barn\nand left them blaming each other — and you.',
+    'Pitchforks up. Tempers high.\nNo blade will touch them —\nonly the corn they grew themselves. Throw it true.'
+  ],
+  lvl8: [
+    '— LEVEL 9 —\nTHE GREAT BARN',
+    'Eight pieces stand together again.\nBut the storm left one last thing\ninside its own barn: you.',
+    'SUPER CORN MAN — the storm, wearing your face.\nEvery strength you have, it has.\nEvery weakness, too.',
+    'Only your own weapons can hurt it:\nthe corn thrower and the golden arrows.\nDefeat yourself — and raise the barn.'
+  ]
+};
+var intro = null;
+function startIntro(key){
+  if (!state.introsSeen) state.introsSeen = {};
+  var pages = INTRO_TEXT[key];
+  if (!pages || !player || state.introsSeen[key] || intro) return;
+  intro = { key: key, pages: pages, i: 0, stage: 'walk', toY: Math.max(64, player.y - 92) };
+  player.invuln = Math.max(player.invuln || 0, 999);
+  hideBanner();
+  dlog('Intro playing: ' + key + ' (' + pages.length + ' pages).');
+}
+function tickIntro(dt){
+  if (!intro || !player) return;
+  if (intro.stage === 'walk'){
+    player.dir = 'up';
+    keys.up = true;                       /* lets the walk cycle animate */
+    player.walkT += dt * 10;
+    player.y -= 105 * dt;
+    if (player.y <= intro.toY){
+      player.y = intro.toY;
+      keys.up = false;
+      intro.stage = 'talk';
+      showOverlay('dlgScreen');
+      dlgShowPage();
+    }
+  }
+}
+function dlgShowPage(){
+  document.getElementById('dlgText').textContent = intro.pages[intro.i];
+  document.getElementById('dlgNext').textContent = intro.i >= intro.pages.length - 1 ? '▶ BEGIN' : '▶ NEXT';
+}
+function dlgAdvance(){
+  if (!intro || intro.stage !== 'talk') return;
+  ac(); sfx('corn');
+  intro.i++;
+  if (intro.i >= intro.pages.length) endIntro();
+  else dlgShowPage();
+}
+function endIntro(){
+  if (!intro) return;
+  state.introsSeen[intro.key] = true;
+  intro = null;
+  showOverlay(null);
+  if (player) player.invuln = Math.max(player.invuln || 0, 1.5);
+  saveActiveProfile();
+  dlog('Intro finished.');
+}
 function enterDungeon(idx){
   if (player) returnSpot = { c: state.owCol, r: state.owRow, x: player.x, y: player.y };
   state.mode = 'dungeon'; state.level = idx; state.screen = 'play'; state.hp = state.maxHp;
@@ -4387,7 +4534,11 @@ function enterDungeon(idx){
      the only pop-up in the barn entrance. */
   hideBanner();
   if (player) player.invuln = Math.max(player.invuln || 0, 2);
-  showBanner('🏚️ LEVEL ' + (idx + 1) + ' — ' + LEVELS[idx].name.toUpperCase() + ' 🏚️', 1500);
+  /* First entry: the CODED-style intro — he walks in, then the
+     story is told page by page (see startIntro). Later entries
+     get the old one-line name banner. */
+  if (!state.introsSeen['lvl' + idx]) startIntro('lvl' + idx);
+  else showBanner('🏚️ LEVEL ' + (idx + 1) + ' — ' + LEVELS[idx].name.toUpperCase() + ' 🏚️', 1500);
   dlog('Entered barn ' + (idx + 1) + ': ' + LEVELS[idx].name);
 }
 /* Walls for a dungeon room: a doorway gap in every wall where the
@@ -4988,13 +5139,22 @@ function armorBlock(dmg){
   if (state.armor === 2){ return dmg >= 2 ? (r < 0.5 ? 0 : 1) : (r < 0.75 ? 0 : 1); } /* silver overalls */
   return dmg >= 2 ? (r < 0.75 ? 0 : 1) : (r < 0.9 ? 0 : 1);                 /* gold overalls */
 }
-function hurtPlayer(dmg){
+function hurtPlayer(dmg, src){
   if (player.invuln > 0 || state.screen !== 'play') return;
   /* No hit of any kind lands while a banner is up inside a barn —
      not contact, not a web, not a boss dash. The pop-up can never
      cost a heart again. */
   if (bannerT > 0 && state.mode === 'dungeon') return;
   dmg = armorBlock(dmg);
+  /* KNOCKBACK (Michael, 2026-11-17): whatever hit Corn Man shoves
+     him a whole square away from it — half a shove when the
+     overalls soak the blow. The glide is applied in the movement
+     code below (player.kbX / kbY). */
+  if (src){
+    var kx = (player.x + 16) - (src.x + (src.w || 0) / 2), ky = (player.y + 18) - (src.y + (src.h || 0) / 2);
+    var kd = Math.hypot(kx, ky) || 1, kPow = dmg <= 0 ? 220 : 440;
+    player.kbX = kx / kd * kPow; player.kbY = ky / kd * kPow;
+  }
   if (dmg <= 0){
     player.invuln = 0.6; sfx('hit');
     burst(player.x + 16, player.y + 10, '#cfd8dc', 4);
@@ -5032,6 +5192,16 @@ function damageEnemy(e, dmg, source){
   }
   e.hp -= dmg; e.hitT = 0.25; sfx('hit');
   burst(e.x + e.w / 2, e.y + e.h / 2, '#fff', 4);
+  /* KNOCKBACK (Michael, 2026-11-17): a solid hit shoves the critter
+     a whole square back, away from Corn Man; the big keepers barely
+     budge. Only survivors are shoved — the fallen stay where they
+     fell, and a hurt chicken chirps. */
+  if (e.hp > 0 && player){
+    var ekx = (e.x + e.w / 2) - (player.x + 16), eky = (e.y + e.h / 2) - (player.y + 18);
+    var ekd = Math.hypot(ekx, eky) || 1, kbDist = e.big ? 8 : 40;
+    moveWithCollide(e, ekx / ekd * kbDist, eky / ekd * kbDist);
+    if (e.type === 'chicken') sfx('chirp');
+  }
   return true;
 }
 function damageBoss(dmg, source){
@@ -5058,7 +5228,7 @@ function leaveDrop(kind, cx, cy, val){
   pickups.push({ x: x, y: y, w: 20, h: 20, kind: kind, val: val || 1, t: 0 });
 }
 function killEnemy(e){
-  sfx('die'); burst(e.x + 17, e.y + 16, '#ffe95e', 10);
+  sfx((e.type === 'chicken' || e.type === 'boss_chicken') ? 'chickendie' : 'die'); burst(e.x + 17, e.y + 16, '#ffe95e', 10);
   var score = ENEMY_TYPES[e.type].score || 1;
   var cx = e.x + e.w / 2, cy = e.y + e.h / 2;
   /* A defeated enemy LEAVES corn or coins behind on the field —
@@ -5099,6 +5269,16 @@ function killEnemy(e){
     pickups.push({ x: Math.max(28, Math.min(W - 54, cx + 10)), y: Math.max(28, Math.min(H - 54, cy + 8)), w: 26, h: 26, kind:'powerheart', t: 0 });
     burst(cx, cy, '#ff5da2', 8); burst(cx, cy, '#ffd700', 6);
     dlog('A POWER HEART appeared where a ' + e.type + ' fell!');
+  }
+  /* Crows carry off arrows — beat one and some come back. Tractors
+     carry oil. No stores anymore: the farm provides. */
+  if (e.type === 'crow' && Math.random() < 0.45){
+    pickups.push({ x: Math.max(28, Math.min(W - 52, cx - 13)), y: Math.max(28, Math.min(H - 52, cy - 13)), w: 26, h: 26, kind:'arrows', val: 3, t: 0 });
+    dlog('The crow dropped 3 arrows it had stolen!');
+  }
+  if (e.type === 'tractor' && Math.random() < 0.3){
+    pickups.push({ x: Math.max(28, Math.min(W - 50, cx - 11)), y: Math.max(28, Math.min(H - 50, cy - 11)), w: 22, h: 22, kind:'oil', t: 0 });
+    dlog('The tractor dropped an oil can!');
   }
   updateHUD();
   if (e.big){
@@ -5585,6 +5765,12 @@ keys = {};
 var KEYMAP = { ArrowUp:'up', KeyW:'up', ArrowDown:'down', KeyS:'down', ArrowLeft:'left', KeyA:'left', ArrowRight:'right', KeyD:'right' };
 document.addEventListener('keydown', function(ev){
   if (ev.target && ev.target.id === 'nameInput') return;   /* typing a name is not game input */
+  /* Intro dialogue up: Space / J / Enter turns the page — and while
+     an intro runs, no other key does anything at all. */
+  if (intro){
+    if (intro.stage === 'talk' && (ev.code === 'Space' || ev.code === 'KeyJ' || ev.code === 'Enter')){ dlgAdvance(); ev.preventDefault(); }
+    return;
+  }
   /* Pause / resume on the keyboard: P or Esc, only while playing. */
   if ((ev.code === 'KeyP' || ev.code === 'Escape') && state.screen === 'play'){ togglePause(); ev.preventDefault(); return; }
   if (KEYMAP[ev.code]){ if (!gamePaused) keys[KEYMAP[ev.code]] = true; ev.preventDefault(); }
@@ -5697,7 +5883,7 @@ function chickenStep(e, dt){
   } else if (e.ck === 'windup'){
     vx = -ux * 14; vy = -uy * 14;
     if (dist > 200){ e.ck = 'peck'; e.ckT = 0; }
-    else if (e.ckT <= 0){ e.ck = 'lunge'; e.ckT = 0.30; e.aimX = ux; e.aimY = uy; sfx('cluck'); }
+    else if (e.ckT <= 0){ e.ck = 'lunge'; e.ckT = 0.30; e.aimX = ux; e.aimY = uy; sfx('squawk'); }
   } else if (e.ck === 'lunge'){
     vx = e.aimX * spd * 3.1; vy = e.aimY * spd * 3.1;
     if (e.ckT <= 0){ e.ck = 'recover'; e.ckT = 0.8; e.ckCd = 1.0; }
@@ -5708,6 +5894,167 @@ function chickenStep(e, dt){
   e.walkT += dt * (Math.abs(vx) + Math.abs(vy)) * 0.09;
   return [vx, vy];
 }
+/* ---------- The other animals: brains (Michael, 2026-11-17) ----------
+   "Give them sprites and give them attacks and make them stronger
+   than the chickens." Each animal gets the chicken's treatment: a
+   step function with a readable pattern — graze, notice, telegraph,
+   strike, recover — so a player can learn it the Zelda way. HP from
+   ENEMY_TYPES: pig 5, crow 3, goat 5, scarecrow 6, mole 4, tractor 8
+   (the chicken is 3). Every strike is telegraphed and its aim LOCKS
+   before it fires, so a sidestep always works. */
+function pigStep(e, dt){
+  if (e.pg === undefined){ e.pg = 'graze'; e.pgT = 0; e.pgCd = 0; e.pgDir = Math.random() * Math.PI * 2; e.age = 0; e.walkT = 0; }
+  e.age += dt;
+  if (e.pgCd > 0) e.pgCd -= dt;
+  var cx = player.x + 16 - (e.x + e.w / 2), cy = player.y + 18 - (e.y + e.h / 2);
+  var dist = Math.hypot(cx, cy) || 1;
+  var ux = cx / dist, uy = cy / dist;
+  var vx = 0, vy = 0, spd = e.speed;
+  e.pgT -= dt;
+  if (e.pg === 'graze'){
+    if (e.pgT <= 0){ e.pgT = 1.4 + Math.random(); e.pgDir = Math.random() * Math.PI * 2; }
+    vx = Math.cos(e.pgDir) * spd * 0.45; vy = Math.sin(e.pgDir) * spd * 0.45;
+    if (dist < 170){ e.pg = 'alert'; e.pgT = 0.3; sfx('oink'); }
+  } else if (e.pg === 'alert'){
+    if (e.pgT <= 0) e.pg = 'stalk';
+  } else if (e.pg === 'stalk'){
+    vx = ux * spd * 1.05; vy = uy * spd * 1.05;
+    if (dist < 118 && e.pgCd <= 0){ e.pg = 'windup'; e.pgT = 0.45; }
+    else if (dist > 235) e.pg = 'graze';
+  } else if (e.pg === 'windup'){          /* paws the ground, head down */
+    vx = ux * spd * 0.12; vy = uy * spd * 0.12;
+    if (e.pgT <= 0){ e.pg = 'charge'; e.pgT = 0.55; e.aimX = ux; e.aimY = uy; sfx('oink'); }
+  } else if (e.pg === 'charge'){          /* the battering ram */
+    vx = e.aimX * spd * 3.4; vy = e.aimY * spd * 3.4;
+    if (e.pgT <= 0){ e.pg = 'recover'; e.pgT = 1.0; e.pgCd = 1.1; }
+  } else {                                /* recover — panting, wide open */
+    if (e.pgT <= 0) e.pg = dist < 200 ? 'stalk' : 'graze';
+  }
+  e.walkT += dt * (Math.abs(vx) + Math.abs(vy)) * 0.09;
+  return [vx, vy];
+}
+function crowStep(e, dt){
+  if (e.cr === undefined){ e.cr = 'circle'; e.crT = 0; e.crCd = 1 + Math.random(); e.age = 0; e.walkT = 0; }
+  e.age += dt;
+  if (e.crCd > 0) e.crCd -= dt;
+  var cx = player.x + 16 - (e.x + e.w / 2), cy = player.y + 18 - (e.y + e.h / 2);
+  var dist = Math.hypot(cx, cy) || 1;
+  var ux = cx / dist, uy = cy / dist;
+  var vx = 0, vy = 0, spd = e.speed;
+  e.crT -= dt;
+  if (e.cr === 'circle'){                 /* orbits Corn Man at ~115px */
+    var px = -uy, py = ux;
+    var radial = Math.max(-spd * 1.4, Math.min(spd * 1.4, (dist - 115) * 1.6));
+    vx = px * spd + ux * radial; vy = py * spd + uy * radial;
+    if (dist < 215 && e.crCd <= 0){ e.cr = 'telegraph'; e.crT = 0.4; sfx('caw'); }
+  } else if (e.cr === 'telegraph'){       /* hangs in the air, screaming */
+    vx = ux * spd * 0.15; vy = uy * spd * 0.15;
+    if (e.crT <= 0){ e.cr = 'dive'; e.crT = 0.5; e.aimX = ux; e.aimY = uy; }
+  } else if (e.cr === 'dive'){            /* beak first, aim locked */
+    vx = e.aimX * spd * 2.6; vy = e.aimY * spd * 2.6;
+    if (e.crT <= 0){ e.cr = 'climb'; e.crT = 0.65; }
+  } else {                                /* climb — break away, re-circle */
+    vx = -ux * spd * 1.1 - uy * spd * 0.4; vy = -uy * spd * 1.1 + ux * spd * 0.4;
+    if (e.crT <= 0){ e.cr = 'circle'; e.crCd = 1.2 + Math.random() * 0.8; }
+  }
+  e.walkT += dt * (Math.abs(vx) + Math.abs(vy)) * 0.09;
+  return [vx, vy];
+}
+function goatStep(e, dt){
+  if (e.gt === undefined){ e.gt = 'graze'; e.gtT = 0; e.gtCd = 0; e.gtDir = Math.random() * Math.PI * 2; e.age = 0; e.walkT = 0; }
+  e.age += dt;
+  if (e.gtCd > 0) e.gtCd -= dt;
+  var cx = player.x + 16 - (e.x + e.w / 2), cy = player.y + 18 - (e.y + e.h / 2);
+  var dist = Math.hypot(cx, cy) || 1;
+  var ux = cx / dist, uy = cy / dist;
+  var vx = 0, vy = 0, spd = e.speed;
+  e.gtT -= dt;
+  if (e.gt === 'graze'){
+    if (e.gtT <= 0){ e.gtT = 1.3 + Math.random(); e.gtDir = Math.random() * Math.PI * 2; }
+    vx = Math.cos(e.gtDir) * spd * 0.4; vy = Math.sin(e.gtDir) * spd * 0.4;
+    if (dist < 195){ e.gt = 'approach'; sfx('baa'); }
+  } else if (e.gt === 'approach'){        /* zigzags in, horns first */
+    var px = -uy, py = ux, s = Math.sin(e.age * 4) * 0.85;
+    vx = (ux + px * s) * spd * 1.05; vy = (uy + py * s) * spd * 1.05;
+    if (dist < 112 && e.gtCd <= 0){ e.gt = 'windup'; e.gtT = 0.4; }
+    else if (dist > 255) e.gt = 'graze';
+  } else if (e.gt === 'windup'){          /* head down, horns forward */
+    vx = ux * spd * 0.1; vy = uy * spd * 0.1;
+    if (e.gtT <= 0){ e.gt = 'dash'; e.gtT = 0.42; e.aimX = ux; e.aimY = uy; sfx('baa'); }
+  } else if (e.gt === 'dash'){            /* the headbutt */
+    vx = e.aimX * spd * 3.2; vy = e.aimY * spd * 3.2;
+    if (e.gtT <= 0){ e.gt = 'dizzy'; e.gtT = 0.95; e.gtCd = 1.2; }
+  } else {                                /* dizzy — stars circling */
+    if (e.gtT <= 0) e.gt = dist < 220 ? 'approach' : 'graze';
+  }
+  e.walkT += dt * (Math.abs(vx) + Math.abs(vy)) * 0.09;
+  return [vx, vy];
+}
+function scarecrowStep(e, dt){
+  if (e.sc === undefined){ e.sc = 'still'; e.scT = 0.5 + Math.random(); e.age = 0; e.walkT = 0; }
+  e.age += dt;
+  var cx = player.x + 16 - (e.x + e.w / 2), cy = player.y + 18 - (e.y + e.h / 2);
+  var dist = Math.hypot(cx, cy) || 1;
+  var ux = cx / dist, uy = cy / dist;
+  var vx = 0, vy = 0, spd = e.speed;
+  e.scT -= dt;
+  if (e.sc === 'still'){                  /* frozen — until you're close */
+    if (dist < 185 && e.scT <= 0){ e.sc = 'lurch'; e.scT = 0.35; sfx('creak'); }
+  } else {                                /* lurch — a stiff, fast burst */
+    vx = ux * spd * 2.3; vy = uy * spd * 2.3;
+    if (e.scT <= 0){ e.sc = 'still'; e.scT = 0.7 + Math.random() * 0.7; }
+  }
+  e.walkT += dt * (Math.abs(vx) + Math.abs(vy)) * 0.09;
+  return [vx, vy];
+}
+function moleStep(e, dt){
+  if (e.ml === undefined){ e.ml = 'buried'; e.mlT = 1 + Math.random(); e.buried = true; e.age = 0; e.walkT = 0; }
+  e.age += dt;
+  var cx = player.x + 16 - (e.x + e.w / 2), cy = player.y + 18 - (e.y + e.h / 2);
+  var dist = Math.hypot(cx, cy) || 1;
+  var ux = cx / dist, uy = cy / dist;
+  var vx = 0, vy = 0, spd = e.speed;
+  e.mlT -= dt;
+  if (e.ml === 'buried'){                 /* the mound tracks you underground */
+    e.buried = true;
+    vx = ux * spd * 0.8; vy = uy * spd * 0.8;
+    if (e.mlT <= 0 && dist < 195){ e.ml = 'pop'; e.mlT = 0.22; sfx('corn'); burst(e.x + e.w / 2, e.y + e.h / 2, '#7d5734', 7); }
+  } else if (e.ml === 'pop'){             /* bursting out of the dirt */
+    e.buried = false;
+    if (e.mlT <= 0){ e.ml = 'up'; e.mlT = 1.15; }
+  } else if (e.ml === 'up'){              /* hops at Corn Man, claws out */
+    vx = ux * spd * 0.45; vy = uy * spd * 0.45;
+    if (e.mlT <= 0){ e.ml = 'burrow'; e.mlT = 0.25; }
+  } else {                                /* burrow — gone again */
+    if (e.mlT <= 0){ e.ml = 'buried'; e.mlT = 1.4 + Math.random() * 1.2; e.buried = true; }
+  }
+  e.walkT += dt * (Math.abs(vx) + Math.abs(vy)) * 0.09;
+  return [vx, vy];
+}
+function tractorStep(e, dt){
+  if (e.tr === undefined){ e.tr = 'chug'; e.trT = 0; e.trCd = 0; e.age = 0; e.walkT = 0; }
+  e.age += dt;
+  if (e.trCd > 0) e.trCd -= dt;
+  var cx = player.x + 16 - (e.x + e.w / 2), cy = player.y + 18 - (e.y + e.h / 2);
+  var dist = Math.hypot(cx, cy) || 1;
+  var ux = cx / dist, uy = cy / dist;
+  var vx = 0, vy = 0, spd = e.speed;
+  e.trT -= dt;
+  if (e.tr === 'chug'){                   /* chugs straight after him */
+    vx = ux * spd * 0.85; vy = uy * spd * 0.85;
+    if (dist < 215 && e.trCd <= 0){ e.tr = 'rev'; e.trT = 0.55; sfx('rev'); }
+  } else if (e.tr === 'rev'){             /* shaking, smoke pouring */
+    if (e.trT <= 0){ e.tr = 'drive'; e.trT = 0.7; e.aimX = ux; e.aimY = uy; sfx('charge'); }
+  } else if (e.tr === 'drive'){           /* straight through where he stood */
+    vx = e.aimX * spd * 3.0; vy = e.aimY * spd * 3.0;
+    if (e.trT <= 0){ e.tr = 'stall'; e.trT = 1.0; e.trCd = 1.3; }
+  } else {                                /* stall — steaming, helpless */
+    if (e.trT <= 0) e.tr = 'chug';
+  }
+  e.walkT += dt * (Math.abs(vx) + Math.abs(vy)) * 0.09;
+  return [vx, vy];
+}
+
 function doThrow(){
   if (throwCd > 0 || state.screen !== 'play' || gamePaused) return;
   throwCd = 0.38; sfx('throw');
@@ -5724,8 +6071,8 @@ function dirVec(){
 }
 function doBow(){
   if (bowCd > 0 || state.screen !== 'play' || gamePaused) return;
-  if (!state.hasBow){ showBanner('🏹 YOU NEED A BOW FIRST — 50 COIN AT THE COUNTRY STORE!', 2200); return; }
-  if (state.arrows <= 0){ showBanner('🏹 OUT OF ARROWS! A PACK OF 25 IS 25 COIN AT THE STORE.', 2200); return; }
+  if (!state.hasBow){ showBanner('🏹 YOU NEED A BOW FIRST — ONE LIES WAITING IN THE FIELD BY THE CREEK & POND!', 2200); return; }
+  if (state.arrows <= 0){ showBanner('🏹 OUT OF ARROWS! CROWS CARRY THE ARROWS THEY STOLE — FIGHT CROWS TO GET MORE!', 2200); return; }
   if (state.corn < 1){ showBanner('🌽 EACH ARROW COSTS 1 CORN TO SHOOT — YOU HAVE NO CORN!', 2200); return; }
   bowCd = 0.34; state.arrows -= 1; state.corn -= 1; sfx('throw');
   var d = dirVec();
@@ -5734,8 +6081,8 @@ function doBow(){
 }
 function doGoldBow(){
   if (goldCd > 0 || state.screen !== 'play' || gamePaused) return;
-  if (!state.hasBow){ showBanner('🏹 YOU NEED A BOW FIRST — 50 COIN AT THE COUNTRY STORE!', 2200); return; }
-  if (state.goldArrows <= 0){ showBanner('✨🏹 OUT OF GOLD ARROWS! A PACK OF 10 IS 200 COIN AT THE STORE.', 2400); return; }
+  if (!state.hasBow){ showBanner('🏹 YOU NEED A BOW FIRST — ONE LIES WAITING IN THE FIELD BY THE CREEK & POND!', 2200); return; }
+  if (state.goldArrows <= 0){ showBanner('✨🏹 OUT OF GOLD ARROWS! A QUIVER OF THEM LIES HIDING IN THE WEST MEADOW.', 2400); return; }
   goldCd = 0.34; state.goldArrows -= 1; sfx('throw');
   var d = dirVec();
   bolts.push({ x: player.x + 11, y: player.y + 13, w: 12, h: 12, vx: d.x * 600, vy: d.y * 600, dx: d.x, dy: d.y, life: 1.1, gold:true });
@@ -5745,7 +6092,7 @@ function doGoldBow(){
 }
 function doWrench(){
   if (wrenchCd > 0 || state.screen !== 'play' || gamePaused) return;
-  if (state.wrench < 1){ showBanner('🔧 NO WRENCH YET — THE WOODEN WRENCH IS FREE AT THE COUNTRY STORE!', 2400); return; }
+  if (state.wrench < 1){ showBanner('🔧 NO WRENCH YET — YOUR WOODEN WRENCH LIES ON THE HOME FARM, WHERE THE STORE USED TO STAND!', 2400); return; }
   wrenchCd = 0.5; sfx('throw');
   var full = state.hp >= state.maxHp;
   var d = dirVec();
@@ -5755,7 +6102,7 @@ function doWrench(){
 }
 function doLantern(){
   if (lanternCd > 0 || state.screen !== 'play' || gamePaused) return;
-  if (!state.hasLantern){ showBanner('🔦 YOU NEED THE LANTERN FIRST — 150 COIN AT THE COUNTRY STORE! ITS FIRE LIGHTS DARK ROOMS AND BURNS SPECIAL HAY BALES.', 2600); return; }
+  if (!state.hasLantern){ showBanner('🔦 YOU NEED THE LANTERN FIRST — IT WAITS ON THE SUNNY EAST FIELD! ITS FIRE LIGHTS DARK ROOMS AND BURNS SPECIAL HAY BALES.', 2600); return; }
   lanternCd = 0.45; sfx('flame');
   var d = dirVec();
   flames.push({ x: player.x + 8, y: player.y + 10, w: 16, h: 16, vx: d.x * 400, vy: d.y * 400, life: 0.38, t: 0 });
@@ -5811,7 +6158,7 @@ function burnLadderBale(o){
 function useOil(){
   if (gamePaused) return;
   if (state.screen !== 'play' && state.screen !== 'map') return;
-  if (state.oilUses <= 0){ showBanner('🛢️ NO OIL CAN — BUY ONE AT THE COUNTRY STORE (100 COIN).', 2200); return; }
+  if (state.oilUses <= 0){ showBanner('🛢️ NO OIL CAN — TRACTORS CARRY THEM SOMETIMES. BEAT ONE AND SEE.', 2200); return; }
   if (state.hp >= state.maxHp){ showBanner('🛢️ HEARTS ARE ALREADY 100% FULL — SAVE THE OIL!', 2000); return; }
   state.hp = state.maxHp; state.oilUses -= 1; sfx('heart'); updateHUD();
   showBanner(state.oilUses > 0
@@ -5861,6 +6208,14 @@ function update(dt){
      RESUME. draw() keeps painting the frozen field behind the
      paused overlay. */
   if (gamePaused) return;
+  /* LEVEL INTROS: the first time Corn Man stands on the Home Farm
+     the opening story plays; while any intro runs, the whole world
+     holds still — he walks in, then the dialogue tells the story. */
+  if (!intro && player && state.mode === 'overworld' && (state.owRow * OW_COLS + state.owCol) === OW_HOME){
+    if (state.world === 2 && !state.introsSeen.opening2) startIntro('opening2');
+    else if (state.world !== 2 && !state.introsSeen.opening) startIntro('opening');
+  }
+  if (intro){ tickIntro(dt); return; }
   /* Already-collected note pending: Corn Man has just walked into
      a repeated level's empty seed room. Play CONTINUES for 2
      seconds — he can look around the room — and only then does
@@ -5918,6 +6273,13 @@ function update(dt){
     player.walkT += dt * 10;
     var spd = player.speed * (player.slowT > 0 ? 0.45 : 1);
     moveWithCollide(player, mx * spd * dt, my * spd * dt);
+  }
+  /* Knockback glide: the shove from a hit, spent over about a square. */
+  if (player.kbX || player.kbY){
+    moveWithCollide(player, player.kbX * dt, player.kbY * dt);
+    var kbLen = Math.hypot(player.kbX, player.kbY), kbDec = 2400 * dt;
+    if (kbLen <= kbDec){ player.kbX = 0; player.kbY = 0; }
+    else { player.kbX -= player.kbX / kbLen * kbDec; player.kbY -= player.kbY / kbLen * kbDec; }
   }
   var pb = { x: player.x, y: player.y, w: player.w, h: player.h };
   /* Climbing over water: the moment Corn Man (carrying the ladder)
@@ -5987,8 +6349,8 @@ function update(dt){
     if (player.dir === 'down') arc = { x: player.x - 6, y: player.y + 22, w: 44, h: 48 };
     if (player.dir === 'left') arc = { x: player.x - 46, y: player.y - 4, w: 48, h: 44 };
     if (player.dir === 'right') arc = { x: player.x + player.w - 2, y: player.y - 4, w: 48, h: 44 };
-    enemies.forEach(function(e){ if (e.hitT <= 0 && rectsOverlap(arc, e)){ damageEnemy(e, 1, 'sword'); } });
-    if (boss && boss.hitT <= 0 && rectsOverlap(arc, boss)){ damageBoss(1, 'sword'); }
+    enemies.forEach(function(e){ if (e.hitT <= 0 && rectsOverlap(arc, e)){ damageEnemy(e, swingDamage(), 'sword'); } });
+    if (boss && boss.hitT <= 0 && rectsOverlap(arc, boss)){ damageBoss(swingDamage(), 'sword'); }
   }
 
   /* spin attack hits — one full-circle strike as the spin gets
@@ -5997,8 +6359,8 @@ function update(dt){
   if (spinT > 0 && !spinHitDone && spinT < 0.32){
     spinHitDone = true;
     var sbox = { x: player.x - 32, y: player.y - 32, w: player.w + 64, h: player.h + 64 };
-    enemies.forEach(function(e){ if (e.hitT <= 0 && rectsOverlap(sbox, e)){ damageEnemy(e, 2, 'sword'); } });
-    if (boss && boss.hitT <= 0 && rectsOverlap(sbox, boss)){ damageBoss(2, 'sword'); }
+    enemies.forEach(function(e){ if (e.hitT <= 0 && rectsOverlap(sbox, e)){ damageEnemy(e, swingDamage() * 2, 'sword'); } });
+    if (boss && boss.hitT <= 0 && rectsOverlap(sbox, boss)){ damageBoss(swingDamage() * 2, 'sword'); }
   }
 
   /* punch hits — bare fist, only while he carries no weapon: a tight
@@ -6134,7 +6496,7 @@ function update(dt){
         if (e.atkT <= 0 && dist < 210){ e.state = 'lunge'; e.stateT = 0.34; e.aimX = cx / dist; e.aimY = cy / dist; sfx('throw'); }
       }
       moveWithCollide(e, vx * dt, vy * dt);
-      if (rectsOverlap(pb, e)) hurtPlayer(def.dmg);
+      if (rectsOverlap(pb, e)) hurtPlayer(def.dmg, e);
       continue;
     }
     if (e.big && def.ai === 'turtle'){          /* Snapping Turtle: neck reaches out to bite AND spits fireballs */
@@ -6149,7 +6511,7 @@ function update(dt){
       }
       if (e.state === 'reach'){
         e.stateT -= dt; e.neckExt = Math.min(1, e.neckExt + dt * 5);
-        if (dist < 138) hurtPlayer(1);        /* the bite! */
+        if (dist < 138) hurtPlayer(1, e);        /* the bite! */
         if (e.stateT <= 0){ e.state = 'stalk'; e.atkT = 1.0 + Math.random() * 0.5; }
       } else {
         e.neckExt = Math.max(0, e.neckExt - dt * 5);
@@ -6157,7 +6519,7 @@ function update(dt){
         if (e.atkT <= 0 && dist < 190){ e.state = 'reach'; e.stateT = 0.65; sfx('throw'); }
       }
       moveWithCollide(e, vx * dt, vy * dt);
-      if (rectsOverlap(pb, e)) hurtPlayer(def.dmg);
+      if (rectsOverlap(pb, e)) hurtPlayer(def.dmg, e);
       continue;
     }
     if (e.big && def.ai === 'tractorcharge'){   /* Tractor / Super Tractor: drives at Corn Man */
@@ -6173,16 +6535,16 @@ function update(dt){
         if (e.chargeT <= 0){ e.state = 'stalk'; e.chargeT = 0.9 + Math.random() * 0.5; }
       }
       moveWithCollide(e, vx * dt, vy * dt);
-      if (rectsOverlap(pb, e)) hurtPlayer(def.dmg);
+      if (rectsOverlap(pb, e)) hurtPlayer(def.dmg, e);
       continue;
     }
     if (e.big && def.ai === 'wife'){            /* Farmer Wife: swings a rolling pin */
       e.atkT -= dt;
       if (e.swingPhase > 0) e.swingPhase -= dt;
-      if (e.atkT <= 0){ e.atkT = 1.1; e.swingPhase = 0.45; sfx('swing'); if (dist < 88) hurtPlayer(1); }
+      if (e.atkT <= 0){ e.atkT = 1.1; e.swingPhase = 0.45; sfx('swing'); if (dist < 88) hurtPlayer(1, e); }
       vx = cx / dist * e.speed; vy = cy / dist * e.speed;
       moveWithCollide(e, vx * dt, vy * dt);
-      if (rectsOverlap(pb, e)) hurtPlayer(def.dmg);
+      if (rectsOverlap(pb, e)) hurtPlayer(def.dmg, e);
       continue;
     }
     if (e.big && def.ai === 'spider'){          /* Giant Spider: spits webs, keeps its distance */
@@ -6197,7 +6559,7 @@ function update(dt){
         sfx('throw');
       }
       moveWithCollide(e, vx * dt, vy * dt);
-      if (rectsOverlap(pb, e)) hurtPlayer(def.dmg);
+      if (rectsOverlap(pb, e)) hurtPlayer(def.dmg, e);
       continue;
     }
     if (e.big && def.ai === 'farmer'){          /* Farmers: pitchfork jabs */
@@ -6205,20 +6567,57 @@ function update(dt){
       if (e.state === 'jab'){
         e.stateT -= dt;
         vx = e.aimX * 320; vy = e.aimY * 320;
-        if (dist < 88) hurtPlayer(1);
+        if (dist < 88) hurtPlayer(1, e);
         if (e.stateT <= 0){ e.state = 'stalk'; e.atkT = 0.9 + Math.random() * 0.4; }
       } else {
         vx = cx / dist * e.speed; vy = cy / dist * e.speed;
         if (e.atkT <= 0 && dist < 200){ e.state = 'jab'; e.stateT = 0.3; e.aimX = cx / dist; e.aimY = cy / dist; sfx('swing'); }
       }
       moveWithCollide(e, vx * dt, vy * dt);
-      if (rectsOverlap(pb, e)) hurtPlayer(def.dmg);
+      if (rectsOverlap(pb, e)) hurtPlayer(def.dmg, e);
       continue;
     }
     if (def.ai === 'chicken'){
       var cv = chickenStep(e, dt);
       moveWithCollide(e, cv[0] * dt, cv[1] * dt);
-      if (rectsOverlap(pb, e)) hurtPlayer(def.dmg);
+      if (rectsOverlap(pb, e)) hurtPlayer(def.dmg, e);
+      continue;
+    }
+    if (def.ai === 'pig'){
+      var pgv = pigStep(e, dt);
+      moveWithCollide(e, pgv[0] * dt, pgv[1] * dt);
+      if (rectsOverlap(pb, e)) hurtPlayer(def.dmg, e);
+      continue;
+    }
+    if (def.ai === 'crow'){
+      var crv = crowStep(e, dt);
+      e.x += crv[0] * dt; e.y += crv[1] * dt;
+      e.x = Math.max(24, Math.min(W - e.w - 24, e.x)); e.y = Math.max(24, Math.min(H - e.h - 24, e.y));
+      if (rectsOverlap(pb, e)) hurtPlayer(def.dmg, e);
+      continue;
+    }
+    if (def.ai === 'goat'){
+      var gtv = goatStep(e, dt);
+      moveWithCollide(e, gtv[0] * dt, gtv[1] * dt);
+      if (rectsOverlap(pb, e)) hurtPlayer(def.dmg, e);
+      continue;
+    }
+    if (def.ai === 'scarecrow'){
+      var scv = scarecrowStep(e, dt);
+      moveWithCollide(e, scv[0] * dt, scv[1] * dt);
+      if (rectsOverlap(pb, e)) hurtPlayer(def.dmg, e);
+      continue;
+    }
+    if (def.ai === 'mole'){
+      var mlv = moleStep(e, dt);
+      moveWithCollide(e, mlv[0] * dt, mlv[1] * dt);
+      if (!e.buried && rectsOverlap(pb, e)) hurtPlayer(def.dmg, e);
+      continue;
+    }
+    if (def.ai === 'tractor'){
+      var trv = tractorStep(e, dt);
+      moveWithCollide(e, trv[0] * dt, trv[1] * dt);
+      if (rectsOverlap(pb, e)) hurtPlayer(def.dmg, e);
       continue;
     }
     if (def.ai === 'wander'){
@@ -6241,7 +6640,7 @@ function update(dt){
     }
     if (def.ai === 'fly'){ e.x += vx * dt; e.y += vy * dt; e.x = Math.max(24, Math.min(W - e.w - 24, e.x)); e.y = Math.max(24, Math.min(H - e.h - 24, e.y)); }
     else moveWithCollide(e, vx * dt, vy * dt);
-    if (rectsOverlap(pb, e)) hurtPlayer(def.dmg);
+    if (rectsOverlap(pb, e)) hurtPlayer(def.dmg, e);
   }
 
   /* boss — Super Corn Man (Level 9): chases, dashes, and throws kernels back.
@@ -6272,7 +6671,7 @@ function update(dt){
       }
     }
     moveWithCollide(boss, bvx * dt, bvy * dt);
-    if (rectsOverlap(pb, boss)) hurtPlayer(1);
+    if (rectsOverlap(pb, boss)) hurtPlayer(1, boss);
     }
   }
 
@@ -6374,9 +6773,48 @@ function update(dt){
         showBanner('🪙 JACKPOT! 100 COINS WERE HIDING THERE! 🪙', 2400);
         dlog('Picked up the hidden stash under ' + p.shedId + ' — +100 coins! Coins: ' + state.coins);
       }
+      else if (p.kind === 'wrench'){
+        /* THE WOODEN WRENCH — found on the Home Farm where the store
+           stood. The same gift the store once gave free: the wrench,
+           the Corn Sword (SWING replaces PUNCH) and the wrench throw. */
+        state.wrench = 1; state.hasSword = true; sfx('piece');
+        burst(p.x + 15, p.y + 15, '#ffd700', 12); burst(p.x + 15, p.y + 15, '#f2c230', 8);
+        showBanner('🔧 YOUR WOODEN WRENCH — RIGHT WHERE THE STORM DROPPED IT! THE CORN SWORD COMES WITH IT: THE RED BUTTON IS SWING NOW, AND K THROWS THE WRENCH! 🔧', 3200);
+        dlog('Found the Wooden Wrench on the Home Farm — Corn Sword granted, punch becomes SWING.');
+      }
+      else if (p.kind === 'lantern'){
+        state.hasLantern = true; sfx('piece');
+        burst(p.x + 15, p.y + 15, '#ffd700', 12); burst(p.x + 15, p.y + 15, '#ff8a2d', 8);
+        showBanner('🔦 YOU FOUND THE LANTERN! PRESS THE LANTERN BUTTON (🔥) TO SHOOT FIRE — IT LIGHTS DARK ROOMS AND BURNS SPECIAL HAY BALES! 🔦', 3000);
+        dlog('Found the Lantern on the Sunny East Field.');
+      }
+      else if (p.kind === 'bow'){
+        state.hasBow = true; sfx('unlock');
+        burst(p.x + 15, p.y + 15, '#ffd700', 12);
+        showBanner('🏹 YOU FOUND THE BOW! SHOOT ARROWS WITH F OR THE BOW BUTTON — SOME KEEPERS CAN ONLY BE HURT BY ARROWS! 🏹', 3000);
+        dlog('Found the Bow by the Creek & Pond.');
+      }
+      else if (p.kind === 'arrows'){
+        state.arrows += (p.val || 3); if ((p.val || 0) >= 10) state.found.bowArrows = true; sfx('corn');
+        burst(p.x + 13, p.y + 13, '#ffd91a', 6);
+        showBanner('🏹 +' + (p.val || 3) + ' ARROWS! 🏹', 1300);
+        dlog('Picked up ' + (p.val || 3) + ' arrows. Arrows: ' + state.arrows);
+      }
+      else if (p.kind === 'goldarrows'){
+        state.goldArrows += (p.val || 3); state.found.goldQuiver = true; sfx('piece');
+        burst(p.x + 13, p.y + 13, '#ffe95e', 10);
+        showBanner('✨🏹 +' + (p.val || 3) + ' GOLD ARROWS! SHOOT THEM WITH G OR THE GOLD BUTTON. ✨', 2400);
+        dlog('Found gold arrows in the West Meadow. Gold arrows: ' + state.goldArrows);
+      }
+      else if (p.kind === 'oil'){
+        state.oilUses += 2; sfx('piece');
+        burst(p.x + 11, p.y + 11, '#ffd700', 8);
+        showBanner('🛢️ AN OIL CAN! 2 FULL HEALS — USE IT WITH O OR THE OIL BUTTON. 🛢️', 2400);
+        dlog('Picked up an oil can. Oil uses: ' + state.oilUses);
+      }
       else { state.corn += (p.val || 1); sfx('corn'); burst(p.x + 9, p.y + 9, '#58b02c', 4); dlog('Picked up ' + (p.val || 1) + ' corn an enemy left behind. Corn: ' + state.corn); }
       pickups.splice(pi, 1); updateHUD();
-    } else if (p.t > 14 && p.kind !== 'heartc' && p.kind !== 'key' && p.kind !== 'superheart' && p.kind !== 'stash' && p.kind !== 'ladder') pickups.splice(pi, 1);
+    } else if (p.t > 14 && p.kind !== 'heartc' && p.kind !== 'key' && p.kind !== 'superheart' && p.kind !== 'stash' && p.kind !== 'ladder' && p.kind !== 'wrench' && p.kind !== 'lantern' && p.kind !== 'bow' && p.kind !== 'goldarrows' && p.kind !== 'arrows' && p.kind !== 'oil') pickups.splice(pi, 1);
   }
 
   /* walk through the door into the barn room */
@@ -6765,34 +7203,148 @@ function drawEnemy(e){
     if (ck === 'alert'){ R(x + 15, y - 15, 3, 9, '#ffd91a'); R(x + 15, y - 4, 3, 3, '#ffd91a'); }   /* the ! */
     /* (the game's own health bar over hurt enemies shows the hits it has left) */
   } else if (e.type === 'pig'){
-    R(x + 3, y + 9, 28, 20, '#f49ac1'); R(x + 22, y + 12, 11, 12, '#f78fb8');
-    R(x + 26, y + 16, 2, 4, '#c2517f'); R(x + 30, y + 16, 2, 4, '#c2517f');
-    R(x + 12, y + 13, 3, 3, '#14181d'); R(x + 7, y + 5, 7, 6, '#f78fb8'); R(x + 1, y + 10, 4, 7, '#e07ba6');
-    R(x + 7, y + 28, 4, 5, '#c2517f'); R(x + 23, y + 28, 4, 5, '#c2517f');
+    /* THE PIG (brain: pigStep): grazing, ALERT (!), stalking,
+       windup (head down, hoof scraping dust), CHARGE (stretched,
+       speed lines, angry brow), recover (head drooped, tongue out,
+       panting). Mirrored to face Corn Man. 5 HP — tougher than a chicken. */
+    var pg = e.pg || 'graze';
+    var pface = e.face < 0 ? -1 : 1;
+    ctx.save(); ctx.translate(x + 17, 0); ctx.scale(pface, 1); ctx.translate(-(x + 17), 0);
+    var plegPh = Math.floor((e.walkT || 0) * 2) % 2;
+    var pmoving = pg === 'graze' || pg === 'stalk' || pg === 'charge';
+    var plegA = pmoving && plegPh === 0 ? 2 : 0, plegB = pmoving && plegPh === 1 ? 2 : 0;
+    var pDip = pg === 'windup' ? 5 : (pg === 'recover' ? 4 : 0);
+    var pStretch = pg === 'charge' ? 4 : 0;
+    var pPant = pg === 'recover' ? Math.round(Math.sin((e.age || 0) * 10)) : 0;
+    R(x + 1, y + 10, 4, 7, '#e07ba6');                                        /* tail */
+    R(x + 3 - pStretch, y + 9, 28 + pStretch, 20, '#f49ac1');                /* body */
+    R(x + 7, y + 28 - plegA, 4, 5, '#c2517f'); R(x + 23, y + 28 - plegB, 4, 5, '#c2517f');  /* legs */
+    R(x + 22, y + 12 + pDip, 11, 12, '#f78fb8');                             /* head */
+    R(x + 26, y + 16 + pDip, 2, 4, '#c2517f'); R(x + 30, y + 16 + pDip, 2, 4, '#c2517f');  /* nostrils */
+    R(x + 12, y + 13 + (pDip ? 2 : 0), 3, 3, '#14181d');                      /* eye */
+    if (pg === 'windup' || pg === 'charge') R(x + 10, y + 11 + (pDip ? 2 : 0), 6, 2, '#14181d');  /* angry brow */
+    R(x + 7, y + 5 + (pDip ? 3 : 0), 7, 6, '#f78fb8');                       /* ear */
+    if (pg === 'windup'){ R(x + 24, y + 31, 7, 2, '#d8c690'); R(x + 27, y + 29, 5, 2, '#d8c690'); }  /* hoof scraping dust */
+    if (pg === 'charge'){ R(x - 5, y + 12, 8, 2, '#cfd8dc'); R(x - 7, y + 19, 10, 2, '#cfd8dc'); }  /* speed lines */
+    if (pg === 'recover') R(x + 30, y + 24 + pPant, 3, 5, '#ff8fab');        /* tongue out */
+    ctx.restore();
+    if (pg === 'alert'){ R(x + 15, y - 15, 3, 9, '#ffd91a'); R(x + 15, y - 4, 3, 3, '#ffd91a'); }   /* the ! */
   } else if (e.type === 'crow'){
-    var f = Math.sin(e.t * 10) * 5;
-    R(x + 10, y + 10, 15, 11, '#23272e'); R(x + 22, y + 6, 10, 10, '#23272e');
-    R(x + 31, y + 10, 7, 3, '#f5a301'); R(x + 27, y + 8, 3, 3, '#ffe95e');
-    R(x - 2, y + 6 - f, 13, 6, '#343a44'); R(x + 24, y + 16 + f, 12, 6, '#343a44');
+    /* THE CROW (brain: crowStep): circling (wings flapping),
+       telegraph (wings spread wide, beak open, !), DIVE (wings
+       swept, speed lines), climb (flapping hard). Mirrored to face
+       Corn Man. 3 HP — and it drops the arrows it stole. */
+    var cr = e.cr || 'circle';
+    var crface = e.face < 0 ? -1 : 1;
+    ctx.save(); ctx.translate(x + 17, 0); ctx.scale(crface, 1); ctx.translate(-(x + 17), 0);
+    var flap = Math.sin((e.age || 0) * (cr === 'climb' ? 18 : 10)) * 5;
+    var spread = cr === 'telegraph' ? 5 : 0;
+    var swept = cr === 'dive' ? 6 : 0;
+    R(x - 1 - spread, y + 6 - flap - spread, 15, 6, '#3d4450');              /* far wing */
+    R(x + 10, y + 10, 15, 11, '#23272e');                                    /* body */
+    R(x + 22, y + 6, 10, 10, '#23272e');                                      /* head */
+    R(x + 31, y + 10, 7, 3, '#f5a301');                                      /* beak */
+    if (cr === 'telegraph') R(x + 31, y + 14, 6, 3, '#f5a301');              /* beak open, cawing */
+    R(x + 27, y + 8, 3, 3, '#ffe95e');                                       /* eye */
+    R(x + 20 + swept, y + 16 + flap + spread, 14, 6, '#3d4450');             /* near wing */
+    if (cr === 'dive'){ R(x - 6, y + 9, 9, 2, '#cfd8dc'); R(x - 8, y + 15, 11, 2, '#cfd8dc'); }  /* speed lines */
+    ctx.restore();
+    if (cr === 'telegraph'){ R(x + 15, y - 15, 3, 9, '#ffd91a'); R(x + 15, y - 4, 3, 3, '#ffd91a'); }  /* the ! */
   } else if (e.type === 'scarecrow'){
-    R(x + 15, y + 12, 4, 20, '#7a4d16'); R(x + 4, y + 16, 26, 4, '#7a4d16');
-    R(x + 8, y + 12, 18, 16, '#3a6bc9'); R(x + 9, y + 2, 16, 13, '#f2c14e');
-    R(x + 12, y + 6, 3, 3, '#14181d'); R(x + 20, y + 6, 3, 3, '#14181d'); R(x + 13, y + 11, 8, 2, '#14181d');
-    R(x + 5, y - 3, 24, 6, '#e07b1f'); R(x + 9, y - 7, 16, 5, '#e07b1f');
+    /* THE SCARECROW (brain: scarecrowStep): stands FROZEN with a
+       slow sway while you are far, LURCHES at you in stiff bursts
+       (leaning into it, straw flying), and at arm's reach its
+       crossbar arm SWIPES down. 6 HP — the toughest plain critter
+       on the farm bar the tractor. */
+    var sc = e.sc || 'still';
+    var sway = sc === 'still' ? Math.round(Math.sin((e.age || 0) * 1.7)) : 0;
+    var lean = sc === 'lurch' ? (e.face < 0 ? -3 : 3) : 0;
+    var scNear = Math.abs((player.x + 16) - (x + e.w / 2)) < 54 && Math.abs((player.y + 18) - (y + e.h / 2)) < 54;
+    R(x + 15, y + 12, 4, 20, '#7a4d16');                                     /* post */
+    if (scNear && sc !== 'lurch') R(x + 4, y + 24, 26, 4, '#7a4d16');        /* arm swung DOWN — the swipe */
+    else R(x + 4 + lean, y + 16, 26, 4, '#7a4d16');                          /* crossbar arms */
+    R(x + 8 + lean, y + 12, 18, 16, '#3a6bc9');                              /* body */
+    R(x + 9 + lean + sway, y + 2, 16, 13, '#f2c14e');                        /* head */
+    R(x + 12 + lean + sway, y + 6, 3, 3, '#14181d'); R(x + 20 + lean + sway, y + 6, 3, 3, '#14181d');  /* button eyes */
+    R(x + 13 + lean + sway, y + 11, 8, 2, '#14181d');                        /* stitched mouth */
+    R(x + 5 + lean, y - 3, 24, 6, '#e07b1f'); R(x + 9 + lean, y - 7, 16, 5, '#e07b1f');  /* straw hat */
+    if (sc === 'lurch'){ R(x + 6, y + 26, 4, 3, '#e8d9b0'); R(x + 24, y + 28, 4, 3, '#e8d9b0'); }  /* straw flying */
   } else if (e.type === 'goat'){
-    R(x + 5, y + 11, 23, 16, '#e8e2d4'); R(x + 23, y + 5, 12, 13, '#e8e2d4');
-    R(x + 24, y - 1, 4, 7, '#b9ac8f'); R(x + 31, y - 1, 4, 7, '#b9ac8f');
-    R(x + 29, y + 9, 3, 3, '#14181d'); R(x + 28, y + 17, 5, 6, '#cbbf9f');
-    R(x + 8, y + 26, 4, 6, '#8f8672'); R(x + 22, y + 26, 4, 6, '#8f8672');
+    /* THE GOAT (brain: goatStep): grazing head-down, zigzag
+       approach, windup (head right down, horns forward), HEADBUTT
+       dash (stretched, speed lines), then DIZZY with stars
+       circling its head. Mirrored to face Corn Man. 5 HP. */
+    var gt = e.gt || 'graze';
+    var gface = e.face < 0 ? -1 : 1;
+    ctx.save(); ctx.translate(x + 17, 0); ctx.scale(gface, 1); ctx.translate(-(x + 17), 0);
+    var glegPh = Math.floor((e.walkT || 0) * 2) % 2;
+    var gmoving = gt === 'graze' || gt === 'approach' || gt === 'dash';
+    var glegA = gmoving && glegPh === 0 ? 2 : 0, glegB = gmoving && glegPh === 1 ? 2 : 0;
+    var gDip = gt === 'graze' ? 6 : (gt === 'windup' ? 7 : (gt === 'dash' ? 4 : 0));
+    var gStretch = gt === 'dash' ? 4 : 0;
+    R(x + 5 - gStretch, y + 11, 23 + gStretch, 16, '#e8e2d4');               /* body */
+    R(x + 23 + gStretch, y + 5 + gDip, 12, 13, '#e8e2d4');                   /* head */
+    R(x + 24 + gStretch, y - 1 + gDip, 4, 7, '#b9ac8f'); R(x + 31 + gStretch, y - 1 + gDip, 4, 7, '#b9ac8f');  /* horns */
+    R(x + 29 + gStretch, y + 9 + gDip, 3, 3, '#14181d');                     /* eye */
+    R(x + 28 + gStretch, y + 17 + gDip, 5, 6, '#cbbf9f');                    /* beard */
+    R(x + 8, y + 26 - glegA, 4, 6, '#8f8672'); R(x + 22, y + 26 - glegB, 4, 6, '#8f8672');  /* legs */
+    if (gt === 'dash'){ R(x - 5, y + 12, 8, 2, '#cfd8dc'); R(x - 7, y + 19, 10, 2, '#cfd8dc'); }  /* speed lines */
+    ctx.restore();
+    if (gt === 'dizzy'){
+      for (var gi = 0; gi < 3; gi++){
+        var ga = (e.age || 0) * 5 + gi * 2.1;
+        R(x + 24 + Math.cos(ga) * 9, y - 4 + Math.sin(ga) * 3, 3, 3, '#ffd91a');   /* stars */
+      }
+    }
   } else if (e.type === 'tractor'){
-    R(x + 2, y + 8, 30, 14, '#37c978'); R(x + 18, y + 1, 11, 10, '#2aa85f');
-    R(x + 20, y + 3, 7, 6, '#bfe8ff'); R(x + 28, y + 4, 4, 9, '#14181d');
-    R(x + 1, y + 18, 11, 13, '#14181d'); R(x + 4, y + 21, 5, 7, '#8a8f96');
-    R(x + 22, y + 20, 10, 10, '#14181d'); R(x + 25, y + 23, 4, 4, '#8a8f96');
+    /* THE TRACTOR (brain: tractorStep): chugging (little smoke
+       puffs), REV (shaking, dark smoke, hot glow, !), DRIVE
+       (stretched, speed lines, dust), stall (steaming, slumped).
+       The only plain critter that hits for 2. 8 HP. Mirrored. */
+    var tr = e.tr || 'chug';
+    var tface = e.face < 0 ? -1 : 1;
+    ctx.save(); ctx.translate(x + 16, 0); ctx.scale(tface, 1); ctx.translate(-(x + 16), 0);
+    var shake = tr === 'rev' ? Math.round(Math.sin((e.age || 0) * 42) * 1.5) : 0;
+    var tStretch = tr === 'drive' ? 4 : 0;
+    var puff = Math.floor((e.age || 0) * 6) % 3;
+    R(x + 2 - tStretch + shake, y + 8, 30 + tStretch, 14, '#37c978');        /* body */
+    R(x + 18 + shake, y + 1, 11, 10, '#2aa85f');                             /* cab */
+    R(x + 20 + shake, y + 3, 7, 6, '#bfe8ff');                               /* window */
+    R(x + 28 + shake, y + 4, 4, 9, '#14181d');                               /* exhaust stack */
+    if (tr === 'chug' || tr === 'rev') R(x + 27 + shake, y - 3 - puff * 2, 5 + puff, 4 + puff, tr === 'rev' ? '#5a5a5a' : '#9aa0a6');  /* smoke */
+    if (tr === 'stall'){ R(x + 27, y - 5, 6, 5, '#e8e8e8'); R(x + 29, y - 10, 5, 4, '#f2f2f2'); }  /* steam */
+    if (tr === 'rev') R(x + 28 + shake, y + 2, 4, 3, '#ff2d2d');             /* hot glow */
+    R(x + 1 + shake, y + 18, 11, 13, '#14181d'); R(x + 4 + shake, y + 21, 5, 7, '#8a8f96');   /* rear wheel */
+    R(x + 22 + shake, y + 20, 10, 10, '#14181d'); R(x + 25 + shake, y + 23, 4, 4, '#8a8f96');  /* front wheel */
+    if (tr === 'drive'){ R(x - 6, y + 10, 9, 2, '#cfd8dc'); R(x - 8, y + 17, 11, 2, '#cfd8dc'); R(x + 4, y + 30, 12, 3, '#d8c690'); }  /* speed lines + dust */
+    ctx.restore();
+    if (tr === 'rev'){ R(x + 15, y - 15, 3, 9, '#ffd91a'); R(x + 15, y - 4, 3, 3, '#ffd91a'); }   /* the ! */
   } else { /* mole */
-    R(x + 6, y + 12, 22, 16, '#6b4a2b'); R(x + 11, y + 5, 13, 10, '#7d5734');
-    R(x + 15, y + 10, 5, 4, '#f49ac1'); R(x + 13, y + 6, 2, 2, '#14181d'); R(x + 20, y + 6, 2, 2, '#14181d');
-    R(x + 2, y + 18, 6, 5, '#e8d9b0'); R(x + 27, y + 18, 6, 5, '#e8d9b0');
+    /* THE MOLE (brain: moleStep): BURIED it is just a moving dirt
+       mound — it cannot hurt Corn Man down there. POP: it bursts
+       out in a spray of dirt. UP: the mole itself, hopping, claws
+       out, over its hole. BURROW: it sinks again. 4 HP. */
+    var ml = e.ml || 'buried';
+    if (ml === 'buried'){
+      var mBob = Math.round(Math.sin((e.age || 0) * 8));
+      R(x + 4, y + 22 + mBob, 26, 9, '#5d4023');
+      R(x + 9, y + 18 + mBob, 16, 6, '#6b4a2b');
+      R(x + 13, y + 15 + mBob, 8, 4, '#7d5734');
+      R(x + 6, y + 26, 5, 3, '#4a3319'); R(x + 24, y + 27, 5, 3, '#4a3319');
+    } else {
+      var mface = e.face < 0 ? -1 : 1;
+      ctx.save(); ctx.translate(x + 17, 0); ctx.scale(mface, 1); ctx.translate(-(x + 17), 0);
+      var rise = (ml === 'pop' || ml === 'burrow') ? 8 : 0;
+      var hop = ml === 'up' ? Math.abs(Math.sin((e.age || 0) * 9)) * 3 : 0;
+      R(x + 6, y + 12 + rise - hop, 22, 16, '#6b4a2b');
+      R(x + 11, y + 5 + rise - hop, 13, 10, '#7d5734');
+      R(x + 15, y + 10 + rise - hop, 5, 4, '#f49ac1');
+      R(x + 13, y + 6 + rise - hop, 2, 2, '#14181d'); R(x + 20, y + 6 + rise - hop, 2, 2, '#14181d');
+      R(x + 2, y + 18 + rise - hop, 6, 5, '#e8d9b0'); R(x + 27, y + 18 + rise - hop, 6, 5, '#e8d9b0');
+      ctx.restore();
+      R(x + 3, y + 27, 28, 6, '#5d4023');
+      if (ml === 'pop'){ R(x + 2, y + 8, 4, 4, '#7d5734'); R(x + 28, y + 6, 4, 4, '#6b4a2b'); R(x + 15, y + 2, 4, 4, '#7d5734'); }
+    }
   }
   ctx.globalAlpha = 1;
   if (e.maxHp > 1 && e.hp < e.maxHp){
@@ -7149,7 +7701,18 @@ function draw(){
   pickups.forEach(function(p){
     var bob = Math.sin(p.t * 5) * 2;
     ctx.textAlign = 'center';
-    if (p.kind === 'heartc'){
+    if (p.kind === 'wrench' || p.kind === 'lantern' || p.kind === 'bow' || p.kind === 'arrows' || p.kind === 'goldarrows' || p.kind === 'oil'){
+      /* storm-scattered gear & supplies: a soft golden glow so a
+         FIND reads as a find, the item's emoji big in the middle */
+      var gearEmoji = { wrench:'🔧', lantern:'🏮', bow:'🏹', arrows:'🏹', goldarrows:'🏹', oil:'🛢️' }[p.kind];
+      ctx.globalAlpha = 0.35 + Math.sin(p.t * 6) * 0.15;
+      ctx.fillStyle = '#ffd700';
+      ctx.beginPath(); ctx.arc(p.x + p.w / 2, p.y + p.h / 2 + bob, 17, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.font = '24px serif';
+      ctx.fillText(gearEmoji, p.x + p.w / 2, p.y + p.h / 2 + 8 + bob);
+      if (p.kind === 'goldarrows') ctx.fillText('✨', p.x + p.w / 2 + 13, p.y + p.h / 2 - 6 + bob);
+    } else if (p.kind === 'heartc'){
       ctx.font = '30px serif';
       ctx.fillText('💖', p.x + 13, p.y + 26 + bob);
     } else if (p.kind === 'goldcoin'){
@@ -7723,9 +8286,9 @@ document.getElementById('world2Btn').addEventListener('click', function(){
 document.getElementById('helpCloseBtn').addEventListener('click', function(){
   document.getElementById('helpScreen').classList.remove('show');
 });
-document.getElementById('shopBtn').addEventListener('click', function(){ ac(); openShop(); });
 document.getElementById('shopCloseBtn').addEventListener('click', function(){ closeShop(); });
 document.getElementById('oilBtn').addEventListener('click', function(){ ac(); useOil(); });
+document.getElementById('dlgScreen').addEventListener('click', function(){ dlgAdvance(); });
 var menu = document.getElementById('menu');
 document.getElementById('menuBtn').addEventListener('click', function(ev){
   ev.stopPropagation(); menu.classList.toggle('open');
@@ -7749,9 +8312,6 @@ document.getElementById('mHow').addEventListener('click', function(){
      pause first so the paused overlay never covers it. */
   if (gamePaused){ gamePaused = false; syncPauseUI(); if (soundOn && musicWasPlaying) startMusic(); }
   document.getElementById('helpScreen').classList.add('show');
-});
-document.getElementById('mShop').addEventListener('click', function(){
-  menu.classList.remove('open'); ac(); openShop();
 });
 document.getElementById('mWorldMap').addEventListener('click', function(){
   menu.classList.remove('open'); ac(); openWorldMap();
