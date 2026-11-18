@@ -4453,6 +4453,7 @@ function loadOwScreen(){
     owFeatures.push({ kind:'sign', arrow:'➡', x: 676, y: 216, w: 44, h: 40, pages: ['🪧 EAST — Sunny Field, and the FIRST BARN (Level 1). The Lantern inside lights the dark rooms, and its flame burns the special hay bales and the little sheds.'] });
   } else if (idx === OW_L1){                                 /* Level 1 — visible barn, far end of the field */
     owFeatures.push({ kind:'dungeon', idx: dunIdxForField(0), style:'barn', x: 592, y: 158, w: 52, h: 30, bx: 520, by: 52, bw: 176, bh: 116 });
+    obstacles.push({ x: 520, y: 70, w: 176, h: 88, type:'housebody' });   /* v23: barn walls are solid, like the village houses */
     scatterObstacles(R, 'hay', 6, avoid.concat([{ x: 600, y: 110, r: 150 }]));
   } else if (idx === OW_L2){                                 /* Level 2 — cellar hatch in the pumpkin patch */
     owFeatures.push({ kind:'dungeon', idx: dunIdxForField(1), style:'hatch', x: 338, y: 138, w: 56, h: 40 });
@@ -4483,7 +4484,8 @@ function loadOwScreen(){
     owFeatures.push({ kind:'npc', x: 366, y: 268, w: 36, h: 40, hint:'👵 OLD FARMER: “Lost, dearie? For the roost over the hills: GO UP, UP, UP, UP — four times north, no matter what your eyes tell you. 20 coin for the telling? …Fine, free today.”' });
     scatterObstacles(R, 'rock', 8, avoid);
   } else if (idx === OW_L5){                                 /* Level 5 — roost barn over the hills */
-    owFeatures.push({ kind:'dungeon', idx: dunIdxForField(4), style:'barn', x: 358, y: 168, w: 52, h: 30, bx: 322, by: 62, bw: 124, bh: 116 });
+    owFeatures.push({ kind:'dungeon', idx: dunIdxForField(4), style:'barn', x: 358, y: 168, w: 52, h: 30, bx: 296, by: 62, bw: 176, bh: 116 });
+    obstacles.push({ x: 296, y: 80, w: 176, h: 88, type:'housebody' });
     scatterObstacles(R, 'tree', 6, avoid.concat([{ x: 384, y: 120, r: 130 }]));
   } else if (idx === OW_L6){                                 /* Level 6 — hatch under a graveyard tombstone */
     for (var gx = 0; gx < 4; gx++) for (var gy = 0; gy < 2; gy++)
@@ -4496,6 +4498,7 @@ function loadOwScreen(){
     owFeatures.push({ kind:'npc', x: 620, y: 452, w: 36, h: 40, hint:'👵 OLD FARMER: “Folks say a hatch sleeps under one of these stones. PUSH the big one, dearie — go on, lean on it.”' });
   } else if (idx === OW_L7){                                 /* Level 7 — padlocked silo; a tractor carries the key */
     owFeatures.push({ kind:'dungeon', idx: dunIdxForField(6), style:'silo', x: 356, y: 176, w: 56, h: 34, locked:'key', bx: 330, by: 36, bw: 108, bh: 150 });
+    obstacles.push({ x: 330, y: 54, w: 108, h: 122, type:'housebody' });
     scatterObstacles(R, 'rock', 5, avoid.concat([{ x: 384, y: 110, r: 150 }]));
   } else if (idx === OW_L8){                                 /* Level 8 — hatch under the lone hay bale */
     var bale = { x: 364, y: 238, w: 40, h: 40, type:'hay', secretId:'hay' };
@@ -4529,6 +4532,7 @@ function loadOwScreen(){
     owSecrets.push({ id:'cache', x: 612, y: 462, w: 56, h: 56 });
   } else if (idx === OW_L9){                                 /* Level 9 — the Great Barn, sealed until 8 pieces */
     owFeatures.push({ kind:'dungeon', idx: dunIdxForField(8), style:'greatbarn', x: 358, y: 196, w: 52, h: 32, locked:'pieces', bx: 264, by: 44, bw: 240, bh: 164 });
+    obstacles.push({ x: 264, y: 62, w: 240, h: 140, type:'housebody' });
     scatterObstacles(R, 'rock', 5, avoid.concat([{ x: 384, y: 130, r: 170 }]));
     /* THE MOAT (see LADDER_BALE): one CONTINUOUS ring of water
        pens the Great Barn in — west, east, south AND north strips
@@ -8616,6 +8620,233 @@ function drawInterior(){
     ctx.fillText('SWITCH', dunSwitch.x + dunSwitch.w / 2, dunSwitch.y + dunSwitch.h + 14);
   }
 }
+/* ---------- THE BARNS (v23, Michael 2026-11-18) ----------
+   Every level entrance is a BUILDING now — big like the village
+   houses, textured like them (small drawn units, one light from
+   above, shade pooled at the ground), and each one dressed for
+   the boss who waits inside. No name labels: a Zelda entrance is
+   a landmark you read by its shape. The atlas lives in
+   STORYLINE.md — barn, boss, item, Zelda echo. */
+function paintBarn(f){
+  var bx = f.bx, by = f.by, bw = f.bw, bh = f.bh;
+  var cx = bx + bw / 2, baseY = by + bh;
+  var great = f.style === 'greatbarn';
+  var owl = f.idx === 4;
+  var wallA = great ? '#a02c22' : (owl ? '#77644e' : '#b03a2e');
+  var wallB = great ? '#8c241b' : (owl ? '#66543f' : '#9c2f24');
+  var roofA = great ? '#5d1410' : (owl ? '#3f3f49' : '#7c1a12');
+  var trim = great ? '#ffd700' : '#fffbe8';
+  /* ground shadow + stone foundation course */
+  ctx.fillStyle = 'rgba(0,0,0,0.20)'; ctx.beginPath(); ctx.ellipse(cx, baseY + 4, bw / 2 + 10, 8, 0, 0, Math.PI * 2); ctx.fill();
+  for (var fx = bx + 2; fx < bx + bw - 14; fx += 17){
+    var ft = texHash(fx, baseY);
+    R(fx, baseY - 9, 15, 9, ft > 0.55 ? '#8f887a' : (ft > 0.25 ? '#7d7668' : '#6b6455'));
+  }
+  R(bx, baseY - 11, bw, 2, 'rgba(0,0,0,0.25)');
+  /* plank walls: a board every 14px, tone hashed, grain running down */
+  for (var wx = bx; wx < bx + bw; wx += 14){
+    var ww = Math.min(14, bx + bw - wx);
+    var wt = texHash(wx, by + 40);
+    R(wx, by + 34, ww, bh - 43, wt > 0.5 ? wallA : wallB);
+    if (wt > 0.72) R(wx + 3, by + 52, 1.6, bh - 80, 'rgba(0,0,0,0.16)');
+    R(wx, by + 34, 1.6, bh - 43, 'rgba(0,0,0,0.20)');
+    R(wx + ww / 2 - 1, by + 44, 2, 2, 'rgba(0,0,0,0.28)');
+  }
+  R(bx, by + 34, bw, 3, 'rgba(255,255,255,0.13)');
+  /* the gable roof: shingle rows running down the slope */
+  var peakY = by - (great ? 20 : 12);
+  ctx.fillStyle = roofA;
+  ctx.beginPath(); ctx.moveTo(bx - 12, by + 38); ctx.lineTo(cx, peakY); ctx.lineTo(bx + bw + 12, by + 38); ctx.closePath(); ctx.fill();
+  ctx.save();
+  ctx.beginPath(); ctx.moveTo(bx - 12, by + 38); ctx.lineTo(cx, peakY); ctx.lineTo(bx + bw + 12, by + 38); ctx.closePath(); ctx.clip();
+  for (var ry = peakY + 7; ry < by + 38; ry += 8){
+    R(bx - 14, ry, bw + 28, 1.8, 'rgba(0,0,0,0.28)');
+    for (var rx = bx - 14 + ((ry * 7) % 13); rx < bx + bw + 14; rx += 17) R(rx, ry, 1.6, 7, 'rgba(0,0,0,0.18)');
+  }
+  ctx.restore();
+  R(cx - 3, peakY - 2, 6, 6, '#4c2c08');
+  /* trim under the eaves (gold on the Great Barn) */
+  R(bx - 6, by + 36, bw + 12, 4, trim);
+  /* hayloft in the gable + the pulley beam */
+  var loftY = by + 8;
+  R(cx - 13, loftY, 26, 24, '#6d4423'); R(cx - 10, loftY + 3, 20, 18, '#8a5a2b');
+  ctx.strokeStyle = '#4c2c08'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(cx - 10, loftY + 3); ctx.lineTo(cx + 10, loftY + 21); ctx.moveTo(cx + 10, loftY + 3); ctx.lineTo(cx - 10, loftY + 21); ctx.stroke();
+  R(cx - 2, loftY - 9, 4, 9, '#5d3a17'); R(cx - 9, loftY - 11, 18, 4, '#5d3a17');
+  if (owl){
+    /* the Owl Roost: two round lit eyes in the gable + a perch */
+    [-30, 30].forEach(function(off){
+      ctx.fillStyle = '#2c2015'; ctx.beginPath(); ctx.arc(cx + off, by + 16, 10, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#ffb03a'; ctx.beginPath(); ctx.arc(cx + off, by + 16, 6.5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#2c2015'; ctx.beginPath(); ctx.arc(cx + off, by + 16, 2.6, 0, Math.PI * 2); ctx.fill();
+    });
+    R(cx - 42, by + 30, 84, 4, '#4c2c08');
+  }
+  if (great){
+    /* the Great Barn: a golden cob in the gable, drawn not written */
+    ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.ellipse(cx, loftY + 12, 7, 12, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(146,104,0,0.65)';
+    [-7, 0, 7].forEach(function(off){ R(cx + off - 0.8, loftY + 3, 1.6, 18, 'rgba(146,104,0,0.65)'); });
+    R(cx - 6, loftY + 8, 12, 1.6, 'rgba(146,104,0,0.65)'); R(cx - 6, loftY + 15, 12, 1.6, 'rgba(146,104,0,0.65)');
+    ctx.fillStyle = '#3f7d22';
+    ctx.beginPath(); ctx.moveTo(cx - 6, loftY + 22); ctx.lineTo(cx - 15, loftY + 29); ctx.lineTo(cx - 3, loftY + 26); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(cx + 6, loftY + 22); ctx.lineTo(cx + 15, loftY + 29); ctx.lineTo(cx + 3, loftY + 26); ctx.closePath(); ctx.fill();
+  }
+  /* the big double doors, X-braced, centred on the step-in */
+  var dw = great ? 64 : 54, dh = 56, dx = cx - dw / 2, dy = baseY - dh;
+  R(dx - 3, dy - 3, dw + 6, dh + 3, '#4c2c08');
+  R(dx, dy, dw / 2 - 1, dh, '#7a4d16'); R(dx + dw / 2 + 1, dy, dw / 2 - 1, dh, '#7a4d16');
+  R(dx + 3, dy + 8, dw / 2 - 7, 2, 'rgba(255,255,255,0.15)'); R(dx + dw / 2 + 4, dy + 8, dw / 2 - 7, 2, 'rgba(255,255,255,0.15)');
+  ctx.strokeStyle = great ? '#ffd700' : '#5d3a17'; ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(dx + 3, dy + 3); ctx.lineTo(dx + dw / 2 - 3, dy + dh - 3); ctx.moveTo(dx + dw / 2 - 3, dy + 3); ctx.lineTo(dx + 3, dy + dh - 3);
+  ctx.moveTo(dx + dw / 2 + 3, dy + 3); ctx.lineTo(dx + dw - 3, dy + dh - 3); ctx.moveTo(dx + dw - 3, dy + 3); ctx.lineTo(dx + dw / 2 + 3, dy + dh - 3);
+  ctx.stroke();
+  R(cx - 1.5, dy, 3, dh, '#2c1c08');
+  /* a round lit window to one side, like the houses */
+  var winX = bx + (Math.abs(bx) % 2 ? bw - 30 : 16);
+  ctx.fillStyle = '#4c2c08'; ctx.beginPath(); ctx.arc(winX + 7, by + 62, 9, 0, Math.PI * 2); ctx.fill();
+  var wg = ctx.createRadialGradient(winX + 7, by + 62, 1, winX + 7, by + 62, 8);
+  wg.addColorStop(0, '#fff3a0'); wg.addColorStop(1, '#e07b1f');
+  ctx.fillStyle = wg; ctx.beginPath(); ctx.arc(winX + 7, by + 62, 7, 0, Math.PI * 2); ctx.fill();
+  if (f.idx === 0){
+    /* THE ROOST (Giant Chicken): coop fence along the left base,
+       a nest with eggs at the right, and a chicken on the ridge */
+    for (var fp = 0; fp < 3; fp++) R(bx - 34 + fp * 13, baseY - 16, 4, 16, '#8a5a2b');
+    R(bx - 36, baseY - 14, 42, 3, '#a06a35'); R(bx - 36, baseY - 7, 42, 3, '#a06a35');
+    R(bx + bw - 2, baseY - 6, 26, 6, '#c79a24');
+    ctx.fillStyle = '#fffbe8';
+    [[6, -9], [14, -10], [11, -6]].forEach(function(e){ ctx.beginPath(); ctx.ellipse(bx + bw + 4 + e[0], baseY + e[1] + 4, 4, 5, 0, 0, Math.PI * 2); ctx.fill(); });
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.ellipse(cx + 12, peakY - 6, 8, 5.5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx + 19, peakY - 10, 3.4, 0, Math.PI * 2); ctx.fill();
+    R(cx + 18, peakY - 15, 3, 3, '#d43a2e'); R(cx + 21, peakY - 11, 4, 2, '#e07b1f');
+    ctx.beginPath(); ctx.moveTo(cx + 4, peakY - 7); ctx.lineTo(cx - 2, peakY - 12); ctx.lineTo(cx + 3, peakY - 3); ctx.closePath(); ctx.fill();
+  }
+  if (great){
+    /* lantern posts flanking the Great Barn door */
+    [-1, 1].forEach(function(sd){
+      var lx = cx + sd * (dw / 2 + 16);
+      R(lx - 2, baseY - 30, 4, 30, '#3a2a12');
+      var lg = ctx.createRadialGradient(lx, baseY - 34, 1, lx, baseY - 34, 9);
+      lg.addColorStop(0, '#fff3a0'); lg.addColorStop(1, 'rgba(224,123,31,0.15)');
+      ctx.fillStyle = lg; ctx.beginPath(); ctx.arc(lx, baseY - 34, 9, 0, Math.PI * 2); ctx.fill();
+      R(lx - 3, baseY - 38, 6, 7, '#ffb03a');
+    });
+    if (piecesGot() < 8){ ctx.font = '20px serif'; ctx.textAlign = 'center'; ctx.fillText('🔒', cx, baseY - 20); }
+  }
+}
+function paintSilo(f){
+  /* THE STORM SILO (Super Tractor): ribbed steel, a domed cap, a
+     bent lightning rod, and a lean-to shed with a tractor tyre */
+  var bx = f.bx, by = f.by, bw = f.bw, bh = f.bh, cx = bx + bw / 2, baseY = by + bh;
+  ctx.fillStyle = 'rgba(0,0,0,0.20)'; ctx.beginPath(); ctx.ellipse(cx + 14, baseY + 4, bw / 2 + 22, 8, 0, 0, Math.PI * 2); ctx.fill();
+  R(bx + 14, by + 18, bw - 28, bh - 18, '#9aa1a9');
+  for (var vx = bx + 20; vx < bx + bw - 16; vx += 11){
+    R(vx, by + 20, 1.8, bh - 22, 'rgba(0,0,0,0.18)');
+    R(vx + 5, by + 30, 1.6, 1.6, 'rgba(0,0,0,0.30)'); R(vx + 5, by + 78, 1.6, 1.6, 'rgba(0,0,0,0.30)'); R(vx + 5, by + 126, 1.6, 1.6, 'rgba(0,0,0,0.30)');
+  }
+  [44, 84, 124].forEach(function(off){ R(bx + 14, by + off, bw - 28, 5, '#7d838c'); R(bx + 14, by + off, bw - 28, 1.8, 'rgba(255,255,255,0.35)'); });
+  R(bx + 14, by + 18, 5, bh - 18, 'rgba(255,255,255,0.28)');
+  ctx.fillStyle = '#878d95'; ctx.beginPath(); ctx.arc(cx, by + 20, bw / 2 - 14, Math.PI, 0); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.30)'; ctx.beginPath(); ctx.arc(cx - 12, by + 12, 16, Math.PI * 1.05, Math.PI * 1.55); ctx.fill();
+  ctx.strokeStyle = '#5d6167'; ctx.lineWidth = 2.4;
+  ctx.beginPath(); ctx.moveTo(cx, by - 6); ctx.lineTo(cx + 7, by - 30); ctx.stroke();
+  ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(cx + 7, by - 32, 3, 0, Math.PI * 2); ctx.fill();
+  /* the lean-to on the right + a tractor tyre leaning on it */
+  R(bx + bw - 8, baseY - 44, 40, 44, '#8a5a2b');
+  ctx.fillStyle = '#5d3a17'; ctx.beginPath(); ctx.moveTo(bx + bw - 12, baseY - 40); ctx.lineTo(bx + bw + 36, baseY - 50); ctx.lineTo(bx + bw + 36, baseY - 42); ctx.lineTo(bx + bw - 12, baseY - 32); ctx.closePath(); ctx.fill();
+  R(bx + bw + 4, baseY - 32, 16, 32, '#5d3a17');
+  ctx.fillStyle = '#26221f'; ctx.beginPath(); ctx.arc(bx + bw + 30, baseY - 10, 11, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#8a8f96'; ctx.beginPath(); ctx.arc(bx + bw + 30, baseY - 10, 5, 0, Math.PI * 2); ctx.fill();
+  /* the silo door */
+  R(cx - 25, baseY - 37, 50, 37, '#4c2c08');
+  R(cx - 22, baseY - 34, 44, 31, '#5d3a17');
+  ctx.strokeStyle = '#2c1c08'; ctx.lineWidth = 2.4;
+  ctx.beginPath(); ctx.moveTo(cx - 22, baseY - 34); ctx.lineTo(cx + 22, baseY - 3); ctx.moveTo(cx + 22, baseY - 34); ctx.lineTo(cx - 22, baseY - 3); ctx.stroke();
+  if (!state.found.siloOpen){ ctx.font = '18px serif'; ctx.textAlign = 'center'; ctx.fillText('🔒', cx, baseY - 12); }
+}
+function paintHatch(f){
+  /* the revealed entrances under things — each dressed for its boss */
+  var cx = f.x + f.w / 2;
+  if (f.idx === 1){
+    /* THE ROOT CELLAR (Snapping Turtle): a stone arch, plank doors
+       lying back, and a pumpkin growing over the top */
+    ctx.fillStyle = 'rgba(0,0,0,0.20)'; ctx.beginPath(); ctx.ellipse(cx, f.y + f.h + 3, f.w / 2 + 12, 5, 0, 0, Math.PI * 2); ctx.fill();
+    for (var sa = 0; sa < 5; sa++){
+      var ang = Math.PI + sa * (Math.PI / 4);
+      var sx = cx + Math.cos(ang) * (f.w / 2 + 1), sy = f.y + 12 + Math.sin(ang) * 15;
+      R(sx - 7, sy - 5, 14, 10, sa % 2 ? '#8f887a' : '#7d7668'); R(sx - 7, sy - 5, 14, 2, 'rgba(255,255,255,0.25)');
+    }
+    R(f.x - 4, f.y + 8, f.w + 8, f.h - 4, '#4c2c08');
+    R(f.x - 1, f.y + 11, f.w / 2 - 1, f.h - 7, '#8a5f24'); R(cx + 1, f.y + 11, f.w / 2 - 1, f.h - 7, '#8a5f24');
+    R(f.x + 3, f.y + 22, f.w - 6, 2.4, 'rgba(0,0,0,0.25)'); R(f.x + 3, f.y + 32, f.w - 6, 2.4, 'rgba(0,0,0,0.25)');
+    ctx.fillStyle = '#e07b1f'; ctx.beginPath(); ctx.ellipse(cx + f.w / 2 - 4, f.y + 2, 11, 8, 0, 0, Math.PI * 2); ctx.fill();
+    R(cx + f.w / 2 - 6, f.y - 6, 4, 5, '#4a7c2f');
+    ctx.strokeStyle = '#4a7c2f'; ctx.lineWidth = 1.8;
+    ctx.beginPath(); ctx.moveTo(cx + f.w / 2 + 4, f.y + 4); ctx.quadraticCurveTo(cx + f.w / 2 + 12, f.y + 12, cx + f.w / 2 + 2, f.y + 15); ctx.stroke();
+    return;
+  }
+  if (f.idx === 5){
+    /* THE CRYPT (Giant Spider): grey stone, iron doors, webs */
+    ctx.fillStyle = 'rgba(0,0,0,0.28)'; ctx.beginPath(); ctx.ellipse(cx, f.y + f.h + 3, f.w / 2 + 10, 5, 0, 0, Math.PI * 2); ctx.fill();
+    R(f.x - 5, f.y - 6, f.w + 10, f.h + 8, '#5d5d66'); R(f.x - 2, f.y - 3, f.w + 4, f.h + 4, '#74747e');
+    R(f.x + 1, f.y, f.w - 2, f.h, '#33333c');
+    R(cx - 1, f.y, 2, f.h, '#1d1d24');
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    [[8, 8], [8, 24], [f.w - 10, 8], [f.w - 10, 24]].forEach(function(p){ ctx.beginPath(); ctx.arc(f.x + p[0], f.y + p[1], 1.8, 0, Math.PI * 2); ctx.fill(); });
+    ctx.strokeStyle = 'rgba(240,240,255,0.75)'; ctx.lineWidth = 1.1;
+    [[f.x - 2, f.y - 3, 1], [f.x + f.w + 2, f.y - 3, -1]].forEach(function(cnr){
+      for (var wl = 0; wl < 3; wl++){
+        ctx.beginPath(); ctx.moveTo(cnr[0], cnr[1] + 4 + wl * 5);
+        ctx.quadraticCurveTo(cnr[0] + cnr[2] * (7 - wl), cnr[1] + 7 + wl * 3, cnr[0] + cnr[2] * (13 - wl * 2), cnr[1] + 15);
+        ctx.stroke();
+      }
+    });
+    ctx.strokeStyle = 'rgba(240,240,255,0.5)';
+    ctx.beginPath(); ctx.moveTo(cx + 14, f.y - 3); ctx.lineTo(cx + 14, f.y + 7); ctx.stroke();
+    ctx.fillStyle = '#1d1d24'; ctx.beginPath(); ctx.arc(cx + 14, f.y + 9, 2.6, 0, Math.PI * 2); ctx.fill();
+    return;
+  }
+  if (f.idx === 7){
+    /* THE TWIN CELLAR (Two Angry Farmers): TWO doors, side by
+       side, moonlight blue-grey — one for each of them */
+    ctx.fillStyle = 'rgba(0,0,0,0.22)'; ctx.beginPath(); ctx.ellipse(cx, f.y + f.h + 3, 46, 5, 0, 0, Math.PI * 2); ctx.fill();
+    [-21, 21].forEach(function(off){
+      R(cx + off - 19, f.y - 4, 38, f.h + 6, '#3d4450');
+      R(cx + off - 16, f.y - 1, 32, f.h, '#5a6472');
+      R(cx + off - 16, f.y + 9, 32, 2.2, 'rgba(0,0,0,0.3)'); R(cx + off - 16, f.y + 21, 32, 2.2, 'rgba(0,0,0,0.3)');
+      ctx.strokeStyle = '#2c333e'; ctx.lineWidth = 2; ctx.strokeRect(cx + off - 16, f.y - 1, 32, f.h);
+      ctx.fillStyle = '#cfd8e3'; ctx.beginPath(); ctx.arc(cx + off + (off < 0 ? 9 : -9), f.y + f.h / 2 + 2, 2.6, 0, Math.PI * 2); ctx.fill();
+    });
+    ctx.fillStyle = '#e8eef7'; ctx.beginPath(); ctx.arc(cx + 30, f.y - 12, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(232,238,247,0.35)'; ctx.beginPath(); ctx.arc(cx + 30, f.y - 12, 11, 0, Math.PI * 2); ctx.fill();
+    return;
+  }
+  /* any other hatch keeps the plain trapdoor */
+  R(f.x - 3, f.y - 3, f.w + 6, f.h + 6, '#4c2c08');
+  R(f.x, f.y, f.w, f.h, '#8a5f24');
+  R(f.x + 4, f.y + f.h / 2 - 2, f.w - 8, 4, '#6e4a26');
+}
+function paintStairs(f){
+  /* THE MAZE STAIRWELL (Runaway Tractor): stone cheeks, an iron
+     rail, a lit lantern post, and tyre tracks leading down */
+  var cx = f.x + f.w / 2;
+  ctx.strokeStyle = 'rgba(60,45,25,0.55)'; ctx.lineWidth = 5;
+  ctx.beginPath(); ctx.moveTo(cx - 12, f.y + f.h + 16); ctx.quadraticCurveTo(cx - 10, f.y + f.h + 4, cx - 8, f.y + f.h - 2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx + 12, f.y + f.h + 16); ctx.quadraticCurveTo(cx + 10, f.y + f.h + 4, cx + 8, f.y + f.h - 2); ctx.stroke();
+  R(f.x - 9, f.y - 4, 8, f.h + 8, '#7d7668'); R(f.x + f.w + 1, f.y - 4, 8, f.h + 8, '#7d7668');
+  R(f.x - 9, f.y - 4, 8, 3, 'rgba(255,255,255,0.3)'); R(f.x + f.w + 1, f.y - 4, 8, 3, 'rgba(255,255,255,0.3)');
+  R(f.x - 3, f.y - 3, f.w + 6, f.h + 6, '#2c2c2c');
+  for (var si = 0; si < 4; si++) R(f.x + 4 + si * 3, f.y + 4 + si * 8, f.w - 8 - si * 6, 6, si % 2 ? '#8a8f96' : '#9aa1a9');
+  ctx.strokeStyle = '#3a3a3a'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(f.x - 5, f.y + 2); ctx.lineTo(f.x + f.w - 6, f.y + 26); ctx.stroke();
+  R(f.x - 12, f.y - 16, 3.4, 18, '#4c2c08');
+  var lg2 = ctx.createRadialGradient(f.x - 10, f.y - 19, 1, f.x - 10, f.y - 19, 9);
+  lg2.addColorStop(0, '#fff3a0'); lg2.addColorStop(1, 'rgba(224,123,31,0.12)');
+  ctx.fillStyle = lg2; ctx.beginPath(); ctx.arc(f.x - 10, f.y - 19, 9, 0, Math.PI * 2); ctx.fill();
+  R(f.x - 13, f.y - 23, 6, 7, '#ffb03a');
+}
 function drawOwFeatures(){
   owFeatures.forEach(function(f){
     ctx.textAlign = 'center';
@@ -8708,51 +8939,25 @@ function drawOwFeatures(){
       ctx.fillText('🏪 STORE', f.bx + f.bw / 2, f.by + 46);
       return;
     }
-    if (f.style === 'barn' || f.style === 'greatbarn'){
-      var big = f.style === 'greatbarn';
-      R(f.bx, f.by + 30, f.bw, f.bh - 30, '#c23a2e');
-      ctx.fillStyle = '#7c1a12'; ctx.beginPath();
-      ctx.moveTo(f.bx - 10, f.by + 34); ctx.lineTo(f.bx + f.bw / 2, f.by - (big ? 16 : 8)); ctx.lineTo(f.bx + f.bw + 10, f.by + 34); ctx.closePath(); ctx.fill();
-      R(f.bx + f.bw / 2 - 25, f.by + f.bh - 56, 50, 56, '#7a4d16');
-      ctx.strokeStyle = '#4c2c08'; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.moveTo(f.bx + f.bw / 2 - 25, f.by + f.bh - 56); ctx.lineTo(f.bx + f.bw / 2 + 25, f.by + f.bh);
-      ctx.moveTo(f.bx + f.bw / 2 + 25, f.by + f.bh - 56); ctx.lineTo(f.bx + f.bw / 2 - 25, f.by + f.bh); ctx.stroke();
-      R(f.bx + f.bw / 2 - 12, f.by + 44, 24, 20, '#fffbe8');
-      ctx.font = (big ? 15 : 12) + 'px "Press Start 2P", monospace'; ctx.fillStyle = '#ffe95e';
-      ctx.strokeStyle = '#000a'; ctx.lineWidth = 3;
-      var lbl = big ? 'THE GREAT BARN' : 'BARN';
-      ctx.strokeText(lbl, f.bx + f.bw / 2, f.by + f.bh + 16); ctx.fillText(lbl, f.bx + f.bw / 2, f.by + f.bh + 16);
-      if (big && piecesGot() < 8){ ctx.font = '20px serif'; ctx.fillText('🔒', f.bx + f.bw / 2, f.by + f.bh - 22); }
-      return;
-    }
-    if (f.style === 'silo'){
-      R(f.bx + 14, f.by, f.bw - 28, f.bh, '#a7adb5');
-      R(f.bx + 14, f.by + 26, f.bw - 28, 6, '#8a8f96'); R(f.bx + 14, f.by + 62, f.bw - 28, 6, '#8a8f96'); R(f.bx + 14, f.by + 98, f.bw - 28, 6, '#8a8f96');
-      ctx.fillStyle = '#8a8f96'; ctx.beginPath(); ctx.arc(f.bx + f.bw / 2, f.by + 2, f.bw / 2 - 14, Math.PI, 0); ctx.fill();
-      R(f.bx + f.bw / 2 - 24, f.by + f.bh - 36, 48, 36, '#5d3a17');
-      ctx.font = '12px "Press Start 2P", monospace'; ctx.fillStyle = '#21360f';
-      ctx.fillText('SILO', f.bx + f.bw / 2, f.by + f.bh + 16);
-      if (!state.found.siloOpen){ ctx.font = '18px serif'; ctx.fillText('🔒', f.bx + f.bw / 2, f.by + f.bh - 14); }
-      return;
-    }
+    if (f.style === 'barn' || f.style === 'greatbarn'){ paintBarn(f); return; }
+    if (f.style === 'silo'){ paintSilo(f); return; }
     if (f.style === 'hut'){
       /* a full-size cottage in the same thatch (v9) */
-      paintHouse(f.bx, f.by, f.bw, f.bh, '#3f7d22', null);
+      paintHouse(f.bx, f.by, f.bw, f.bh, '#b03a2e', null);
+      /* v23: THE ORCHARD BARN (Farmer Wife) — apple crates stacked
+         by the wall and the orchard ladder up to the loft */
+      R(f.bx + 10, f.by + f.bh - 18, 20, 18, '#8a5a2b'); R(f.bx + 10, f.by + f.bh - 18, 20, 3, '#a06a35');
+      R(f.bx + 13, f.by + f.bh - 34, 20, 18, '#8a5a2b'); R(f.bx + 13, f.by + f.bh - 34, 20, 3, '#a06a35');
+      ctx.fillStyle = '#d43a2e';
+      [[15, -27], [22, -28], [18, -24], [16, -11], [24, -12]].forEach(function(a){ ctx.beginPath(); ctx.arc(f.bx + a[0], f.by + f.bh + a[1], 3.2, 0, Math.PI * 2); ctx.fill(); });
+      ctx.save(); ctx.translate(f.bx + f.bw - 24, f.by + f.bh - 4); ctx.rotate(-0.30);
+      R(-2, -64, 3.4, 64, '#6d4423'); R(9, -64, 3.4, 64, '#6d4423');
+      for (var rg = 0; rg < 5; rg++) R(-2, -58 + rg * 13, 14.4, 3, '#8a5a2b');
+      ctx.restore();
       return;
     }
-    if (f.style === 'hatch'){
-      R(f.x - 3, f.y - 3, f.w + 6, f.h + 6, '#4c2c08');
-      R(f.x, f.y, f.w, f.h, '#8a5f24');
-      R(f.x + 4, f.y + f.h / 2 - 2, f.w - 8, 4, '#6e4a26');
-      ctx.font = '15px serif'; ctx.fillText('⬇️', f.x + f.w / 2, f.y + f.h / 2 + 16);
-      return;
-    }
-    if (f.style === 'stairs'){
-      R(f.x - 3, f.y - 3, f.w + 6, f.h + 6, '#2c2c2c');
-      for (var si = 0; si < 4; si++) R(f.x + 4 + si * 3, f.y + 4 + si * 8, f.w - 8 - si * 6, 6, '#8a8f96');
-      ctx.font = '13px serif'; ctx.fillText('⬇️', f.x + f.w / 2, f.y + f.h + 14);
-      return;
-    }
+    if (f.style === 'hatch'){ paintHatch(f); return; }
+    if (f.style === 'stairs'){ paintStairs(f); return; }
   });
 }
 function drawDarkness(){
