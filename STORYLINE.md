@@ -20,10 +20,15 @@ field anyway.
    8 pieces inside 8 barns across the farm, each guarded by a storm-touched
    keeper.
 2. **Empty hands.** The Country Stores are gone — the storm took them too.
-   Everything Corn Man needs must be *found* where the storm dropped it: his
-   Wooden Wrench on the Home Farm, a Lantern on the Sunny East Field, a Bow
-   by the Creek & Pond, golden arrows in the West Meadow. Crows carry off
-   arrows — take them back from crows.
+   Everything Corn Man needs must be *found* where the storm dropped it. And
+   the first one is an adventure, not a pickup: early morning fog lies over
+   the fields, and Corn Man must fight his way north with his bare fists —
+   four fields, past Middle Field — to the Pedestal Grove, where his Wooden
+   Wrench waits thrust into the old farm stone. He takes hold with both
+   hands, and PULLS. (Once the wrench is in his hand, the fog lifts — the
+   sun is up.) Then a Lantern on the Sunny East Field, a Bow by the Creek
+   & Pond, golden arrows in the West Meadow. Crows carry off arrows — take
+   them back from crows.
 3. **The eight barns.** Beat each keeper, take its heart, follow the path to
    the seed room, and claim the barn piece. His wrench grows with his heart:
    5 hearts earns the Silver Wrench, 10 the Golden.

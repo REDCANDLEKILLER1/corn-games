@@ -2933,7 +2933,7 @@ var MAP_SPOTS = [
   { lvl:7, ow:97,  how:'🕳️ Hatch — push the lone hay bale' },
   { lvl:8, ow:7,   how:'🔒 Great Barn — opens at 8/8 pieces' }
 ];
-var MAP_NOTES = { 103:'🏠 Start here — your wrench lies in the grass', 71:'💬 Hint farmer · secret rock', 26:'⛰️ Go UP, UP, UP, UP to climb to Owl Roost' };
+var MAP_NOTES = { 103:'🏠 Start here — the wrench waits north, in the grove stone', 39:'🪨 The Pedestal Grove — pull the wrench from the stone', 71:'💬 Hint farmer · secret rock', 26:'⛰️ Go UP, UP, UP, UP to climb to Owl Roost' };
 /* ---------- World 2: everything switched around ----------
    In World 2 the LEVELS trade fields: each barn entrance on the
    farm hosts a different level (L1–L8 are shuffled among their 8
@@ -3712,7 +3712,7 @@ function owIdx(c, r){ return r * OW_COLS + c; }
 var OW_HOME = owIdx(7, 6), OW_L1 = owIdx(10, 6), OW_L2 = owIdx(13, 6),
     OW_L3 = owIdx(2, 4), OW_L4 = owIdx(11, 4), OW_L5 = owIdx(13, 0),
     OW_L6 = owIdx(1, 1), OW_L7 = owIdx(14, 3), OW_L8 = owIdx(1, 6),
-    OW_L9 = owIdx(7, 0), OW_LOST = owIdx(10, 1), OW_MIDDLE = owIdx(7, 4);
+    OW_L9 = owIdx(7, 0), OW_LOST = owIdx(10, 1), OW_MIDDLE = owIdx(7, 4), OW_GROVE = owIdx(7, 2);
 var OW_THEMES = [
   { tag:'Meadow',          ground:'#5db531', ground2:'#55a82c', ob:'hay',     deco:'flower'  },
   { tag:'Corn Rows',       ground:'#64b037', ground2:'#5aa330', ob:'corn',    deco:'corn'    },
@@ -3740,6 +3740,7 @@ OW_SPECIAL[OW_LOST] = { name:'The Lost Hills',    ground:'#8a7a45', ground2:'#7f
 OW_SPECIAL[OW_L5]   = { name:'Owl Roost Ridge',   ground:'#477a35', ground2:'#3f6e2f', ob:'tree',    deco:'star'    };
 OW_SPECIAL[OW_L3]   = { name:'The Corn Maze',     ground:'#3e7d26', ground2:'#376e21', ob:'corn',    deco:'corn'    };
 OW_SPECIAL[OW_MIDDLE] = { name:'Middle Field',    ground:'#64b037', ground2:'#5aa330', ob:'hay',     deco:'flower'  };
+OW_SPECIAL[OW_GROVE] = { name:'The Pedestal Grove', ground:'#477a35', ground2:'#3f6e2f', ob:'tree',    deco:'flower'  };
 OW_SPECIAL[OW_L4]   = { name:'Creek & Pond',      ground:'#4f9e4d', ground2:'#478f45', ob:'rock',    deco:'lily'    };
 OW_SPECIAL[OW_L7]   = { name:'Silo Yard',         ground:'#5b8f3e', ground2:'#527f36', ob:'rock',    deco:'corn'    };
 OW_SPECIAL[OW_L8]   = { name:'West Meadow',       ground:'#6aa832', ground2:'#619c2d', ob:'hay',     deco:'flower'  };
@@ -3768,6 +3769,7 @@ OW_SPECIAL_ENEMIES[OW_L8] = [['chicken',3],['pig',1]];
 OW_SPECIAL_ENEMIES[OW_HOME] = [['chicken',2]];
 OW_SPECIAL_ENEMIES[OW_L1] = [['chicken',3],['pig',2]];
 OW_SPECIAL_ENEMIES[OW_L2] = [['chicken',2],['pig',2],['crow',1]];
+OW_SPECIAL_ENEMIES[OW_GROVE] = [['chicken',2],['crow',1]];
 var OW_ENEMIES = [];
 for (var oei = 0; oei < OW_COLS * OW_ROWS; oei++){
   if (OW_SPECIAL_ENEMIES[oei]){ OW_ENEMIES.push(OW_SPECIAL_ENEMIES[oei]); continue; }
@@ -4043,8 +4045,7 @@ function loadOwScreen(){
   if (idx === OW_LOST){ owGaps.N = true; owGaps.E = false; }  /* Lost Hills: north loops, east is solid rock */
   obstacles = borderObstacles(owGaps, 'fence');
   var avoid = [{ x: W/2, y: 40, r: 90 }, { x: W/2, y: H - 60, r: 90 }, { x: 40, y: H/2, r: 90 }, { x: W - 60, y: H/2, r: 90 }];
-  if (idx === OW_HOME){                                      /* HOME FARM — a clear field now (Michael, 2026-11-17): no store, no farmer standing on it. The storm took the store; Corn Man's wrench lies in the grass where it stood. */
-    if (state.wrench < 1) pickups.push({ x: W/2 - 15, y: 158, w: 30, h: 30, kind:'wrench', t: 0 });
+  if (idx === OW_HOME){                                      /* HOME FARM — a clear field (Michael, 2026-11-17): no store, no farmer standing on it. And no wrench lying in the grass (2026-11-18): it waits in the Pedestal Grove, four fields north — Corn Man fights his way there with his fists, through the morning fog. */
     scatterObstacles(R, 'hay', 4, avoid);
   } else if (idx === OW_L1){                                 /* Level 1 — visible barn, far end of the field */
     owFeatures.push({ kind:'dungeon', idx: dunIdxForField(0), style:'barn', x: 592, y: 158, w: 52, h: 30, bx: 520, by: 52, bw: 176, bh: 116 });
@@ -4100,7 +4101,7 @@ function loadOwScreen(){
     owFeatures.push({ kind:'npc', x: 130, y: 120, w: 36, h: 40, hint:'🧑‍🌾 OLD FARMER: “Funny thing — that lone hay bale in the middle of the meadow. Never seen anyone MOVE it. Wonder what’s under it…”' });
     scatterObstacles(R, 'hay', 3, avoid);
   } else if (idx === OW_MIDDLE){                             /* Middle Field — hints + a coin cache secret */
-    owFeatures.push({ kind:'npc', x: 366, y: 268, w: 36, h: 40, hint:'🧑‍🌾 OLD FARMER: “West along this row is the corn maze — mind the rows. Far north-west, the graveyard. And they say going UP four times climbs the Lost Hills, north-east of here, on the way to the Owl Roost…”' });
+    owFeatures.push({ kind:'npc', x: 366, y: 268, w: 36, h: 40, hint:'🧑‍🌾 OLD FARMER: “West along this row is the corn maze — mind the rows. Far north-west, the graveyard. Two fields north of here stands the Pedestal Grove — a wrench waits in the stone there, for hands strong enough to pull it. And they say going UP four times climbs the Lost Hills, north-east of here, on the way to the Owl Roost…”' });
     var rock = { x: 600, y: 96, w: 40, h: 40, type:'rock', secretId:'cache' };
     obstacles.push(rock);
     owSecrets.push({ id:'cache', x: 592, y: 88, w: 56, h: 56 });
@@ -4133,6 +4134,10 @@ function loadOwScreen(){
       return !moat.some(function(m){ return rectsOverlap(o, m); });
     });
     moat.forEach(function(m){ obstacles.push(m); });
+  } else if (idx === OW_GROVE){                              /* THE PEDESTAL GROVE — the Wooden Wrench waits thrust into the old stone (Michael, 2026-11-18, modeled on Zelda: the sword has a PLACE, and you earn the walk to it — fists only, four fields north). The stone is a real obstacle; the apron in front of it is the trigger (see the pedestal branch in the feature loop). */
+    obstacles.push({ x: W/2 - 26, y: 222, w: 52, h: 36, type:'rock' });
+    owFeatures.push({ kind:'pedestal', x: W/2 - 34, y: 226, w: 68, h: 34 });
+    scatterObstacles(R, 'tree', 7, avoid.concat([{ x: W/2, y: 250, r: 175 }]));
   } else {
     scatterObstacles(R, S.ob, 6, avoid);
   }
@@ -4405,12 +4410,19 @@ var INTRO_TEXT = {
   opening: [
     'The storm came in the night.\nIt took the Great Barn apart, board by board,\nand scattered its eight pieces across the farm.',
     'Every creature on the farm woke up bold.\nEvery machine woke up angry.\nThe fields are not safe anymore.',
-    'You are Corn Man. Your hands are empty —\nbut your old wrench survived the storm.\nIt lies in the grass where the store used to stand.',
-    'Find the eight hidden barns.\nTake back the pieces. Raise the Great Barn again.\nIt is dangerous to go alone — take heart, and go.'
+    'You are Corn Man. Your hands are empty —\nthe storm took everything, even your wrench.\nMorning fog still hugs the fields.',
+    'But the wrench survived. Word is it waits north —\nfour fields up the old road, past Middle Field,\nthrust into the pedestal stone in the grove.',
+    'Fight your way there with your fists.\nThen find the eight hidden barns, take back the pieces,\nand raise the Great Barn again. Take heart — and go.'
   ],
   opening2: [
     'The farm has shifted in the night.\nNothing stands where it stood,\nand the storm\'s creatures remember you.',
     'They have grown stronger. So have you.\nEight pieces. Eight barns. One wedding.\nGo again, hero.'
+  ],
+  wrench: [
+    '— THE PEDESTAL GROVE —',
+    'An old stone stands in the quiet of the grove.\nFarmers raised it in the first days of the farm\nto mark the road north.',
+    'A wrench is thrust into the stone —\nyour wrench, lost the night of the storm,\nwaiting here for its owner. For you.',
+    'You take hold with both hands.\nYou plant your feet.\nAnd you PULL —'
   ],
   lvl0: [
     '— LEVEL 1 —\nSUNNY FIELD',
@@ -4464,7 +4476,7 @@ function startIntro(key){
   if (!state.introsSeen) state.introsSeen = {};
   var pages = INTRO_TEXT[key];
   if (!pages || !player || state.introsSeen[key] || intro) return;
-  intro = { key: key, pages: pages, i: 0, stage: 'walk', toY: Math.max(64, player.y - 92) };
+  intro = { key: key, pages: pages, i: 0, stage: 'walk', toY: key === 'wrench' ? 228 : Math.max(64, player.y - 92) };
   hideBanner();
   dlog('Intro playing: ' + key + ' (' + pages.length + ' pages).');
 }
@@ -4474,6 +4486,7 @@ function tickIntro(dt){
     player.dir = 'up';
     keys.up = true;                       /* lets the walk cycle animate */
     player.walkT += dt * 10;
+    if (intro.key === 'wrench'){ var wtx = W/2 - 16, wdx = wtx - player.x; player.x += Math.sign(wdx) * Math.min(Math.abs(wdx), 105 * dt); }
     player.y -= 105 * dt;
     if (player.y <= intro.toY){
       player.y = intro.toY;
@@ -4498,6 +4511,16 @@ function dlgAdvance(){
 function endIntro(){
   if (!intro) return;
   state.introsSeen[intro.key] = true;
+  if (intro.key === 'wrench' && state.wrench < 1){
+    /* THE PULL — the last page ends on "And you PULL —", so the
+       wrench comes free the moment the bubble closes: fanfare,
+       banner, and the red button swings from here on. */
+    state.wrench = 1; state.hasSword = true;
+    if (player) player.y = 262;         /* step back from the stone */
+    sfx('win');
+    showBanner('🔧 YOU PULLED THE WOODEN WRENCH FROM THE STONE! THE RED BUTTON SWINGS IT NOW!', 3400);
+    updateHUD();
+  }
   intro = null;
   showOverlay(null);
   if (player) player.invuln = Math.max(player.invuln || 0, 1.5);
@@ -4965,6 +4988,8 @@ function owUpdate(dt){
       if (!rectsOverlap(pb, f)) continue;
       if (f.kind === 'npc'){
         if (npcCd <= 0){ showBanner(f.hint, 5000); npcCd = 5; sfx('corn'); }
+      } else if (f.kind === 'pedestal'){
+        if (state.wrench < 1 && !intro){ startIntro('wrench'); interactCd = 1.5; }
       } else if (f.kind === 'shop'){
         player.y = f.y + f.h + 10; interactCd = 1.5;
         openShop();
@@ -7532,6 +7557,27 @@ function drawOwFeatures(){
       ctx.fillText('💬', f.x + f.w / 2 + 16, f.y + 2 + Math.sin(runTime * 5) * 2);
       return;
     }
+    if (f.kind === 'pedestal'){
+      /* The old stone, drawn around its apron rect: plinth slabs with
+         the Wooden Wrench thrust into the top while it still waits —
+         a dark slot in the stone once it has been pulled. */
+      var pcx = f.x + f.w / 2, pby = f.y + 34;
+      if (state.wrench < 1){
+        var pPulse = 0.5 + Math.sin(runTime * 4) * 0.2;
+        ctx.globalAlpha = pPulse * 0.5; ctx.fillStyle = '#ffd700';
+        ctx.beginPath(); ctx.arc(pcx, pby - 62, 30, 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.font = '30px serif';
+        ctx.fillText('🔧', pcx, pby - 42 + Math.sin(runTime * 2.4) * 2);
+      }
+      R(pcx - 31, pby - 40, 62, 10, '#7d838a');
+      if (state.wrench >= 1) R(pcx - 7, pby - 39, 14, 4, '#3c4043');
+      R(pcx - 26, pby - 30, 52, 20, '#9aa0a6');
+      R(pcx - 26, pby - 30, 52, 5, '#b4babe');
+      R(pcx - 35, pby - 10, 70, 10, '#8a8f96');
+      R(pcx - 35, pby - 10, 70, 3, '#a8adb2');
+      return;
+    }
     if (f.kind === 'shop'){
       /* Little storefront — not a cart: cream walls, a pitched sign
          board, a red-and-white striped awning over the front, two
@@ -7616,6 +7662,37 @@ function drawDarkness(){
   ctx.beginPath(); ctx.arc(cx, cy, r + 16, 0, Math.PI * 2); ctx.arc(cx, cy, r, 0, Math.PI * 2);
   ctx.fillStyle = 'rgba(2,2,10,0.45)'; ctx.fill('evenodd');
   ctx.restore();
+}
+/* ---------- Morning fog (Michael, 2026-11-18) ----------
+   Early morning on the farm: until Corn Man is armed, a fog lies
+   over the fields — he can see his own feet and not much past his
+   fists, which is what makes the walk to the grove an adventure.
+   The moment the wrench is in his hand, the sun is up: no fog. */
+function fogActive(){
+  return state.mode === 'overworld' && state.screen === 'play' && state.wrench < 1 && !!player;
+}
+var fogCv = null;
+function drawFog(){
+  if (!fogCv){ fogCv = document.createElement('canvas'); fogCv.width = W; fogCv.height = H; }
+  var fc = fogCv.getContext('2d');
+  fc.clearRect(0, 0, W, H);
+  fc.fillStyle = 'rgba(228, 234, 228, 0.60)';
+  fc.fillRect(0, 0, W, H);
+  /* slow banks rolling east, a little thicker than the wash */
+  fc.fillStyle = 'rgba(240, 244, 240, 0.35)';
+  for (var fi2 = 0; fi2 < 6; fi2++){
+    var fbx = ((fi2 * 173 + runTime * (6 + fi2 * 2)) % (W + 240)) - 120;
+    var fby = 60 + (fi2 * 89) % (H - 120) + Math.sin(runTime * 0.4 + fi2 * 1.7) * 14;
+    fc.beginPath(); fc.ellipse(fbx, fby, 110 + (fi2 % 3) * 30, 30 + (fi2 % 2) * 12, 0, 0, Math.PI * 2); fc.fill();
+  }
+  /* the clear circle around Corn Man */
+  var fpx = player.x + player.w / 2, fpy = player.y + player.h / 2;
+  var fg = fc.createRadialGradient(fpx, fpy, 70, fpx, fpy, 190);
+  fg.addColorStop(0, 'rgba(0,0,0,1)'); fg.addColorStop(1, 'rgba(0,0,0,0)');
+  fc.globalCompositeOperation = 'destination-out';
+  fc.fillStyle = fg; fc.beginPath(); fc.arc(fpx, fpy, 190, 0, Math.PI * 2); fc.fill();
+  fc.globalCompositeOperation = 'source-over';
+  ctx.drawImage(fogCv, 0, 0);
 }
 function draw(){
   ctx.save();
@@ -7917,6 +7994,7 @@ function draw(){
     var gotLbl = (LEVELS[state.level] && LEVELS[state.level].piece ? LEVELS[state.level].piece : 'PUZZLE PIECE').toUpperCase();
     ctx.strokeText(gotLbl, W/2, H/2 + 20); ctx.fillText(gotLbl, W/2, H/2 + 20);
   }
+  if (fogActive()) drawFog();
   if (state.mode === 'dungeon' && dunDark && !dunLit && phase !== 'blink') drawDarkness();
   ctx.restore();
 }
