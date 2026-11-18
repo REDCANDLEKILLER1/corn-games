@@ -5047,18 +5047,10 @@ function paintHouse(bx, by, bw, bh, doorColor, sign){
   ctx.strokeStyle = '#b57a10'; ctx.lineWidth = 2; ctx.stroke();
   /* a stone step to land on */
   ctx.fillStyle = '#b9b2a4'; rrPath(dx - 24, baseY - 3, 48, 8, 3); ctx.fill();
-  /* the hanging sign, on a curved arm off the porch — flipped for east-side houses */
-  if (sign){
-    var sgn = dx > 400 ? -1 : 1;
-    ctx.strokeStyle = '#4c2c08'; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.moveTo(dx + sgn * 23, eaveY + 8);
-    ctx.quadraticCurveTo(dx + sgn * 36, eaveY - 2, dx + sgn * 42, eaveY + 6); ctx.stroke();
-    ctx.font = '10px "Press Start 2P", monospace'; ctx.textAlign = 'left';
-    var swd = ctx.measureText(sign).width + 12;
-    var sbx = sgn > 0 ? dx + 42 : dx - 42 - swd;
-    ctx.fillStyle = '#5d3a17'; rrPath(sbx, eaveY + 6, swd, 17, 4); ctx.fill();
-    ctx.fillStyle = '#ffe9a8'; ctx.fillText(sign, sbx + 6, eaveY + 19);
-  }
+  /* no painted name signs on the houses (Michael, 2026-11-18:
+     "no flying texts") — a house says its name in the banner when
+     you walk in, and its folks introduce themselves in the chat
+     bubble; the walls stay clean */
 }
 
 function drawVillager(x, y, pal, name, kid){
@@ -5078,12 +5070,8 @@ function drawVillager(x, y, pal, name, kid){
   R(cx - 11, 0 + bob * 0.4, 22, 4, P[2]); R(cx - 6, -4 + bob * 0.4, 12, 5, P[2]);
   R(cx - 4, 8 + bob * 0.4, 2, 2, '#202020'); R(cx + 3, 8 + bob * 0.4, 2, 2, '#202020');
   ctx.restore();
-  if (name){
-    ctx.font = '700 11px Nunito, sans-serif'; ctx.textAlign = 'center';
-    ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,0.65)';
-    var ny = y - 8 + bob * 0.4;
-    ctx.strokeText(name, x + 15, ny); ctx.fillStyle = '#fffbe8'; ctx.fillText(name, x + 15, ny);
-  }
+  /* no name labels floating over heads either (Michael, 2026-11-18) —
+     people say who they are when you step up and talk to them */
 }
 var HOUSES = {
   pearl: { title: "GRANDMA PEARL'S COTTAGE", rug: '#a33327', rug2: '#b8452f', deco: 'picture',
