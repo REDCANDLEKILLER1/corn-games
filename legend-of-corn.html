@@ -5685,6 +5685,19 @@ function dunStoneBlocks(idx, n){
     }
     return picked;
   }
+  if (n === dunBossRoom(idx)){
+    /* THE ARENA (v33): a boss room is a fighting pit — a few
+       blocks at the edges for character, open floor between
+       the keeper and Corn Man (Michael: "they gotta have
+       room to move around"). Doorway keeps still apply. */
+    var edgeCells = [[1, 1], [14, 1], [1, 10], [14, 10], [3, 1], [12, 1], [3, 10], [12, 10], [1, 3], [14, 3], [1, 8], [14, 8]];
+    var pool2 = edgeCells.slice(), picks = 4 + Math.floor(R() * 2);
+    while (picks-- > 0 && pool2.length){
+      var cell2 = pool2.splice(Math.floor(R() * pool2.length), 1)[0];
+      put(cell2[0], cell2[1]);
+    }
+    return out;
+  }
   if (arche === 0){                                    /* scattered singles, none touching */
     scatter(special ? 8 : 13, true); scatter(3, false);
   } else if (arche === 1){                             /* chunky 2×2 clusters */
@@ -9335,13 +9348,23 @@ function drawInterior(){
      the level + room numbers, so a room always dresses the same way
      on every visit, and no two rooms dress alike. */
   var fi = state.level || 0, fr = dunRoom || 0;
-  var palettes = [
-    ['#86622f', '#75552a'], ['#8a6533', '#78582c'], ['#7f5e2e', '#6e5027'],
-    ['#8f6a35', '#7a5a2d'], ['#846231', '#715128'], ['#89602c', '#775325']
+  /* LEVEL THEMES (v33, Michael 2026-11-18 — "every place needs
+     to be different"): every barn's insides wear their own
+     ground now. [light checker, dark checker, seam/base] */
+  var LEVEL_FLOORS = [
+    ['#9a7434', '#87652c', '#5d421c'],   /* L1 The Roost — warm barn planks + straw */
+    ['#6f5b45', '#5f4d3b', '#40342a'],   /* L2 The Root Cellar — packed earth */
+    ['#4d5c2a', '#415124', '#2e3a1a'],   /* L3 The Dark Corn Maze — deep corn green */
+    ['#7a7a38', '#676730', '#4a4a22'],   /* L4 The Orchard Barn — leafy gold-green */
+    ['#615a70', '#534d61', '#383344'],   /* L5 The Owl Roost — dusk violet-grey */
+    ['#62626b', '#53535c', '#33333c'],   /* L6 The Crypt — cold stone */
+    ['#68727c', '#59636d', '#39424c'],   /* L7 The Storm Silo — steel plate */
+    ['#4d5a78', '#414e66', '#2a3348'],   /* L8 The Twin Cellar — moonlit blue */
+    ['#86502e', '#74452a', '#4c2c16']    /* L9 The Great Barn — grand red-brown */
   ];
-  var pal = palettes[(fi * 2 + fr) % palettes.length];
+  var pal = LEVEL_FLOORS[fi % LEVEL_FLOORS.length];
   var shift = fr % 2;
-  R(0, 0, W, H, '#7d5a30');
+  R(0, 0, W, H, pal[2]);
   for (var y = 0; y < 12; y++) for (var x = 0; x < 16; x++){
     R(x * TILE + 1, y * TILE + 1, TILE - 2, TILE - 2, (x + y + shift) % 2 ? pal[0] : pal[1]);
     /* The gray stone blocks are NOT drawn here any more: they are
@@ -9353,7 +9376,7 @@ function drawInterior(){
   ctx.globalAlpha = 0.22;
   for (var sk = 0; sk < 6; sk++){
     var stx = 1 + ((fr * 31 + fi * 17 + sk * 53) % 14), sty = 1 + ((fr * 19 + fi * 11 + sk * 29) % 10);
-    R(stx * TILE + 9, sty * TILE + 30, 20, 4, '#4c3013');
+    R(stx * TILE + 9, sty * TILE + 30, 20, 4, pal[2]);
   }
   ctx.globalAlpha = 0.5; ctx.font = '20px serif'; ctx.textAlign = 'center';
   var webCorners = [[44, 52], [W - 44, 52], [44, H - 34], [W - 44, H - 34]];
@@ -9361,6 +9384,13 @@ function drawInterior(){
   ctx.fillText('🕸️', webCorners[wi][0], webCorners[wi][1]);
   ctx.fillText('🕸️', webCorners[(wi + 2) % 4][0], webCorners[(wi + 2) % 4][1]);
   ctx.globalAlpha = 1;
+  /* ATMOSPHERE (v33): the underground barns sit darker, the
+     Owl Roost is dusk, the Twin Cellar is moonlit, the Great
+     Barn glows warm — a wash over the floor before the room's
+     contents draw on top of it. */
+  var MOODS = [null, 'rgba(20,14,8,0.16)', 'rgba(6,10,4,0.20)', null, 'rgba(16,18,44,0.18)', 'rgba(8,8,14,0.22)', 'rgba(10,14,20,0.10)', 'rgba(8,12,34,0.20)', 'rgba(30,16,4,0.10)'];
+  var mood = MOODS[fi % MOODS.length];
+  if (mood) R(0, 0, W, H, mood);
   if (dunSwitch){
     R(dunSwitch.x, dunSwitch.y, dunSwitch.w, dunSwitch.h, dunSwitch.done ? '#37c978' : '#9a9a9a');
     R(dunSwitch.x + 5, dunSwitch.y + 5, dunSwitch.w - 10, dunSwitch.h - 10, dunSwitch.done ? '#2aa85f' : '#7d7d7d');
