@@ -9014,128 +9014,303 @@ function drawEnemy(e){
 /* ---------- End-guy drawing (levels 1-8) ---------- */
 function drawBigEnemy(e){
   var x = e.x, y = e.y, w = e.w, h = e.h, f = e.face || 1;
+  var cx = x + w / 2, feet = y + h;
   if (e.hitT > 0.12) ctx.globalAlpha = 0.55;
   if ((e.kind === 'tractor' || e.kind === 'supertractor') && e.state === 'aim' && Math.floor(runTime * 8) % 2)
     R(x - 6, y - 6, w + 12, h + 12, '#ff2d2d55');
-  /* ANIMATION (Michael, 2026-11-18 — every enemy animated): a walk
-     phase measured from the boss's REAL movement between frames,
-     the same 0.09/px the field brains accumulate, taken here in the
-     draw so every kind spends it below: legs step, feet paddle,
-     treads march, dresses sway. A boss that isn't moving isn't
-     stepping — no statues, no marching in place. */
+  /* ANIMATION (kept from v6): a walk phase measured from the
+     boss's REAL movement between frames — legs step, wings flap,
+     treads march. A boss that isn't moving isn't stepping. */
   if (e._lx === undefined){ e._lx = e.x; e._ly = e.y; e.walkT = 0; }
   e.walkT = (e.walkT || 0) + (Math.abs(e.x - e._lx) + Math.abs(e.y - e._ly)) * 0.09;
   e._lx = e.x; e._ly = e.y;
   var wph = Math.floor((e.walkT || 0) * 2) % 2, wLegA = wph === 0 ? 3 : 0, wLegB = wph === 1 ? 3 : 0;
   var wBob = Math.round(Math.sin((e.walkT || 0) * 6) * 1.5);
+  /* the ground shadow every keeper stands on */
+  ctx.save();
+  ctx.globalAlpha *= 0.20; ctx.fillStyle = '#000';
+  ctx.beginPath(); ctx.ellipse(cx, feet + 3, w * 0.62, 6, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+  if (e.hitT > 0.12) ctx.globalAlpha = 0.55;
   if (e.kind === 'chicken'){
-    var peck = e.state === 'lunge' ? 10 : 0;
-    R(x + 8, y + 18, 44, 34, '#ffffff'); R(x + 4, y + 26, 12, 16, '#e8e8e8');       /* body + tail */
-    R(x + 38 + (f > 0 ? peck : -peck), y + 2 + wBob, 22, 22, '#ffffff');             /* head, bobbing */
-    R(x + 46 + (f > 0 ? peck : -peck), y - 4 + wBob, 8, 8, '#ff2d2d');               /* comb */
-    if (f > 0) R(x + 59 + peck, y + 11 + wBob, 12, 6, '#f5a301'); else R(x - 7 - peck, y + 11 + wBob, 12, 6, '#f5a301'); /* beak */
-    R(x + 49 + (f > 0 ? peck : -peck), y + 8 + wBob, 4, 4, '#14181d');
-    R(x + 18, y + 50 - wLegA, 5, 9, '#f5a301'); R(x + 38, y + 50 - wLegB, 5, 9, '#f5a301');   /* legs step */
+    /* THE GIANT CHICKEN (v32, from Michael's portrait): front-on,
+       wings raised, talons planted, glaring straight at him */
+    var lunge = e.state === 'lunge' ? 5 : 0;
+    var flapW = Math.sin((e.walkT || 0) * 6) * 4;
+    R(cx - 26, feet - 14 - wLegA, 9, 12, '#f5a301'); R(cx + 17, feet - 14 - wLegB, 9, 12, '#f5a301');   /* legs step */
+    R(cx - 34, feet - 4 - wLegA, 20, 5, '#f5a301'); R(cx + 14, feet - 4 - wLegB, 20, 5, '#f5a301');    /* talon feet */
+    ctx.fillStyle = '#c4c4c4';   /* wings, raised wide and layered */
+    ctx.beginPath(); ctx.moveTo(cx - 16, y + 30); ctx.lineTo(cx - 62, y - 12 - flapW); ctx.lineTo(cx - 56, y + 10 - flapW); ctx.lineTo(cx - 48, y + 38); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(cx + 16, y + 30); ctx.lineTo(cx + 62, y - 12 - flapW); ctx.lineTo(cx + 56, y + 10 - flapW); ctx.lineTo(cx + 48, y + 38); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#e8e8e8';
+    ctx.beginPath(); ctx.moveTo(cx - 16, y + 28); ctx.lineTo(cx - 50, y - 4 - flapW); ctx.lineTo(cx - 40, y + 34); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(cx + 16, y + 28); ctx.lineTo(cx + 50, y - 4 - flapW); ctx.lineTo(cx + 40, y + 34); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#ffffff';   /* the great round body */
+    ctx.beginPath(); ctx.ellipse(cx, y + 44 + lunge, 40, 33, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#dcdcdc';
+    ctx.beginPath(); ctx.ellipse(cx, y + 58 + lunge, 33, 19, 0, Math.PI, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#f4f4f4';   /* the ruff under her chin */
+    ctx.beginPath();
+    for (var rfi = 0; rfi < 5; rfi++){ var rfx = cx - 16 + rfi * 8; ctx.moveTo(rfx, y + 26 + lunge); ctx.lineTo(rfx + 4, y + 33 + lunge); ctx.lineTo(rfx + 8, y + 26 + lunge); }
+    ctx.fill();
+    ctx.strokeStyle = '#c9c9c9'; ctx.lineWidth = 2;   /* feather shading */
+    for (var fi = 0; fi < 3; fi++){ ctx.beginPath(); ctx.arc(cx - 16 + fi * 16, y + 48 + lunge, 8, 0.3, Math.PI - 0.6); ctx.stroke(); }
+    ctx.lineWidth = 1;
+    R(cx - 22, y + 40 + lunge, 10, 3, '#d9a441'); R(cx + 14, y + 52 + lunge, 9, 3, '#d9a441'); R(cx - 4, y + 62 + lunge, 8, 3, '#d9a441');   /* straw in the feathers */
+    var hr = e.state === 'lunge' ? 20 : 18, hy = y + 12 + wBob + lunge;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.ellipse(cx, hy, hr, hr - 2, 0, 0, Math.PI * 2); ctx.fill();   /* head */
+    R(cx - 11, hy - hr - 6, 6, 9, '#ff2d2d'); R(cx - 3, hy - hr - 9, 6, 11, '#ff2d2d'); R(cx + 5, hy - hr - 6, 6, 9, '#ff2d2d');   /* comb */
+    R(cx - 8, hy + 12, 6, 10, '#ff2d2d'); R(cx + 3, hy + 12, 6, 10, '#ff2d2d');          /* wattle */
+    ctx.fillStyle = '#f5a301';   /* beak, pointing at him */
+    ctx.beginPath(); ctx.moveTo(cx - 7, hy + 3); ctx.lineTo(cx + 7, hy + 3); ctx.lineTo(cx, hy + 13); ctx.closePath(); ctx.fill();
+    R(cx - 13, hy - 6, 8, 6, '#ff7a1a'); R(cx + 5, hy - 6, 8, 6, '#ff7a1a');            /* the glare */
+    R(cx - 11, hy - 4, 4, 4, '#14181d'); R(cx + 7, hy - 4, 4, 4, '#14181d');
+    ctx.strokeStyle = '#14181d'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(cx - 14, hy - 10); ctx.lineTo(cx - 4, hy - 7); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx + 14, hy - 10); ctx.lineTo(cx + 4, hy - 7); ctx.stroke();
+    ctx.lineWidth = 1;
   } else if (e.kind === 'turtle'){
-    R(x + 6, y + 14, 58, 36, '#2f7a1e'); R(x + 14, y + 8, 42, 14, '#3f9e2c');        /* shell */
-    R(x + 22 + (wph ? 1 : -1), y + 20, 26, 16, '#e8b93a');                           /* shell pattern, rocking */
-    var neck = Math.round((e.neckExt || 0) * 26);
-    if (f > 0){ R(x + 60, y + 24, 8 + neck, 9, '#7fd67f'); R(x + 64 + neck, y + 18, 16, 16, '#7fd67f'); R(x + 74 + neck, y + 23, 4, 4, '#14181d'); R(x + 76 + neck, y + 30, 6, 3, '#c22e24'); }
-    else { R(x + 2 - neck, y + 24, 8 + neck, 9, '#7fd67f'); R(x - 14 - neck, y + 18, 16, 16, '#7fd67f'); R(x - 12 - neck, y + 23, 4, 4, '#14181d'); R(x - 16 - neck, y + 30, 6, 3, '#c22e24'); }
-    R(x + 12 + (wph === 0 ? 2 : 0), y + 48, 10, 6, '#2f7a1e'); R(x + 50 + (wph === 1 ? 2 : 0), y + 48, 10, 6, '#2f7a1e');   /* feet paddle */
+    /* THE SNAPPING TURTLE (v32): a mossy mountain of shell with
+       pumpkins growing on it — and a mouth that lunges out */
+    var snap = e.neckExt || 0;
+    R(cx - 50, feet - 8 - wLegA, 22, 8, '#4a6b2a'); R(cx + 28, feet - 8 - wLegB, 22, 8, '#4a6b2a');   /* clawed feet paddle */
+    R(cx - 52, feet - 3 - wLegA, 6, 3, '#e8d9b0'); R(cx - 42, feet - 3 - wLegA, 6, 3, '#e8d9b0');
+    R(cx + 30, feet - 3 - wLegB, 6, 3, '#e8d9b0'); R(cx + 40, feet - 3 - wLegB, 6, 3, '#e8d9b0');
+    ctx.fillStyle = '#2f7a1e';   /* the shell dome */
+    ctx.beginPath(); ctx.ellipse(cx, feet - 6, 56, 40, 0, Math.PI, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#3f9e2c';
+    ctx.beginPath(); ctx.ellipse(cx, feet - 14, 40, 27, 0, Math.PI, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#256b16'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.ellipse(cx, feet - 6, 56, 40, 0, Math.PI * 1.15, Math.PI * 1.85); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx - 30, feet - 34); ctx.lineTo(cx - 18, feet - 12); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx + 30, feet - 34); ctx.lineTo(cx + 18, feet - 12); ctx.stroke();
+    ctx.lineWidth = 1;
+    R(cx - 44, feet - 34, 12, 7, '#5d7a35'); R(cx + 20, feet - 42, 13, 7, '#5d7a35'); R(cx - 8, feet - 46, 11, 6, '#5d7a35');   /* moss */
+    R(cx - 40, feet - 50, 15, 12, '#e07b1f'); R(cx - 35, feet - 54, 4, 5, '#4a6b2a');   /* pumpkins on the shell */
+    R(cx + 26, feet - 52, 13, 11, '#e07b1f'); R(cx + 31, feet - 56, 4, 5, '#4a6b2a');
+    ctx.strokeStyle = '#58b02c'; ctx.lineWidth = 2;   /* a vine curl */
+    ctx.beginPath(); ctx.arc(cx + 44, feet - 38, 5, 0, Math.PI * 1.6); ctx.stroke(); ctx.lineWidth = 1;
+    var hd = 1 + snap * 0.35, hw2 = 24 * hd, hh2 = 19 * hd, hcy = feet - 22 + snap * 10;
+    ctx.fillStyle = '#7fb069';   /* the head, lunging out of the shell at him */
+    ctx.beginPath(); ctx.ellipse(cx, hcy, hw2, hh2, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#5d8a48';
+    ctx.beginPath(); ctx.ellipse(cx, hcy - hh2 + 4, hw2 - 3, 6, 0, 0, Math.PI * 2); ctx.fill();   /* brow ridge */
+    R(cx - hw2 + 3, hcy - 5, 7, 7, '#e8b93a'); R(cx + hw2 - 10, hcy - 5, 7, 7, '#e8b93a');          /* eyes */
+    R(cx - hw2 + 5, hcy - 3, 3, 3, '#14181d'); R(cx + hw2 - 8, hcy - 3, 3, 3, '#14181d');
+    if (snap > 0.35){   /* the snap: jaws open, dark inside */
+      R(cx - 12, hcy + 5, 24, 9, '#571e14');
+      ctx.fillStyle = '#fffbe8';
+      ctx.beginPath(); ctx.moveTo(cx - 11, hcy + 5); ctx.lineTo(cx - 5, hcy + 5); ctx.lineTo(cx - 8, hcy + 11); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(cx + 11, hcy + 5); ctx.lineTo(cx + 5, hcy + 5); ctx.lineTo(cx + 8, hcy + 11); ctx.closePath(); ctx.fill();
+    }
+    ctx.fillStyle = '#8fae5f';   /* the beak point */
+    ctx.beginPath(); ctx.moveTo(cx - 6, hcy + 2); ctx.lineTo(cx + 6, hcy + 2); ctx.lineTo(cx, hcy + 8 + snap * 3); ctx.closePath(); ctx.fill();
   } else if (e.kind === 'tractor' || e.kind === 'supertractor'){
+    /* THE TRACTORS (v32): seen from the front at last — headlight
+       eyes, a grille for a mouth, stacks smoking. The Runaway is
+       rust-red and wild; the Super is an armored fortress. */
     var superT = e.kind === 'supertractor';
-    var chug = (e.state === 'stalk' || e.state === 'charge') ? Math.round(Math.sin(runTime * 26) * 1) : 0;   /* engine shake */
-    R(x + 6, y + 14 + chug, w - 12, 30, superT ? '#c22e24' : '#37c978');             /* body */
-    R(x + w - 42, y + 0 + chug, 30, 20, superT ? '#8f1f18' : '#2aa85f');             /* cab */
-    R(x + w - 37, y + 4 + chug, 19, 11, '#bfe8ff');
-    R(x + 2, y + 6 + chug, 16, 10, '#e0aa00'); R(x + w - 14, y - 6 + chug, 6, 14, '#555b61');   /* header + exhaust */
-    ctx.fillStyle = '#fff'; ctx.font = 'bold 10px Nunito, sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText(superT ? 'SUPER' : 'TRACTOR', x + w / 2 - 8, y + 34 + chug);
-    if (e.state === 'charge'){ var tp2 = Math.floor(runTime * 9) % 3; R(x + w - 13, y - 13 - tp2 * 3, 5 + tp2 * 2, 4 + tp2, '#9aa0a6'); }   /* charge smoke */
-    if (superT){                                                                     /* treads, marching */
-      R(x + 2, y + h - 16, 40, 15, '#14181d'); R(x + w - 42, y + h - 16, 40, 15, '#14181d');
-      for (var ti = 0; ti < 5; ti++){ R(x + 6 + ti * 8 + (wph ? 4 : 0), y + h - 12, 4, 7, '#8a8f96'); R(x + w - 38 + ti * 8 + (wph ? 4 : 0), y + h - 12, 4, 7, '#8a8f96'); }
-    } else {
-      R(x + 2, y + h - 22, 24, 22, '#14181d'); R(x + 8 + (wph ? 2 : 0), y + h - 16 + (wph ? 2 : 0), 12, 12, '#8a8f96');   /* hubs turn */
-      R(x + w - 24, y + h - 19, 20, 19, '#14181d'); R(x + w - 18 + (wph ? 1 : 0), y + h - 13 + (wph ? 1 : 0), 8, 8, '#8a8f96');
+    var chug = (e.state === 'stalk' || e.state === 'charge') ? Math.round(Math.sin(runTime * 26) * 1.5) : 0;
+    var body = superT ? '#5a2320' : '#b03a2e', dark = superT ? '#2e2a2e' : '#7c241c', trim = superT ? '#8a8f96' : '#d98f4e';
+    var bx = cx - (superT ? 62 : 56), bw2 = superT ? 124 : 112, by = y - 8 + chug;
+    ctx.fillStyle = '#14181d';   /* the great treaded wheels */
+    ctx.fillRect(bx - 8, by + 30, 26, 52); ctx.fillRect(bx + bw2 - 18, by + 30, 26, 52);
+    ctx.fillStyle = '#3a3f45';
+    for (var wi = 0; wi < 5; wi++){ var woff = (wph ? 5 : 0); R(bx - 6, by + 34 + wi * 10 + (wi % 2 ? woff : 0), 20, 5, '#3a3f45'); R(bx + bw2 - 14, by + 34 + wi * 10 + (wi % 2 ? 0 : woff), 20, 5, '#3a3f45'); }
+    R(bx + 2, by + 52, 12, 12, '#8a8f96'); R(bx + bw2 - 14, by + 52, 12, 12, '#8a8f96');   /* hubs */
+    R(bx + 12, by + 18, bw2 - 24, 52, body);                                              /* the body */
+    R(bx + 12, by + 18, bw2 - 24, 8, dark);
+    var stacks = superT ? [-38, -14, 14, 38] : [-30, 30];
+    for (var si = 0; si < stacks.length; si++){
+      R(cx + stacks[si] - 4, by - 12, 8, 32, dark);
+      var puf = Math.floor(runTime * 3 + si * 1.7) % 3;
+      ctx.globalAlpha = 0.5 - puf * 0.13; ctx.fillStyle = '#6b6f75';
+      ctx.beginPath(); ctx.arc(cx + stacks[si] + puf * 3, by - 20 - puf * 9, 5 + puf * 3, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = e.hitT > 0.12 ? 0.55 : 1;
     }
+    R(cx - 30, by + 30, 60, 26, '#1c1e22');                                               /* the grille mouth */
+    for (var gi = 0; gi < 5; gi++) R(cx - 24 + gi * 12, by + 32, 4, 22, trim);
+    ctx.fillStyle = '#fffbe8';   /* teeth along the grille's jaw */
+    for (var tii = 0; tii < 5; tii++){ ctx.beginPath(); ctx.moveTo(cx - 25 + tii * 13, by + 56); ctx.lineTo(cx - 19 + tii * 13, by + 56); ctx.lineTo(cx - 22 + tii * 13, by + 63); ctx.closePath(); ctx.fill(); }
+    ctx.fillStyle = '#f5a301';   /* headlight eyes, burning */
+    ctx.beginPath(); ctx.arc(cx - 38, by + 26, 9, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx + 38, by + 26, 9, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fff3b0';
+    ctx.beginPath(); ctx.arc(cx - 38, by + 26, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx + 38, by + 26, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.save(); ctx.translate(cx - 38, by + 15); ctx.rotate(0.5); R(-11, -2, 22, 4, dark); ctx.restore();   /* brow plates, angled mad */
+    ctx.save(); ctx.translate(cx + 38, by + 15); ctx.rotate(-0.5); R(-11, -2, 22, 4, dark); ctx.restore();
+    if (superT){   /* armor: riveted plates and the dozer blade */
+      R(bx + 16, by + 62, bw2 - 32, 10, trim);
+      R(bx + 4, feet - 14, bw2 - 8, 14, '#6e1f1a'); R(bx + 4, feet - 14, bw2 - 8, 4, trim);
+      ctx.fillStyle = '#cfd8dc';
+      for (var ri2 = 0; ri2 < 6; ri2++){ ctx.beginPath(); ctx.arc(bx + 16 + ri2 * ((bw2 - 32) / 5), feet - 7, 2, 0, Math.PI * 2); ctx.fill(); }
+      R(cx - 34, by + 20, 10, 6, '#3a3f45'); R(cx + 24, by + 20, 10, 6, '#3a3f45');
+    } else {   /* the Runaway's rust and dents */
+      R(bx + 20, by + 44, 14, 6, '#7c4a21'); R(bx + bw2 - 38, by + 36, 10, 5, '#7c4a21'); R(cx + 8, by + 64, 16, 5, '#7c4a21');
+    }
+    if (e.state === 'charge'){ var tp3 = Math.floor(runTime * 9) % 3; R(cx - 6, by - 26 - tp3 * 4, 10 + tp3 * 3, 7 + tp3, '#9aa0a6'); }
   } else if (e.kind === 'wife'){
-    R(x + 10 + (wph ? 1 : -1), y + 30, 36, 34, '#c94f7c'); R(x + 16 + (wph ? 1 : -1), y + 38, 24, 18, '#fffbe8');   /* dress + apron, swaying */
-    R(x + 16, y + 8, 24, 24, '#f2c09a');                                             /* head */
-    R(x + 13, y + 2, 30, 12, '#6b4a2b'); R(x + 24, y - 3, 9, 8, '#6b4a2b');          /* hair + bun */
-    R(x + 21, y + 17, 4, 4, '#14181d'); R(x + 32, y + 17, 4, 4, '#14181d'); R(x + 23, y + 26, 10, 3, '#a03a1e');
-    var sw = e.swingPhase > 0 ? Math.sin((0.45 - e.swingPhase) / 0.45 * Math.PI) : 0;
-    ctx.save(); ctx.translate(x + (f > 0 ? w - 4 : 4), y + 30); ctx.rotate(f * (-0.5 + sw * 1.5));
-    R(f > 0 ? 0 : -26, -4, 26, 7, '#c68a3f'); R(f > 0 ? 20 : -30, -6, 10, 11, '#e8d9b0');  /* rolling pin */
+    /* THE FARMER WIFE (v32): floral dress, white apron, and the
+       rolling pin comes DOWN when she swings */
+    var sway = (wph ? 1 : -1);
+    R(cx - 16, feet - 8 - wLegA, 11, 8, '#5b3a12'); R(cx + 6, feet - 8 - wLegB, 11, 8, '#5b3a12');   /* work boots */
+    ctx.fillStyle = '#2e5f8a';   /* the dress, wide at the hem */
+    ctx.beginPath(); ctx.moveTo(cx - 13, y + 26); ctx.lineTo(cx + 13, y + 26); ctx.lineTo(cx + 26, feet - 6); ctx.lineTo(cx - 26, feet - 6); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#e86a9a';   /* her flowers */
+    var fpos = [[-16, -30], [-4, -22], [10, -34], [-10, -46], [14, -48], [0, -58]];
+    for (var fi2 = 0; fi2 < fpos.length; fi2++){ ctx.beginPath(); ctx.arc(cx + fpos[fi2][0] + sway, feet + fpos[fi2][1], 3, 0, Math.PI * 2); ctx.fill(); }
+    ctx.fillStyle = '#ffd94e';
+    for (var fi3 = 0; fi3 < fpos.length; fi3++){ ctx.beginPath(); ctx.arc(cx + fpos[fi3][0] + sway, feet + fpos[fi3][1], 1.4, 0, Math.PI * 2); ctx.fill(); }
+    R(cx - 12, y + 34, 24, feet - y - 44, '#fffbe8');                                     /* the apron */
+    R(cx - 7, feet - 26, 14, 9, '#f2ead2');                                               /* apron pocket */
+    R(cx - 20, y + 30, 8, 16, '#2e5f8a');                                                 /* left arm, hand on hip */
+    ctx.save(); ctx.translate(cx - 22, y + 44); ctx.rotate(0.9); R(-4, 0, 7, 10, '#f2c09a'); ctx.restore();
+    var sw2 = e.swingPhase > 0 ? Math.sin((0.45 - e.swingPhase) / 0.45 * Math.PI) : 0;
+    ctx.save(); ctx.translate(cx + 16, y + 30); ctx.rotate(-0.7 + sw2 * 1.9);            /* the pin arm swings down */
+    R(-3, -6, 7, 18, '#f2c09a');
+    R(-4, -34, 9, 30, '#c68a3f'); R(-6, -36, 13, 6, '#e8d9b0');                           /* THE PIN */
     ctx.restore();
-    R(x + 18, y + 62 - wLegA, 7, 6, '#5b3a12'); R(x + 32, y + 62 - wLegB, 7, 6, '#5b3a12');   /* shoes shuffle */
+    ctx.fillStyle = '#f2c09a';   /* head */
+    ctx.beginPath(); ctx.ellipse(cx, y + 16, 14, 13, 0, 0, Math.PI * 2); ctx.fill();
+    R(cx - 14, y + 2, 28, 8, '#6b4a2b');                                                  /* hair */
+    ctx.fillStyle = '#6b4a2b'; ctx.beginPath(); ctx.arc(cx, y + 1, 6, 0, Math.PI * 2); ctx.fill();   /* the bun */
+    R(cx - 9, y + 12, 6, 3, '#14181d'); R(cx + 3, y + 12, 6, 3, '#14181d');                /* brows */
+    R(cx - 7, y + 16, 3, 3, '#14181d'); R(cx + 4, y + 16, 3, 3, '#14181d');                /* eyes */
+    R(cx - 10, y + 19, 4, 3, '#e88a7a'); R(cx + 6, y + 19, 4, 3, '#e88a7a');               /* cheeks */
+    ctx.strokeStyle = '#a03a1e'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(cx, y + 27, 5, Math.PI * 1.15, Math.PI * 1.85); ctx.stroke(); ctx.lineWidth = 1;   /* the frown */
   } else if (e.kind === 'owl'){
-    ctx.save(); ctx.translate(0, Math.round(Math.sin(runTime * 10) * 1.5));   /* body rides the flap */
-    var flap = Math.sin(runTime * 10) * 7;
-    R(x - 4, y + 8 - flap, 20, 10, '#6b4a2b'); R(x + w - 16, y + 8 - flap, 20, 10, '#6b4a2b');  /* wings */
-    R(x + 16, y + 10, 42, 40, '#8a5f36'); R(x + 22, y + 26, 30, 20, '#e8d9b0');      /* body + belly */
-    R(x + 20, y + 2, 34, 22, '#a06a3a');
-    R(x + 24, y + 7, 10, 10, '#fff'); R(x + 41, y + 7, 10, 10, '#fff');
-    R(x + 27, y + 10, 5, 5, '#14181d'); R(x + 44, y + 10, 5, 5, '#14181d');
-    R(x + 34, y + 17, 7, 5, '#f5a301');                                             /* beak */
-    R(x + 26, y + 49, 6, 6, '#f5a301'); R(x + 43, y + 49, 6, 6, '#f5a301');          /* talons */
-    ctx.restore();
+    /* THE GIANT OWL (v32): wings wall to wall, a heart-shaped
+       face, and eyes that never blink */
+    var flap2 = Math.sin(runTime * 10) * 8;
+    ctx.fillStyle = '#6b4a2b';   /* the great wings */
+    ctx.beginPath(); ctx.moveTo(cx - 10, y + 20); ctx.lineTo(cx - 66, y - 2 - flap2); ctx.lineTo(cx - 58, y + 30); ctx.lineTo(cx - 40, y + 44); ctx.lineTo(cx - 12, y + 40); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(cx + 10, y + 20); ctx.lineTo(cx + 66, y - 2 - flap2); ctx.lineTo(cx + 58, y + 30); ctx.lineTo(cx + 40, y + 44); ctx.lineTo(cx + 12, y + 40); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#8a5f36';
+    ctx.beginPath(); ctx.moveTo(cx - 10, y + 24); ctx.lineTo(cx - 50, y + 8 - flap2 * 0.6); ctx.lineTo(cx - 42, y + 34); ctx.lineTo(cx - 12, y + 38); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(cx + 10, y + 24); ctx.lineTo(cx + 50, y + 8 - flap2 * 0.6); ctx.lineTo(cx + 42, y + 34); ctx.lineTo(cx + 12, y + 38); ctx.closePath(); ctx.fill();
+    R(cx - 18, feet - 8, 10, 7, '#f5a301'); R(cx + 8, feet - 8, 10, 7, '#f5a301');         /* talons */
+    ctx.fillStyle = '#54382a';   /* scalloped feather edge along the wings */
+    for (var sci = 0; sci < 4; sci++){ ctx.beginPath(); ctx.arc(cx - 52 + sci * 11, y + 34 - flap2 * 0.4, 6, 0, Math.PI); ctx.fill(); ctx.beginPath(); ctx.arc(cx + 52 - sci * 11, y + 34 - flap2 * 0.4, 6, 0, Math.PI); ctx.fill(); }
+    ctx.fillStyle = '#8a5f36';   /* body */
+    ctx.beginPath(); ctx.ellipse(cx, y + 40, 29, 29, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#e8d9b0';
+    ctx.beginPath(); ctx.ellipse(cx, y + 50, 18, 18, 0, 0, Math.PI * 2); ctx.fill();      /* belly */
+    ctx.fillStyle = '#a06a3a';
+    for (var spi = 0; spi < 5; spi++){ ctx.fillRect(cx - 12 + (spi % 3) * 10, y + 42 + Math.floor(spi / 3) * 9, 3, 3); }   /* belly speckle */
+    ctx.fillStyle = '#fffbe8';   /* the heart-shaped face */
+    ctx.beginPath(); ctx.ellipse(cx - 11, y + 15, 13, 12, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx + 11, y + 15, 13, 12, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(cx - 17, y + 22); ctx.lineTo(cx + 17, y + 22); ctx.lineTo(cx, y + 34); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#f5a301';   /* the great amber eyes */
+    ctx.beginPath(); ctx.arc(cx - 11, y + 15, 8, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx + 11, y + 15, 8, 0, Math.PI * 2); ctx.fill();
+    R(cx - 13, y + 13, 5, 5, '#14181d'); R(cx + 8, y + 13, 5, 5, '#14181d');
+    R(cx - 14, y + 11, 2, 2, '#fff'); R(cx + 7, y + 11, 2, 2, '#fff');
+    ctx.fillStyle = '#e07b1f';   /* beak */
+    ctx.beginPath(); ctx.moveTo(cx - 5, y + 21); ctx.lineTo(cx + 5, y + 21); ctx.lineTo(cx, y + 28); ctx.closePath(); ctx.fill();
   } else if (e.kind === 'spider'){
-    ctx.save(); ctx.translate(0, Math.round(Math.sin(runTime * 6) * 1));   /* body breathes */
-    ctx.strokeStyle = '#2b2135'; ctx.lineWidth = 4;
+    /* THE GIANT SPIDER (v32): eight red eyes in the dark of the
+       crypt, fangs dripping, legs everywhere */
+    ctx.save(); ctx.translate(0, Math.round(Math.sin(runTime * 6) * 1));
+    ctx.strokeStyle = '#241a30'; ctx.lineWidth = 5; ctx.lineCap = 'round';
     for (var li = 0; li < 4; li++){
-      var ly = y + 14 + li * 12, wig = Math.sin(runTime * 6 + li) * 3;
-      ctx.beginPath(); ctx.moveTo(x + 14, ly); ctx.lineTo(x - 8, ly - 6 + wig); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(x + w - 14, ly); ctx.lineTo(x + w + 8, ly - 6 - wig); ctx.stroke();
+      var ly2 = y + 16 + li * 13, wig2 = Math.sin(runTime * 6 + li * 1.3) * 3;
+      ctx.beginPath(); ctx.moveTo(cx - 16, ly2); ctx.lineTo(cx - 44, ly2 - 8 + wig2); ctx.lineTo(cx - 56, ly2 + 14 + wig2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx + 16, ly2); ctx.lineTo(cx + 44, ly2 - 8 - wig2); ctx.lineTo(cx + 56, ly2 + 14 - wig2); ctx.stroke();
     }
-    R(x + 14, y + 12, 50, 42, '#3a2d4d'); R(x + 24, y + 20, 30, 24, '#54406e');      /* body */
-    R(x + 28, y + 2, 22, 16, '#2b2135');                                             /* head */
-    R(x + 31, y + 7, 5, 5, '#ff2d2d'); R(x + 42, y + 7, 5, 5, '#ff2d2d');            /* eyes */
-    ctx.font = '15px serif'; ctx.textAlign = 'center'; ctx.fillText('🕸️', x + w / 2, y + 40);
+    ctx.lineCap = 'butt';
+    ctx.fillStyle = '#3a2d4d';   /* the abdomen, high behind */
+    ctx.beginPath(); ctx.ellipse(cx, y + 18, 30, 22, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#6a4d8f'; ctx.lineWidth = 3;   /* its chevrons */
+    for (var ci = 0; ci < 3; ci++){ ctx.beginPath(); ctx.moveTo(cx - 16 + ci * 2, y + 8 + ci * 8); ctx.lineTo(cx, y + 14 + ci * 8); ctx.lineTo(cx + 16 - ci * 2, y + 8 + ci * 8); ctx.stroke(); }
+    ctx.lineWidth = 1;
+    ctx.fillStyle = '#2b2135';   /* the head, low and front */
+    ctx.beginPath(); ctx.ellipse(cx, y + 44, 20, 15, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#ff2d2d';   /* EIGHT EYES */
+    var eyes = [[-12, 38], [-4, 36], [4, 36], [12, 38], [-8, 44], [8, 44], [-3, 46], [3, 46]];
+    for (var ei = 0; ei < eyes.length; ei++){ ctx.beginPath(); ctx.arc(cx + eyes[ei][0], y + eyes[ei][1], ei < 4 ? 3 : 2.2, 0, Math.PI * 2); ctx.fill(); }
+    ctx.fillStyle = '#fffbe8';   /* the fangs */
+    ctx.beginPath(); ctx.moveTo(cx - 12, y + 52); ctx.lineTo(cx - 5, y + 52); ctx.lineTo(cx - 9, y + 66); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(cx + 12, y + 52); ctx.lineTo(cx + 5, y + 52); ctx.lineTo(cx + 9, y + 66); ctx.closePath(); ctx.fill();
+    var drip = (runTime % 1.6) / 1.6;
+    ctx.strokeStyle = '#7fd67f'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(cx - 9, y + 66); ctx.lineTo(cx - 9, y + 66 + drip * 7); ctx.stroke(); ctx.lineWidth = 1;   /* venom */
+    ctx.strokeStyle = 'rgba(230,230,250,0.35)';
+    ctx.beginPath(); ctx.moveTo(cx - 58, y - 6); ctx.lineTo(cx - 30, y + 12); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx + 58, y - 6); ctx.lineTo(cx + 30, y + 12); ctx.stroke();
     ctx.restore();
   } else if (e.kind === 'farmer'){
-    R(x + 12, y + 26, 32, 30, '#2456c9'); R(x + 12, y + 26, 32, 8, '#f2c230');       /* overalls + shirt */
-    R(x + 17, y + 8, 22, 20, '#f2c09a');                                             /* head */
-    R(x + 12, y + 2, 32, 8, '#e8b93a'); R(x + 16, y + 8, 24, 4, '#c79a24');          /* straw hat */
-    R(x + 21, y + 16, 4, 4, '#14181d'); R(x + 31, y + 16, 4, 4, '#14181d');
-    var jab = e.state === 'jab' ? 12 : 0;
-    ctx.save(); ctx.translate(x + (f > 0 ? w - 2 : 2), y + 30); if (f < 0) ctx.scale(-1, 1); ctx.translate(jab, 0);
-    R(0, -14, 4, 30, '#8a5a2b');                                                     /* pitchfork handle */
-    R(-4, -20, 12, 4, '#cfd8dc'); R(-4, -20, 3, 9, '#cfd8dc'); R(1, -20, 3, 9, '#cfd8dc'); R(6, -20, 3, 9, '#cfd8dc');
+    /* THE ANGRY FARMERS (v32): front-on, overalls and straw hat,
+       pitchfork high — and the jab still jabs */
+    R(cx - 15, feet - 7 - wLegA, 10, 7, '#5b3a12'); R(cx + 6, feet - 7 - wLegB, 10, 7, '#5b3a12');   /* boots step */
+    R(cx - 16, y + 28, 32, feet - y - 34, '#2456c9');                                     /* overalls */
+    R(cx - 16, y + 28, 7, 20, '#2456c9'); R(cx + 9, y + 28, 7, 20, '#2456c9');             /* straps */
+    R(cx - 20, y + 26, 6, 14, '#c22e24'); R(cx + 14, y + 26, 6, 14, '#c22e24');           /* shirt sleeves */
+    R(cx - 6, y + 40, 12, 9, '#1d46a5');                                                  /* pocket */
+    R(cx - 13, y + 30, 4, 4, '#e8b93a'); R(cx + 10, y + 30, 4, 4, '#e8b93a');              /* buttons */
+    var jab2 = e.state === 'jab' ? 5 : 0;
+    ctx.save(); ctx.translate(cx + 24 + jab2, y + 34);                                    /* pitchfork arm */
+    R(-3, -8, 6, 16, '#f2c09a');
+    R(-2, -30, 4, 34, '#8a5a2b');
+    R(-9, -36, 18, 4, '#cfd8dc'); R(-9, -36, 4, 10, '#cfd8dc'); R(-2, -36, 4, 10, '#cfd8dc'); R(5, -36, 4, 10, '#cfd8dc');
     ctx.restore();
-    R(x + 18, y + 56 - wLegA, 7, 7, '#5b3a12'); R(x + 32, y + 56 - wLegB, 7, 7, '#5b3a12');   /* boots step */
+    R(cx - 24, y + 34, 6, 12, '#f2c09a');                                                 /* free fist */
+    ctx.fillStyle = '#f2c09a';   /* head */
+    ctx.beginPath(); ctx.ellipse(cx, y + 15, 13, 12, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#e8b93a';   /* the straw hat */
+    ctx.beginPath(); ctx.ellipse(cx, y + 5, 19, 5, 0, 0, Math.PI * 2); ctx.fill();
+    R(cx - 9, y - 5, 18, 10, '#e8b93a'); R(cx - 9, y + 2, 18, 3, '#c79a24');
+    R(cx - 9, y + 11, 7, 3, '#14181d'); R(cx + 2, y + 11, 7, 3, '#14181d');               /* brows, slanted mad */
+    R(cx - 7, y + 15, 3, 3, '#14181d'); R(cx + 4, y + 15, 3, 3, '#14181d');
+    R(cx - 11, y + 18, 4, 3, '#e88a7a'); R(cx + 7, y + 18, 4, 3, '#e88a7a');
+    ctx.strokeStyle = '#a03a1e'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(cx, y + 26, 5, Math.PI * 1.15, Math.PI * 1.85); ctx.stroke(); ctx.lineWidth = 1;
   }
   ctx.globalAlpha = 1;
 }
 /* ---------- Super Corn Man (Level 9 boss) ---------- */
 function drawBoss(b){
-  var x = b.x, y = b.y;
-  /* he stomps: the same displacement-measured walk phase as the
-     big enemies, spent as a bob under the whole body */
+  var x = b.x, y = b.y, cx = x + b.w / 2, feet = y + b.h;
   if (b._lx === undefined){ b._lx = b.x; b._ly = b.y; b.walkT = 0; }
   b.walkT = (b.walkT || 0) + (Math.abs(b.x - b._lx) + Math.abs(b.y - b._ly)) * 0.09;
   b._lx = b.x; b._ly = b.y;
   ctx.save(); ctx.translate(0, Math.round(Math.sin((b.walkT || 0) * 6) * 1.5));
   if (b.hitT > 0.12) ctx.globalAlpha = 0.6;
   if (b.dashT > 0 && Math.floor(runTime * 10) % 2) R(x - 5, y - 5, b.w + 10, b.h + 10, '#ffd91a44');
-  /* golden cape */
-  var capeFl = 34 + Math.round(Math.sin(runTime * 6) * 3);
-  R(x - 4, y + 18, 12, capeFl, '#e0aa00'); R(x + b.w - 8, y + 18, 12, capeFl, '#e0aa00');   /* cape, fluttering */
-  /* bigger corn-cob body */
-  R(x + 8, y + 26, 40, 26, '#ffd91a'); R(x + 8, y + 48, 40, 14, '#2456c9');
-  R(x + 18, y + 26, 3, 36, '#e0aa00'); R(x + 28, y + 26, 3, 36, '#e0aa00'); R(x + 38, y + 26, 3, 36, '#e0aa00');
-  R(x + 10, y + 60, 9, 7, '#5b3a12'); R(x + 37, y + 60, 9, 7, '#5b3a12');
-  /* head — a huge ear of corn with angry eyes */
-  R(x + 10, y + 0, 36, 28, '#ffd91a');
-  R(x + 20, y + 0, 3, 28, '#e0aa00'); R(x + 33, y + 0, 3, 28, '#e0aa00'); R(x + 10, y + 9, 36, 3, '#e0aa00'); R(x + 10, y + 19, 36, 3, '#e0aa00');
-  R(x + 6, y + 20, 7, 12, '#3f8f22'); R(x + 43, y + 20, 7, 12, '#3f8f22'); R(x + 24, y - 5, 8, 7, '#58b02c');
-  R(x + 15, y + 10, 8, 5, '#14181d'); R(x + 33, y + 10, 8, 5, '#14181d');           /* angry brows */
-  if ((runTime % 2.9) > 2.72){ R(x + 17, y + 15, 4, 1, '#ff2d2d'); R(x + 35, y + 15, 4, 1, '#ff2d2d'); }   /* a blink */
-  else { R(x + 17, y + 13, 4, 4, '#ff2d2d'); R(x + 35, y + 13, 4, 4, '#ff2d2d'); }           /* glowing eyes */
-  R(x + 22, y + 23, 12, 3, '#14181d');
-  ctx.font = '17px serif'; ctx.textAlign = 'center';
-  ctx.fillText('👑', x + b.w / 2, y - 8 + Math.sin(runTime * 4) * 2);
+  ctx.globalAlpha *= 0.20; ctx.fillStyle = '#000';   /* his shadow */
+  ctx.beginPath(); ctx.ellipse(cx, feet + 3, b.w * 0.75, 6, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.globalAlpha = b.hitT > 0.12 ? 0.6 : 1;
+  var flut = Math.sin(runTime * 6) * 3;
+  ctx.fillStyle = '#3f8f22';   /* the husk cape, flowing both sides */
+  ctx.beginPath(); ctx.moveTo(cx - 12, y + 24); ctx.lineTo(cx - 40, y + 44 + flut); ctx.lineTo(cx - 30, feet - 4); ctx.lineTo(cx - 12, feet - 10); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(cx + 12, y + 24); ctx.lineTo(cx + 40, y + 44 - flut); ctx.lineTo(cx + 30, feet - 4); ctx.lineTo(cx + 12, feet - 10); ctx.closePath(); ctx.fill();
+  function kernels(rx, ry, rw, rh, base, line){   /* a panel of corn-kernel armor */
+    R(rx, ry, rw, rh, base);
+    ctx.fillStyle = line;
+    for (var kx = rx + 5; kx < rx + rw - 2; kx += 7) ctx.fillRect(kx, ry + 2, 1.6, rh - 4);
+    for (var ky = ry + 5; ky < ry + rh - 2; ky += 7) ctx.fillRect(rx + 2, ky, rw - 4, 1.6);
+  }
+  kernels(cx - 13, feet - 26, 10, 20, '#ffd91a', '#e0aa00'); kernels(cx + 3, feet - 26, 10, 20, '#ffd91a', '#e0aa00');   /* legs */
+  R(cx - 15, feet - 7, 13, 7, '#3f8f22'); R(cx + 2, feet - 7, 13, 7, '#3f8f22');          /* boots */
+  kernels(cx - 30, y + 30, 11, 26, '#ffd91a', '#e0aa00'); kernels(cx + 19, y + 30, 11, 26, '#ffd91a', '#e0aa00');   /* arms */
+  R(cx - 31, y + 54, 13, 11, '#ffd91a'); R(cx + 18, y + 54, 13, 11, '#ffd91a');           /* fists */
+  kernels(cx - 19, y + 24, 38, 34, '#ffd91a', '#e0aa00');                                /* the great torso */
+  R(cx - 19, y + 46, 38, 4, '#c79a24');                                                  /* belt shade */
+  ctx.save(); ctx.translate(cx - 24, y + 22); ctx.rotate(-0.5); kernels(-5, -14, 10, 20, '#ffd91a', '#e0aa00'); ctx.restore();   /* shoulder cobs */
+  ctx.save(); ctx.translate(cx + 24, y + 22); ctx.rotate(0.5); kernels(-5, -14, 10, 20, '#ffd91a', '#e0aa00'); ctx.restore();
+  kernels(cx - 14, y - 6, 28, 30, '#ffd91a', '#e0aa00');                                 /* the tall cob head */
+  ctx.fillStyle = '#ffd91a';
+  ctx.beginPath(); ctx.ellipse(cx, y - 6, 14, 5, 0, 0, Math.PI * 2); ctx.fill();
+  R(cx - 12, y + 6, 9, 4, '#14181d'); R(cx + 3, y + 6, 9, 4, '#14181d');                 /* brows */
+  if ((runTime % 2.9) > 2.72){ R(cx - 10, y + 12, 5, 1, '#ff2d2d'); R(cx + 5, y + 12, 5, 1, '#ff2d2d'); }
+  else { R(cx - 10, y + 10, 5, 5, '#ff2d2d'); R(cx + 5, y + 10, 5, 5, '#ff2d2d'); }        /* glowing eyes */
+  R(cx - 6, y + 20, 12, 3, '#14181d');                                                   /* the stern mouth */
+  ctx.fillStyle = '#e0aa00';   /* the crown, DRAWN (no emoji) */
+  ctx.beginPath(); ctx.moveTo(cx - 11, y - 12); ctx.lineTo(cx - 11, y - 20); ctx.lineTo(cx - 5, y - 15); ctx.lineTo(cx, y - 22); ctx.lineTo(cx + 5, y - 15); ctx.lineTo(cx + 11, y - 20); ctx.lineTo(cx + 11, y - 12); ctx.closePath(); ctx.fill();
+  R(cx - 2, y - 17, 4, 4, '#ff2d2d');
   ctx.globalAlpha = 1;
   ctx.restore();
 }
