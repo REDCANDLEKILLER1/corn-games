@@ -4938,28 +4938,42 @@ function rrPath(x, y, w, h, r){
   ctx.lineTo(x, y + r); ctx.arc(x + r, y + r, r, Math.PI, Math.PI * 1.5);
   ctx.closePath();
 }
+function texHash(x, y){ var h = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return h - Math.floor(h); }
 function paintHouse(bx, by, bw, bh, doorColor, sign){
-  /* v10 — drawn FROM Michael's Minish Cap reference (Link's House):
-     the house is a golden HAYSTACK, not a triangle on a box. One big
-     rounded loaf of thatch, wider than the walls, scalloped in tufted
-     rows under a wavy fringed hem; eyebrow dormers on its face; a
-     short rounded-stone wall peeking out below; a hooded porch over
-     a round-arched door; the chimney poking out of the thatch at the
-     top right. Almost nothing here is a straight line. */
+  /* v20 — the texture pass (Michael, 2026-11-18). The v10 haystack
+     silhouette stays — one big rounded loaf of thatch over a short
+     stone wall, hooded porch, round-arched door — but every
+     material is now DRAWN in small units, the Zelda way: stone is
+     individual stones over mortar, each with a lit top edge and a
+     shadowed bottom; the thatch is tuft rows with shade pooled
+     under every row, straw strokes running down the slope, and a
+     quiet ordered speckle for grain; the door is planks with the
+     grain running ALONG the wood, iron bands and studs. One light,
+     from above. Every choice runs through texHash, so the texture
+     is the same on every frame — detail, never flicker. */
   var cx = bx + bw / 2;
   var seed = Math.abs(bx * 3 + by * 7) % 11 - 5;   /* each house leans its own way — the same way every frame */
   var peakX = cx + seed;
   var topY = by - 14;
   var eaveY = by + bh * 0.66;
   var baseY = by + bh;
+  function stone(x, y, w, h, tones){
+    ctx.fillStyle = tones[Math.floor(texHash(x, y) * tones.length) % tones.length];
+    rrPath(x, y, w, h, Math.min(5, h / 2)); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.20)'; rrPath(x + 2, y + 1.5, Math.max(2, w - 4), 3, 2); ctx.fill();
+    ctx.fillStyle = 'rgba(60,50,35,0.25)'; rrPath(x + 2, y + h - 4, Math.max(2, w - 4), 2.5, 2); ctx.fill();
+  }
   /* soft oval shadow */
   ctx.fillStyle = 'rgba(0,0,0,0.16)';
   ctx.beginPath(); ctx.ellipse(cx, baseY + 3, bw * 0.58, 8, 0, 0, Math.PI * 2); ctx.fill();
-  /* the stone chimney first, so the thatch swallows its base */
+  /* the stone chimney first, so the thatch swallows its base —
+     real little stones now, not a slab with dots */
   var chX = bx + bw - 46, chY = topY - 10;
-  ctx.fillStyle = '#cfd4d1'; rrPath(chX, chY, 24, 48, 5); ctx.fill();
-  ctx.fillStyle = '#a9a49a'; rrPath(chX - 3, chY - 5, 30, 9, 4); ctx.fill();
-  ctx.fillStyle = '#6f6a5e'; R(chX + 5, chY, 3, 3); R(chX + 12, chY, 3, 3); R(chX + 19, chY, 3, 3);
+  ctx.fillStyle = '#8f887a'; rrPath(chX - 2, chY + 3, 28, 45, 5); ctx.fill();
+  for (var cyy = 0; cyy < 3; cyy++) for (var cxx = 0; cxx < 2; cxx++)
+    stone(chX + cxx * 12 + (cyy % 2) * 3 - 1, chY + 5 + cyy * 13, 11, 11, ['#cfd4d1', '#c3c9c5', '#d9dcd8']);
+  ctx.fillStyle = '#6f6a5e'; rrPath(chX - 4, chY - 5, 32, 10, 4); ctx.fill();
+  R(chX - 4, chY - 5, 32, 3, 'rgba(255,255,255,0.25)');
   /* smoke — two puffs drifting up and growing soft */
   ctx.fillStyle = '#ffffff';
   for (var sp = 0; sp < 2; sp++){
@@ -4968,13 +4982,42 @@ function paintHouse(bx, by, bw, bh, doorColor, sign){
     ctx.beginPath(); ctx.arc(chX + 12 + Math.sin((runTime + sp * 2) * 1.3) * 3, chY - 10 - sph, 4 + sph * 0.28, 0, Math.PI * 2); ctx.fill();
   }
   ctx.globalAlpha = 1;
-  /* the little stone wall under the thatch — rounded stones, not a slab */
-  ctx.fillStyle = '#ddd8ce'; rrPath(bx + 8, eaveY - 8, bw - 16, baseY - eaveY + 6, 7); ctx.fill();
-  ctx.fillStyle = '#c9c2b2';
-  for (var sx = bx + 20; sx < bx + bw - 20; sx += 26){
-    ctx.beginPath(); ctx.ellipse(sx + ((sx * 7) % 5), baseY - 5, 10, 5, 0, 0, Math.PI * 2); ctx.fill();
-  }
-  /* THE THATCH — one big rounded loaf */
+  /* the stone wall — courses of individual stones over dark mortar */
+  ctx.fillStyle = '#8f887a'; rrPath(bx + 8, eaveY - 8, bw - 16, baseY - eaveY + 6, 7); ctx.fill();
+  ctx.save(); rrPath(bx + 8, eaveY - 8, bw - 16, baseY - eaveY + 6, 7); ctx.clip();
+  var wallTones = ['#ddd8ce', '#d5cfc1', '#e4dfd3', '#cfc8b8'];
+  for (var wy = eaveY - 6, wr = 0; wy < baseY + 2; wy += 13, wr++)
+    for (var wx = bx + 10 - (wr % 2) * 13; wx < bx + bw - 12; wx += 26)
+      stone(wx, wy, 23, 10.5, wallTones);
+  /* shade pooled where the thatch overhangs the wall */
+  var gsh = ctx.createLinearGradient(0, eaveY - 8, 0, eaveY + 12);
+  gsh.addColorStop(0, 'rgba(90,60,10,0.30)'); gsh.addColorStop(1, 'rgba(90,60,10,0)');
+  ctx.fillStyle = gsh; ctx.fillRect(bx + 8, eaveY - 8, bw - 16, 20);
+  ctx.restore();
+  /* one round lit window in the wall, on the quiet side of the porch */
+  var winX = cx + (seed >= 0 ? -1 : 1) * bw * 0.31, winY = (eaveY + baseY) / 2 + 3;
+  ctx.fillStyle = 'rgba(60,50,35,0.30)';
+  ctx.beginPath(); ctx.ellipse(winX, winY + 8, 10, 3.5, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#5d3a17';
+  ctx.beginPath(); ctx.arc(winX, winY, 9.5, 0, Math.PI * 2); ctx.fill();
+  var wg = ctx.createRadialGradient(winX - 2, winY - 2, 1, winX, winY, 8);
+  wg.addColorStop(0, '#ffe9a8'); wg.addColorStop(1, '#e8a33d');
+  ctx.fillStyle = wg;
+  ctx.beginPath(); ctx.arc(winX, winY, 7, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#5d3a17'; ctx.lineWidth = 1.6;
+  ctx.beginPath(); ctx.moveTo(winX - 7, winY); ctx.lineTo(winX + 7, winY); ctx.moveTo(winX, winY - 7); ctx.lineTo(winX, winY + 7); ctx.stroke();
+  /* the foundation — bigger, darker stones where house meets earth */
+  for (var fxx = bx + 12; fxx < bx + bw - 16; fxx += 31)
+    stone(fxx, baseY - 1, 28, 9, ['#a49c8c', '#98917f', '#aca494']);
+  /* grass tufts nosing up at the base */
+  ctx.strokeStyle = '#4e8f2a'; ctx.lineWidth = 1.6;
+  [bx + 6, bx + bw - 8, bx + bw * 0.22, bx + bw * 0.78].forEach(function(gx){
+    for (var gt = 0; gt < 3; gt++){
+      ctx.beginPath(); ctx.moveTo(gx + gt * 3 - 3, baseY + 6);
+      ctx.lineTo(gx + gt * 3 - 4 + texHash(gx, gt) * 3, baseY - 1 - texHash(gt, gx) * 3); ctx.stroke();
+    }
+  });
+  /* THE THATCH — one big rounded loaf, textured */
   function roofPath(){
     ctx.beginPath();
     ctx.moveTo(bx - 14, eaveY);
@@ -4988,22 +5031,32 @@ function paintHouse(bx, by, bw, bh, doorColor, sign){
   g.addColorStop(0, '#f7cd4a'); g.addColorStop(0.55, '#eeb62e'); g.addColorStop(1, '#dd9a1a');
   roofPath(); ctx.fillStyle = g; ctx.fill();
   ctx.save(); roofPath(); ctx.clip();
-  /* tufted rows — overlapping scallop arcs marching down the loaf */
+  /* tufted rows — lit tufts, and the shadow each row casts on the next */
   var rowsN = 5;
   for (var r2 = 0; r2 < rowsN; r2++){
     var ry = topY + 12 + r2 * ((eaveY - topY - 14) / rowsN);
-    ctx.fillStyle = r2 % 2 ? 'rgba(255,232,150,0.55)' : 'rgba(198,128,20,0.35)';
     for (var tx = bx - 8 + (r2 % 2) * 11; tx < bx + bw + 10; tx += 22){
+      ctx.fillStyle = r2 % 2 ? 'rgba(255,232,150,0.55)' : 'rgba(198,128,20,0.35)';
       ctx.beginPath(); ctx.arc(tx, ry, 11, 0, Math.PI); ctx.fill();
+      ctx.strokeStyle = 'rgba(146,90,8,0.45)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(tx, ry + 2.5, 11, Math.PI * 0.15, Math.PI * 0.85); ctx.stroke();
     }
   }
-  /* loose straw strokes */
-  ctx.strokeStyle = 'rgba(160,98,10,0.35)'; ctx.lineWidth = 2;
-  for (var st = 0; st < 14; st++){
-    var stx = bx + 8 + ((st * 53 + Math.abs(seed) * 7) % Math.max(12, bw - 16));
-    var sty = topY + 16 + ((st * 37) % Math.max(10, eaveY - topY - 30));
-    ctx.beginPath(); ctx.moveTo(stx, sty); ctx.lineTo(stx + 2, sty + 9); ctx.stroke();
+  /* straw strokes running down the slope, in two tones */
+  ctx.lineWidth = 1.6;
+  for (var sy2 = topY + 10; sy2 < eaveY - 4; sy2 += 11){
+    for (var sx2 = bx - 6; sx2 < bx + bw + 6; sx2 += 13){
+      var hh = texHash(sx2, sy2); if (hh < 0.35) continue;
+      var lean = sx2 < peakX ? -1.5 : 1.5;
+      ctx.strokeStyle = hh > 0.75 ? 'rgba(255,240,170,0.50)' : 'rgba(160,98,10,0.40)';
+      ctx.beginPath(); ctx.moveTo(sx2 + hh * 6, sy2); ctx.lineTo(sx2 + hh * 6 + lean, sy2 + 7 + hh * 3); ctx.stroke();
+    }
   }
+  /* ordered speckle — Zelda's checker grain, kept quiet, denser low */
+  ctx.fillStyle = 'rgba(146,90,8,0.20)';
+  for (var dy2 = topY + 14; dy2 < eaveY; dy2 += 7)
+    for (var dx2 = bx - 4; dx2 < bx + bw + 4; dx2 += 7)
+      if ((((dx2 + dy2) / 7) | 0) % 2 === 0 && texHash(dx2, dy2) > 0.45) ctx.fillRect(dx2, dy2, 2.4, 2.4);
   /* warm shade pooling at the hem */
   var g2 = ctx.createLinearGradient(0, eaveY - 26, 0, eaveY + 4);
   g2.addColorStop(0, 'rgba(150,84,0,0)'); g2.addColorStop(1, 'rgba(150,84,0,0.35)');
@@ -5017,43 +5070,78 @@ function paintHouse(bx, by, bw, bh, doorColor, sign){
     var fl2 = 4 + ((fx * 13) % 4);
     ctx.beginPath(); ctx.moveTo(fx, eaveY + 3); ctx.lineTo(fx + 1, eaveY + 3 + fl2); ctx.stroke();
   }
-  /* eyebrow dormers — little thatch bumps with tiny dark windows */
+  /* eyebrow dormers — thatch bumps, straw strokes, a lit window */
   [-0.27, 0.25].forEach(function(off){
     var ddx = cx + bw * off, ddy = by + bh * 0.33;
     ctx.fillStyle = '#f2c134';
     ctx.beginPath(); ctx.arc(ddx, ddy + 6, 15, Math.PI, 0); ctx.fill();
     ctx.strokeStyle = 'rgba(160,98,10,0.55)'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(ddx, ddy + 6, 15, Math.PI * 1.05, Math.PI * 1.95); ctx.stroke();
+    ctx.strokeStyle = 'rgba(160,98,10,0.40)';
+    for (var ds = -1; ds <= 1; ds++){
+      ctx.beginPath(); ctx.moveTo(ddx + ds * 6, ddy - 6); ctx.lineTo(ddx + ds * 6 + 1, ddy - 1); ctx.stroke();
+    }
     ctx.fillStyle = '#5d3a17'; rrPath(ddx - 5, ddy - 1, 10, 8, 3); ctx.fill();
+    R(ddx - 1.5, ddy + 1.5, 3, 4, '#ffd76a');
   });
-  /* the porch: two posts and a little thatch hood over the door */
+  /* the porch: two posts with grain, and a little thatch hood */
   var dx = cx;
-  ctx.fillStyle = '#6d4423'; R(dx - 25, eaveY + 2, 5, baseY - eaveY - 4); R(dx + 20, eaveY + 2, 5, baseY - eaveY - 4);
+  R(dx - 25, eaveY + 2, 5, baseY - eaveY - 4, '#6d4423'); R(dx + 20, eaveY + 2, 5, baseY - eaveY - 4, '#6d4423');
+  ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(dx - 22.5, eaveY + 5); ctx.lineTo(dx - 22.5, baseY - 8); ctx.moveTo(dx + 22.5, eaveY + 5); ctx.lineTo(dx + 22.5, baseY - 8); ctx.stroke();
   /* the round-arched door, tucked up under the thatch */
   ctx.fillStyle = '#4c2c08';
   ctx.beginPath();
   ctx.moveTo(dx - 16, baseY - 2); ctx.lineTo(dx - 16, eaveY + 9);
   ctx.arc(dx, eaveY + 9, 16, Math.PI, 0);
   ctx.lineTo(dx + 16, baseY - 2); ctx.closePath(); ctx.fill();
-  ctx.fillStyle = doorColor;
-  ctx.beginPath();
-  ctx.moveTo(dx - 12, baseY - 2); ctx.lineTo(dx - 12, eaveY + 12);
-  ctx.arc(dx, eaveY + 12, 12, Math.PI, 0);
-  ctx.lineTo(dx + 12, baseY - 2); ctx.closePath(); ctx.fill();
-  /* its tiny oval window and brass knob */
-  ctx.fillStyle = '#2c1c08';
+  function doorPath(){
+    ctx.beginPath();
+    ctx.moveTo(dx - 12, baseY - 2); ctx.lineTo(dx - 12, eaveY + 12);
+    ctx.arc(dx, eaveY + 12, 12, Math.PI, 0);
+    ctx.lineTo(dx + 12, baseY - 2); ctx.closePath();
+  }
+  doorPath(); ctx.fillStyle = doorColor; ctx.fill();
+  ctx.save(); doorPath(); ctx.clip();
+  /* planks: seams, and grain running ALONG the wood */
+  ctx.strokeStyle = 'rgba(0,0,0,0.28)'; ctx.lineWidth = 1.6;
+  ctx.beginPath(); ctx.moveTo(dx - 4, eaveY + 2); ctx.lineTo(dx - 4, baseY - 2); ctx.moveTo(dx + 4, eaveY + 2); ctx.lineTo(dx + 4, baseY - 2); ctx.stroke();
+  ctx.strokeStyle = 'rgba(0,0,0,0.15)'; ctx.lineWidth = 1;
+  for (var pk = -8; pk <= 8; pk += 4){
+    var gl2 = 5 + texHash(dx + pk, eaveY) * 8;
+    ctx.beginPath(); ctx.moveTo(dx + pk + 1, eaveY + 14 + texHash(pk, dx) * 10); ctx.lineTo(dx + pk + 1, eaveY + 14 + texHash(pk, dx) * 10 + gl2); ctx.stroke();
+  }
+  /* iron bands with studs */
+  R(dx - 12, eaveY + 17, 24, 4, '#3a3f44'); R(dx - 12, baseY - 15, 24, 4, '#3a3f44');
+  R(dx - 12, eaveY + 17, 24, 1.2, 'rgba(255,255,255,0.18)'); R(dx - 12, baseY - 15, 24, 1.2, 'rgba(255,255,255,0.18)');
+  [-8, 0, 8].forEach(function(so){ R(dx + so - 1, eaveY + 18.5, 2, 2, '#20242a'); R(dx + so - 1, baseY - 13.5, 2, 2, '#20242a'); });
+  ctx.restore();
+  doorPath(); ctx.strokeStyle = 'rgba(0,0,0,0.35)'; ctx.lineWidth = 2; ctx.stroke();
+  /* its tiny oval window — lit warm now — and brass knob */
+  var og = ctx.createRadialGradient(dx - 1, eaveY + 11, 0.5, dx, eaveY + 13, 6);
+  og.addColorStop(0, '#ffe9a8'); og.addColorStop(1, '#c07f10');
+  ctx.fillStyle = og;
   ctx.beginPath(); ctx.ellipse(dx, eaveY + 13, 4.5, 6, 0, 0, Math.PI * 2); ctx.fill();
   R(dx + 6, (eaveY + baseY) / 2 + 10, 4, 4, '#ffd700');
-  /* the hood, drawn last so it caps the door's arch */
+  /* the hood, drawn last so it caps the door's arch — tufted like the roof */
   ctx.fillStyle = '#e9b32c';
   ctx.beginPath();
   ctx.moveTo(dx - 31, eaveY + 5);
   ctx.quadraticCurveTo(dx, eaveY - 21, dx + 31, eaveY + 5);
   ctx.quadraticCurveTo(dx, eaveY + 11, dx - 31, eaveY + 5);
   ctx.closePath(); ctx.fill();
-  ctx.strokeStyle = '#b57a10'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.strokeStyle = 'rgba(146,90,8,0.5)'; ctx.lineWidth = 1.6;
+  for (var hx = dx - 22; hx <= dx + 22; hx += 11){
+    ctx.beginPath(); ctx.arc(hx, eaveY - 1, 6, Math.PI * 0.1, Math.PI * 0.9); ctx.stroke();
+  }
+  ctx.strokeStyle = '#b57a10'; ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(dx - 31, eaveY + 5);
+  ctx.quadraticCurveTo(dx, eaveY - 21, dx + 31, eaveY + 5);
+  ctx.quadraticCurveTo(dx, eaveY + 11, dx - 31, eaveY + 5);
+  ctx.closePath(); ctx.stroke();
   /* a stone step to land on */
-  ctx.fillStyle = '#b9b2a4'; rrPath(dx - 24, baseY - 3, 48, 8, 3); ctx.fill();
+  stone(dx - 24, baseY - 3, 48, 8, ['#b9b2a4', '#aaa294']);
   /* no painted name signs on the houses (Michael, 2026-11-18:
      "no flying texts") — a house says its name in the banner when
      you walk in, and its folks introduce themselves in the chat
@@ -5177,6 +5265,19 @@ function drawHouseInterior(){
   R(0, H - 48, W, 48, '#8d8577'); R(0, H - 49, W, 5, '#5d3a17');
   R(0, 0, 48, H, '#8d8577'); R(44, 0, 5, H, '#5d3a17');
   R(W - 48, 0, 48, H, '#8d8577'); R(W - 49, 0, 5, H, '#5d3a17');
+  /* v20 texture, indoors too: mortar courses across the stone
+     walls, and grain running along the floor planks (kept off
+     the rug) — the same Zelda lesson, one light from above */
+  ctx.fillStyle = 'rgba(60,50,35,0.20)';
+  for (var myy = 15; myy < 48; myy += 15){ ctx.fillRect(0, myy, W, 1.6); ctx.fillRect(0, H - 48 + myy, W, 1.6); }
+  for (var mxx = 15; mxx < 48; mxx += 15){ ctx.fillRect(mxx, 0, 1.6, H); ctx.fillRect(W - 48 + mxx, 0, 1.6, H); }
+  ctx.fillStyle = 'rgba(90,55,15,0.13)';
+  for (var gy2 = 60; gy2 < H - 56; gy2 += 24)
+    for (var gx2 = 56; gx2 < W - 70; gx2 += 72){
+      if (texHash(gx2, gy2) < 0.4) continue;
+      if (gx2 > W / 2 - 140 && gx2 < W / 2 + 130 && gy2 > H / 2 - 94 && gy2 < H / 2 + 86) continue;   /* not on the rug */
+      ctx.fillRect(gx2 + texHash(gy2, gx2) * 30, gy2 + 8, 16 + texHash(gx2 * 2, gy2) * 14, 1.6);
+    }
   ctx.strokeStyle = 'rgba(0,0,0,0.18)'; ctx.lineWidth = 1;
   for (px = 30; px < W; px += 46){ ctx.beginPath(); ctx.moveTo(px, 6); ctx.lineTo(px, 42); ctx.stroke(); }
   /* what hangs on the north wall says whose house this is */
