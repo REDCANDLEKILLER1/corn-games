@@ -1922,6 +1922,7 @@ function sfx(name){
   else if (name === 'caw'){ beep(660, .15, 'sawtooth', .06, 260); }
   else if (name === 'rev'){ beep(85, .42, 'sawtooth', .08, 210); }
   else if (name === 'creak'){ doorCreak(); }
+  else if (name === 'slam'){ beep(72, .16, 'sawtooth', .15, 38); setTimeout(function(){ beep(120, .06, 'square', .07, 60); }, 55); }
 }
 /* A small wooden door creak, synthesized (no file): a low sawtooth
    groan whose pitch sags, catches and drops away while the volume
@@ -5866,7 +5867,7 @@ function loadRoom(n, spawnSide){
   }
   var nextDir = dunNeighborDir(idx, n, 1);
   if (n === 1){
-    if (nextDir) obstacles.push(doorObstacle(nextDir, 'shutter', { shutter: true }));
+    if (nextDir){ obstacles.push(doorObstacle(nextDir, 'shutter', { shutter: true })); sfx('slam'); }
     spawnFieldEnemies([[LEVELS[idx].enemies[0][0], 2], [LEVELS[idx].enemies[1] ? LEVELS[idx].enemies[1][0] : 'pig', 1]], R, null);
     /* Short form + no stacking: this is the second room of Level 1,
        the one Ryan hit right behind the barn intro — a second long
@@ -5875,9 +5876,10 @@ function loadRoom(n, spawnSide){
   } else if (n === keyRoom){
     pickups.push({ x: W/2 - 11, y: 120, w: 22, h: 22, kind:'key', t: 0 });
     spawnFieldEnemies([['crow', 2], ['mole', 1]], R, null);
-    if (dunLit) showDungeonHint('🗝️ THE RUSTY KEY IS UP BY THE FAR WALL — TAKE IT!', 1600);
-    else if (state.hasLantern) showDungeonHint('🌑 PITCH BLACK! LANTERN (L) LIGHTS IT — KEY 🗝️ AHEAD!', 1600);
-    else showDungeonHint('🌑 PITCH BLACK! THE KEY 🗝️ GLEAMS AHEAD — TAKE IT!', 1600);
+    if (nextDir){ obstacles.push(doorObstacle(nextDir, 'shutter', { shutter: true })); sfx('slam'); }
+    if (dunLit) showDungeonHint('🚪 SLAM! CLEAR EVERY PEST TO OPEN THE DOOR! 🗝️ THE RUSTY KEY IS UP BY THE FAR WALL!', 1700);
+    else if (state.hasLantern) showDungeonHint('🚪 SLAM! CLEAR EVERY PEST TO OPEN THE DOOR! 🌑 PITCH BLACK — LANTERN (L) LIGHTS IT!', 1700);
+    else showDungeonHint('🚪 SLAM! CLEAR EVERY PEST TO OPEN THE DOOR! 🌑 THE KEY 🗝️ GLEAMS IN THE DARK AHEAD!', 1700);
   } else if (n === padlockRoom){
     if (nextDir) obstacles.push(doorObstacle(nextDir, 'lockeddoor', { locked: true }));
     var crate = { x: W/2 - 120, y: 300, w: 40, h: 40, type:'crate', pushable: true };
@@ -5971,6 +5973,12 @@ function loadRoom(n, spawnSide){
     var eA = LEVELS[idx].enemies[n % LEVELS[idx].enemies.length][0];
     var eB = LEVELS[idx].enemies[(n + 1) % LEVELS[idx].enemies.length][0];
     spawnFieldEnemies([[eA, 2], [eB, n % 3 === 0 ? 2 : 1]], R, null);
+    /* v34: THE SLAM (Michael, Zelda's rule) — the way forward
+       seals until the room is clear; openShutters() (fired
+       when the last pest falls) lets him through. The way
+       back never seals: nobody gets trapped in a room. */
+    if (nextDir){ obstacles.push(doorObstacle(nextDir, 'shutter', { shutter: true })); sfx('slam'); }
+    showDungeonHint('🚪 THE DOOR SLAMS SHUT! CLEAR EVERY PEST TO OPEN IT!', 1400);
   }
   updateHUD();
   dlog('Barn ' + (idx + 1) + ' room ' + (n + 1) + (dunDark ? ' (dark)' : ''));
