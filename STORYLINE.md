@@ -84,6 +84,11 @@ level, forever. Everything else on the farm is tougher than a chicken.
 - **Every talking farmer on the farm is a drawn character now** — the emoji stand-ins are gone.
 - **The Level 4 hut is a full-size cottage** on its pond island. No more person-sized buildings.
 
+## The houses, upgraded + the Hayloft Inn (v9, Michael 2026-11-18)
+
+- Michael sent Minish Cap houses as the bar — **the houses were rebuilt to it**: a great scalloped thatch roof over plaster and stone, chimney smoke, shuttered windows, an arched door with a hanging sign; inside, thick stone walls, a lit fireplace, a bookcase of colorful books, real beds, and a keepsake on the north wall (Pearl's picture, Hank's shield and crossed tools, Fern's wreath).
+- **The Hayloft Inn** is the village's fourth house. Innkeeper Ruth keeps it. Step up to a bed and Corn Man sleeps: good night, then morning — **every heart full, and the farm's day counter turns**. Hurt all you like out there; the inn makes it right.
+
 ## The dialogue script (as shipped in the game)
 Zelda rules: short lines, plain words, one idea per page, tap NEXT to read
 on. The full text lives in the game file as `INTRO_TEXT` — opening, one

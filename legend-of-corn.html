@@ -2075,6 +2075,7 @@ var state = {
   visitedRooms:{},           // Level Map progress, per hero: { levelIndex: [one boolean per room in that barn — 15 to 25 rooms, shaped like the level's boss] } — a room flips true the moment Corn Man steps into it, and its screen on the Level Map turns yellow (map only)
   hasLadder:false,           // the small ladder hidden under a hay bale — PERMANENT once picked up: carrying it makes ANY water walkable (touch water and Corn Man climbs over it). It is NEVER used up — not by crossing water, not by falling, not by restarting the quest — and it is saved with the hero (the Great Barn moat and every future water hazard)
   introsSeen: {},            // level-intro dialogues this hero has already watched (saved per hero)
+  day: 1,                    // the farm's day count — a night at the Hayloft Inn turns it
   visitedFields: {},         // Farm Map fog of war, per hero: { 'world:owIndex': true } — a field is charted the moment Corn Man stands on it (saved per hero)
   equipMelee: 'wrench',      // the Pack (pause): what the red button does — 'wrench' (on) or 'fist' (taken off)
   equipThrow: 'kernel',      // the Pack (pause): what THROW throws — 'kernel' | 'bow' | 'gold'
@@ -2164,6 +2165,7 @@ function resetRun(){
   state.bossHearts = [false,false,false,false,false,false,false,false,false];
   state.corn = 0; state.coins = 0; state.arrows = 25; state.goldArrows = 0; state.hasBow = false; state.hasSword = false;
   state.oilUses = 0; state.wrench = 0; state.armor = 0;
+  state.day = 1;
   state.equipMelee = 'wrench'; state.equipThrow = 'kernel';   /* the Pack starts empty-handed too (map knowledge stays — like visitedRooms) */
   state.maxHp = 6; state.hp = state.maxHp; state.cheatAll = false; state.cheatCorn = false;
   state.hasLantern = false; state.keys = 0; state.found = {};
@@ -2340,7 +2342,7 @@ function snapshotState(){
     hasLadder: state.hasLadder, ladderBurned: state.ladderBurned,
     visitedRooms: state.visitedRooms,
     introsSeen: state.introsSeen,
-    visitedFields: state.visitedFields, equipMelee: state.equipMelee, equipThrow: state.equipThrow,
+    visitedFields: state.visitedFields, day: state.day || 1, equipMelee: state.equipMelee, equipThrow: state.equipThrow,
     owCol: state.owCol, owRow: state.owRow,
     world: state.world, world2Unlocked: state.world2Unlocked
   };
@@ -2373,6 +2375,7 @@ function applySnapshot(d){
   state.visitedRooms = (d.visitedRooms && typeof d.visitedRooms === 'object') ? d.visitedRooms : {};
   state.introsSeen = (d.introsSeen && typeof d.introsSeen === 'object') ? d.introsSeen : {};
   state.visitedFields = (d.visitedFields && typeof d.visitedFields === 'object') ? d.visitedFields : {};
+  state.day = (d.day | 0) >= 1 ? (d.day | 0) : 1;
   state.equipMelee = d.equipMelee === 'fist' ? 'fist' : 'wrench';
   state.equipThrow = (d.equipThrow === 'bow' || d.equipThrow === 'gold') ? d.equipThrow : 'kernel';
   state.owCol = Math.min(15, Math.max(0, (d.owCol == null ? 7 : d.owCol) | 0));
@@ -4316,15 +4319,17 @@ function loadOwScreen(){
     owFeatures.push({ kind:'path', x: 366, y: 0, w: 38, h: 576 });
     /* three full-size houses: walk into the door and you are inside,
        with the folks who live there (see HOUSES / enterHouse) */
-    owFeatures.push({ kind:'house', id:'pearl', sign:"PEARL'S COTTAGE", wall:'#e8dcc0', roof:'#7c1a12', x: 126, y: 168, w: 36, h: 26, bx: 56, by: 64, bw: 176, bh: 128 });
+    owFeatures.push({ kind:'house', id:'pearl', sign:"PEARL'S COTTAGE", wall:'#e8dcc0', roof:'#7c1a12', door:'#3f7d22', x: 126, y: 168, w: 36, h: 26, bx: 56, by: 64, bw: 176, bh: 128 });
     obstacles.push({ x: 56, y: 82, w: 176, h: 84, type:'housebody' });
-    owFeatures.push({ kind:'house', id:'hank', sign:"HANK'S FORGE", wall:'#cbb59a', roof:'#37474f', x: 596, y: 168, w: 36, h: 26, bx: 536, by: 64, bw: 176, bh: 128 });
+    owFeatures.push({ kind:'house', id:'hank', sign:"HANK'S FORGE", wall:'#cbb59a', roof:'#37474f', door:'#5d3a17', x: 596, y: 168, w: 36, h: 26, bx: 536, by: 64, bw: 176, bh: 128 });
     obstacles.push({ x: 536, y: 82, w: 176, h: 84, type:'housebody' });
-    owFeatures.push({ kind:'house', id:'fern', sign:"FERN'S FARMHOUSE", wall:'#dfe8c8', roof:'#5d3a17', x: 366, y: 484, w: 36, h: 26, bx: 296, by: 380, bw: 176, bh: 128 });
+    owFeatures.push({ kind:'house', id:'fern', sign:"FERN'S FARMHOUSE", wall:'#dfe8c8', roof:'#5d3a17', door:'#2e5f8a', x: 366, y: 484, w: 36, h: 26, bx: 296, by: 380, bw: 176, bh: 128 });
     obstacles.push({ x: 296, y: 398, w: 176, h: 84, type:'housebody' });
+    owFeatures.push({ kind:'house', id:'inn', sign:"HAYLOFT INN", wall:'#e3d3ae', roof:'#7c1a12', door:'#7c1a12', x: 126, y: 484, w: 36, h: 26, bx: 56, by: 380, bw: 176, bh: 128 });
+    obstacles.push({ x: 56, y: 398, w: 176, h: 84, type:'housebody' });
     /* the well in the square, and the village directions farmer */
     obstacles.push({ x: 420, y: 330, w: 34, h: 30, type:'well' });
-    owFeatures.push({ kind:'npc', x: 300, y: 268, w: 36, h: 40, hint:'🧑‍🌾 OLD FARMER: “Welcome to Corn Village, son. Folks live here — walk up to any door and you are inside; Pearl, Hank and Fern all take visitors, and they love to talk. West along this row is the corn maze. Far north-west, the graveyard. Two fields north stands the Pedestal Grove, where a wrench waits in the stone. And going UP four times climbs the Lost Hills, north-east, on the way to the Owl Roost…”' });
+    owFeatures.push({ kind:'npc', x: 300, y: 268, w: 36, h: 40, hint:'🧑‍🌾 OLD FARMER: “Welcome to Corn Village, son. Folks live here — walk up to any door and you are inside; Pearl, Hank and Fern all take visitors, and they love to talk — and Ruth keeps the Hayloft Inn, where a bed mends every hurt by morning. West along this row is the corn maze. Far north-west, the graveyard. Two fields north stands the Pedestal Grove, where a wrench waits in the stone. And going UP four times climbs the Lost Hills, north-east, on the way to the Owl Roost…”' });
     var rock = { x: 620, y: 470, w: 40, h: 40, type:'rock', secretId:'cache' };
     obstacles.push(rock);
     owSecrets.push({ id:'cache', x: 612, y: 462, w: 56, h: 56 });
@@ -4764,6 +4769,47 @@ function endIntro(){
    the chat bubble. The talking farmers out on the fields are drawn
    people too — no more emoji stand-ins. */
 var houseTalk = null, currentHouse = null;
+function paintHouse(bx, by, bw, bh, doorColor, sign){
+  /* the Minish way (Michael's reference shots): the house is mostly
+     ROOF — a great scalloped thatch over a strip of plaster, standing
+     on a stone foundation, with an arched door and a hanging sign */
+  R(bx + 6, by + bh - 4, bw - 12, 7, 'rgba(0,0,0,0.18)');
+  R(bx, by + bh - 14, bw, 14, '#9a958c');
+  R(bx + 14, by + bh - 14, 3, 14, '#857f74'); R(bx + bw - 40, by + bh - 14, 3, 14, '#857f74'); R(bx + bw / 2, by + bh - 14, 3, 14, '#857f74');
+  R(bx, by + bh * 0.52, bw, bh * 0.48 - 14, '#efe3c2');
+  ctx.fillStyle = '#d9a92e'; ctx.beginPath();
+  ctx.moveTo(bx - 10, by + bh * 0.58); ctx.lineTo(bx + bw / 2, by - 16); ctx.lineTo(bx + bw + 10, by + bh * 0.58); ctx.closePath(); ctx.fill();
+  for (var tr = 0; tr < 4; tr++){
+    var ty = by + 6 + tr * (bh * 0.13), tw = bw * (0.30 + tr * 0.19);
+    R(bx + bw / 2 - tw / 2, ty, tw, 7, tr % 2 ? '#eec95c' : '#e3b83f');
+  }
+  R(bx + bw / 2 - bw * 0.16, by - 13, bw * 0.32, 6, '#b98c22');
+  R(bx - 10, by + bh * 0.58 - 4, bw + 20, 5, 'rgba(90,60,10,0.35)');
+  R(bx + bw - 48, by - 2, 17, 30, '#8a8578');
+  R(bx + bw - 50, by - 6, 21, 6, '#6f6a5e');
+  ctx.globalAlpha = 0.35; ctx.fillStyle = '#ffffff';
+  var smk = (runTime * 9) % 22;
+  ctx.beginPath(); ctx.arc(bx + bw - 40, by - 12 - smk, 4 + smk * 0.25, 0, Math.PI * 2); ctx.fill();
+  ctx.globalAlpha = 1;
+  [bx + 16, bx + bw - 42].forEach(function(wx){
+    R(wx, by + bh * 0.60, 26, 24, '#ffe9a8');
+    R(wx - 5, by + bh * 0.60, 5, 24, doorColor); R(wx + 26, by + bh * 0.60, 5, 24, doorColor);
+    ctx.strokeStyle = '#5d3a17'; ctx.lineWidth = 2; ctx.strokeRect(wx, by + bh * 0.60, 26, 24);
+  });
+  var dx = bx + bw / 2;
+  R(dx - 21, by + bh - 48, 42, 48, '#5d3a17');
+  R(dx - 16, by + bh - 44, 32, 44, doorColor);
+  ctx.fillStyle = doorColor; ctx.beginPath(); ctx.arc(dx, by + bh - 44, 16, Math.PI, 0); ctx.fill();
+  R(dx + 8, by + bh - 22, 4, 4, '#ffd700');
+  R(dx - 24, by + bh - 3, 48, 4, '#857f74');
+  if (sign){
+    R(dx + 30, by + bh - 52, 3, 14, '#4c2c08');
+    ctx.font = '10px "Press Start 2P", monospace'; ctx.textAlign = 'left';
+    var swd = ctx.measureText(sign).width + 12;
+    R(dx + 33, by + bh - 52, swd, 17, '#5d3a17');
+    ctx.fillStyle = '#ffe9a8'; ctx.fillText(sign, dx + 39, by + bh - 39);
+  }
+}
 function drawVillager(x, y, pal, name, kid){
   var PALS = [ ['#b03024', '#2e5f8a', '#f2c14e'], ['#2e7d32', '#6d4c41', '#8d6e63'], ['#6a1b9a', '#37474f', '#ffd54f'], ['#a34d28', '#455a64', '#e8e3d8'] ];
   var P = PALS[Math.abs(pal | 0) % 4];
@@ -4789,8 +4835,8 @@ function drawVillager(x, y, pal, name, kid){
   }
 }
 var HOUSES = {
-  pearl: { title: "GRANDMA PEARL'S COTTAGE",
-    furniture: [ [92, 92, 44, 40, 'stove'], [200, 62, 64, 20, 'shelf'], [622, 80, 54, 84, 'bed'], [330, 236, 96, 44, 'table'] ],
+  pearl: { title: "GRANDMA PEARL'S COTTAGE", rug: '#a33327', rug2: '#b8452f', deco: 'picture',
+    furniture: [ [110, 40, 64, 54, 'stove'], [520, 52, 72, 24, 'shelf'], [620, 56, 54, 84, 'bed'], [330, 240, 96, 44, 'table'], [70, 440, 34, 40, 'barrel'], [660, 450, 26, 30, 'plant'] ],
     villagers: [
       { kind:'villager', id:'pearl', name:'Grandma Pearl', x: 404, y: 176, w: 30, h: 40, pal: 3, gift: 'corn', pages: [
         'GRANDMA PEARL: “Well, come on in out of that sun, hon. Mind the rug — your granddaddy braided it the winter the river froze.”',
@@ -4803,8 +4849,8 @@ var HOUSES = {
         '“Secret three: the tractors carry the rusty keys, and the crows carry the arrows they stole. Secret four—” she counts on her fingers “—the old silo is locked, but that is not a secret, that is just a fact.”',
         '“If you get lost, the grown-ups in the village know every road. Grandma knows the MOST roads. She will tell you. She tells everybody.”' ] }
     ] },
-  hank: { title: "HANK'S FORGE",
-    furniture: [ [370, 246, 54, 30, 'anvil'], [110, 120, 110, 40, 'table'], [640, 92, 44, 40, 'stove'], [520, 62, 64, 20, 'shelf'] ],
+  hank: { title: "HANK'S FORGE", rug: '#5d6d7e', rug2: '#6b7f92', deco: 'tools',
+    furniture: [ [370, 246, 54, 30, 'anvil'], [110, 130, 110, 40, 'table'], [110, 40, 64, 54, 'stove'], [600, 52, 72, 24, 'shelf'], [656, 130, 34, 40, 'barrel'], [70, 440, 34, 40, 'barrel'] ],
     villagers: [
       { kind:'villager', id:'hank', name:'Blacksmith Hank', x: 290, y: 196, w: 30, h: 40, pal: 1, gift: 'oil', pages: [
         'BLACKSMITH HANK: “Mind the anvil, son. Name is Hank. I shoe the horses, I mend the fences, and I know wrenches like preachers know psalms.”',
@@ -4812,14 +4858,24 @@ var HOUSES = {
         '“And hold that swing button down sometime, till she hums. Then let go. A spinning wrench clears a whole crowd of trouble. Old trick. Still works.”',
         '“Take this oil for the road. A dry tractor is a loud tractor, and a loud tractor wakes the whole farm.”' ] }
     ] },
-  fern: { title: "FERN'S FARMHOUSE",
-    furniture: [ [92, 80, 54, 84, 'bed'], [92, 300, 44, 40, 'stove'], [600, 62, 64, 20, 'shelf'], [340, 250, 96, 44, 'table'] ],
+  fern: { title: "FERN'S FARMHOUSE", rug: '#2e7d32', rug2: '#3f9e2c', deco: 'wreath',
+    furniture: [ [70, 56, 54, 84, 'bed'], [610, 40, 64, 54, 'stove'], [200, 52, 72, 24, 'shelf'], [340, 250, 96, 44, 'table'], [70, 440, 34, 40, 'barrel'], [660, 450, 26, 30, 'plant'] ],
+
     villagers: [
       { kind:'villager', id:'fern', name:'Fern', x: 430, y: 180, w: 30, h: 40, pal: 0, pages: [
         'FERN: “Come in, come in. I am Fern — Ferris and I have kept this farmhouse forty-one years this spring. Sit a minute. Walking men never sit, and it is a shame.”',
         '“They say when the eight pieces are home and the Great Barn stands whole again, there is to be a wedding in it. The first one since the storm. Half the farm cries just hearing it.”',
         '“Ferris says a barn is just boards. I say a barn is a promise you can stand inside of. You go find those pieces, and we will all stand in that promise together.”',
         '“God gave you strong hands and a long road. That is not an accident, that is an assignment. Now go on — and come back and tell me everything.”' ] }
+    ] },
+  inn: { title: "THE HAYLOFT INN", rug: '#37474f', rug2: '#455a64', deco: 'sign',
+    furniture: [ [64, 64, 54, 84, 'bed'], [196, 52, 84, 50, 'bed'], [316, 52, 84, 50, 'bed'], [600, 44, 64, 54, 'stove'], [430, 250, 96, 44, 'table'], [520, 52, 72, 24, 'shelf'], [660, 430, 34, 40, 'barrel'] ],
+    beds: [ [68, 148, 46, 24], [200, 106, 76, 24], [320, 106, 76, 24] ],
+    villagers: [
+      { kind:'villager', id:'ruth', name:'Innkeeper Ruth', x: 450, y: 176, w: 30, h: 40, pal: 0, pages: [
+        'INNKEEPER RUTH: “Well now, a traveler. I am Ruth, and this is the Hayloft Inn — the softest straw and the quietest nights in Corn Village.”',
+        '“Step up to any bed and you will sleep clear through till morning. Whatever hurts you came in with, you leave in the bed. Every heart full, every ache gone — that is the house rule.”',
+        '“Ferris snores in the farmhouse, Hank dreams in anvil shapes, and Pearl — Pearl is up before the roosters, praying over this whole village. You are in good company here. Sleep well, when you are ready.”' ] }
     ] }
 };
 function loadHouse(id){
@@ -4828,10 +4884,16 @@ function loadHouse(id){
   clearField();
   owFeatures = []; owSecrets = [];
   owGaps = { N: false, S: false, E: false, W: false };
-  obstacles = borderObstacles({}, 'fence');
+  obstacles = [
+    { x: 0, y: 0, w: W, h: 48, type: 'housewall' },
+    { x: 0, y: H - 48, w: W, h: 48, type: 'housewall' },
+    { x: 0, y: 0, w: 48, h: H, type: 'housewall' },
+    { x: W - 48, y: 0, w: 48, h: H, type: 'housewall' }
+  ];
   hd.furniture.forEach(function(fu){ obstacles.push({ x: fu[0], y: fu[1], w: fu[2], h: fu[3], type: fu[4] }); });
   hd.villagers.forEach(function(v){ owFeatures.push(v); });
-  owFeatures.push({ kind:'exitdoor', x: W/2 - 30, y: H - 64, w: 60, h: 30 });
+  (hd.beds || []).forEach(function(bd){ owFeatures.push({ kind:'innbed', x: bd[0], y: bd[1], w: bd[2], h: bd[3] }); });
+  owFeatures.push({ kind:'exitdoor', x: W/2 - 30, y: H - 56, w: 60, h: 30 });
   if (!player) player = makePlayer(W/2 - 16, H - 110);
   player.x = W/2 - 16; player.y = H - 110; player.dir = 'up';
   interactCd = Math.max(interactCd, 0.8);
@@ -4851,16 +4913,43 @@ function exitHouse(){
 }
 function drawHouseInterior(){
   var hd = HOUSES[currentHouse] || HOUSES.pearl;
-  for (var py = 0; py < H; py += 24)
-    for (var px = 0; px < W; px += 96){
-      R(px, py, 96, 24, ((px / 96 + py / 24) % 2) ? '#9a6a38' : '#a3713d');
+  var px, py;
+  for (py = 0; py < H; py += 24)
+    for (px = 0; px < W; px += 96){
+      var tone = ((px * 7 + py * 13) % 5) - 2;
+      R(px, py, 96, 24, tone > 0 ? '#a87843' : (tone < 0 ? '#9a6a38' : '#a06f3a'));
       R(px, py + 22, 96, 2, '#7d5527');
     }
-  R(W/2 - 130, H/2 - 84, 260, 168, '#a33327');
-  R(W/2 - 118, H/2 - 72, 236, 144, '#b8452f');
-  R(W/2 - 120, 28, 240, 26, '#5d3a17');
-  ctx.font = '11px "Press Start 2P", monospace'; ctx.textAlign = 'center'; ctx.fillStyle = '#ffe9a8';
-  ctx.fillText(hd.title, W/2, 46);
+  /* window light pooling on the floorboards */
+  ctx.globalAlpha = 0.10; R(120, 120, 130, 90, '#ffe9a8'); R(500, 130, 120, 80, '#ffe9a8'); ctx.globalAlpha = 1;
+  /* the rug — bordered, with a diamond at its heart */
+  R(W/2 - 132, H/2 - 86, 264, 172, hd.rug || '#a33327');
+  R(W/2 - 120, H/2 - 74, 240, 148, hd.rug2 || '#b8452f');
+  ctx.save(); ctx.translate(W/2, H/2); ctx.rotate(Math.PI / 4); R(-26, -26, 52, 52, hd.rug || '#a33327'); ctx.restore();
+  /* thick stone walls with a wooden beam, all the way around */
+  R(0, 0, W, 48, '#8d8577'); R(0, 44, W, 5, '#5d3a17');
+  R(0, H - 48, W, 48, '#8d8577'); R(0, H - 49, W, 5, '#5d3a17');
+  R(0, 0, 48, H, '#8d8577'); R(44, 0, 5, H, '#5d3a17');
+  R(W - 48, 0, 48, H, '#8d8577'); R(W - 49, 0, 5, H, '#5d3a17');
+  ctx.strokeStyle = 'rgba(0,0,0,0.18)'; ctx.lineWidth = 1;
+  for (px = 30; px < W; px += 46){ ctx.beginPath(); ctx.moveTo(px, 6); ctx.lineTo(px, 42); ctx.stroke(); }
+  /* what hangs on the north wall says whose house this is */
+  if (hd.deco === 'picture'){ R(W/2 - 90, 10, 34, 26, '#5d3a17'); R(W/2 - 87, 13, 28, 20, '#8ed8ff'); R(W/2 - 80, 24, 14, 9, '#3f7d22'); }
+  if (hd.deco === 'tools'){ R(W/2 - 100, 8, 30, 30, '#6d6d6d'); R(W/2 - 97, 11, 24, 24, '#ffd700'); ctx.strokeStyle = '#4c2c08'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(W/2 - 60, 12); ctx.lineTo(W/2 - 40, 32); ctx.moveTo(W/2 - 40, 12); ctx.lineTo(W/2 - 60, 32); ctx.stroke(); }
+  if (hd.deco === 'wreath'){ ctx.strokeStyle = '#2e7d32'; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(W/2 - 84, 24, 11, 0, Math.PI * 2); ctx.stroke(); R(W/2 - 88, 33, 8, 6, '#c04537'); }
+  if (hd.deco === 'sign'){ ctx.font = '10px "Press Start 2P", monospace'; ctx.textAlign = 'center'; ctx.fillStyle = '#ffe9a8'; ctx.fillText('REST · EAT · REST', W/2 - 84, 28); }
+}
+
+function startSleep(){
+  houseTalk = { sleep: true, i: 0, villager: null, pages: [
+    'You climb into a soft hay bed. The inn is quiet, and the day’s aches settle down into the straw…',
+    '🌙 Good night. Sleep deep, Corn Man — the farm will keep till morning.',
+    '☀️ Morning! Sun through the window, birds in the rafters — and every heart you own is full again.'
+  ] };
+  hideBanner();
+  showOverlay('dlgScreen');
+  houseTalkShow();
+  sfx('corn');
 }
 function startHouseTalk(f){
   houseTalk = { pages: f.pages, i: 0, villager: f };
@@ -4878,11 +4967,17 @@ function houseTalkAdvance(){
   ac(); sfx('corn');
   houseTalk.i++;
   if (houseTalk.i >= houseTalk.pages.length){
-    var f = houseTalk.villager;
+    var f = houseTalk.villager, slept = houseTalk.sleep;
     houseTalk = null;
     showOverlay(null);
     npcCd = 5; interactCd = 0.8;
-    if (f.gift && !state.found['gift_' + f.id]){
+    if (slept){
+      state.hp = state.maxHp;
+      state.day = (state.day || 1) + 1;
+      sfx('win');
+      showBanner('☀️ DAY ' + state.day + ' DAWNS — YOU WAKE AT THE HAYLOFT INN WITH EVERY HEART FULL!', 3200);
+      updateHUD();
+    } else if (f.gift && !state.found['gift_' + f.id]){
       state.found['gift_' + f.id] = true;
       if (f.gift === 'corn'){ state.corn += 10; showBanner('🌽 GRANDMA PEARL GIVES YOU 10 CORN — “FOR THE ROAD, HON.”', 2800); }
       if (f.gift === 'oil'){ state.oilUses += 1; showBanner('🛢️ BLACKSMITH HANK GIVES YOU A CAN OF TRACTOR OIL!', 2800); }
@@ -5374,6 +5469,8 @@ function owUpdate(dt){
           enterHouse(f.id); interactCd = 1.5;
         } else if (f.kind === 'villager'){
           if (npcCd <= 0 && !houseTalk) startHouseTalk(f);
+        } else if (f.kind === 'innbed'){
+          if (npcCd <= 0 && !houseTalk) startSleep();
         } else if (f.kind === 'exitdoor'){
           exitHouse(); interactCd = 1.5;
         } else {
@@ -7356,10 +7453,13 @@ function drawObstacle(o){
   }
   if (o.type === 'fence'){ R(x, y, o.w, o.h, '#7a4d16'); R(x, y + (o.h > o.w ? 14 : 6), o.w, 4, '#96621f'); return; }
   if (o.type === 'housebody'){ return; }   /* the house feature draws the building; the obstacle is just its body */
-  if (o.type === 'table'){ R(x, y + 6, o.w, o.h - 6, '#8a5a2b'); R(x - 2, y + 2, o.w + 4, 8, '#a06a35'); R(x + 4, y + o.h - 4, 6, 4, '#6d4423'); R(x + o.w - 10, y + o.h - 4, 6, 4, '#6d4423'); return; }
-  if (o.type === 'bed'){ R(x, y, o.w, o.h, '#7a4d16'); R(x + 2, y + 2, o.w - 4, 14, '#fffbe8'); R(x + 2, y + 18, o.w - 4, o.h - 20, '#a33327'); R(x + 2, y + 18, o.w - 4, 5, '#c04537'); return; }
-  if (o.type === 'stove'){ R(x, y + 4, o.w, o.h - 4, '#37474f'); R(x + 4, y, 10, 8, '#263238'); R(x + 6, y + 14, o.w - 12, o.h - 22, '#263238'); R(x + 9, y + 17, o.w - 18, o.h - 28, '#ff8a2d'); return; }
-  if (o.type === 'shelf'){ R(x, y, o.w, o.h, '#6d4423'); R(x + 3, y + 5, o.w - 6, 3, '#8a5a2b'); R(x + 3, y + 15, o.w - 6, 3, '#8a5a2b'); R(x + 6, y - 3, 6, 8, '#c04537'); R(x + 15, y - 3, 6, 8, '#37c978'); R(x + 8, y + 7, 6, 8, '#ffd91a'); return; }
+  if (o.type === 'table'){ R(x, y + 6, o.w, o.h - 6, '#8a5a2b'); R(x - 2, y + 2, o.w + 4, 8, '#a06a35'); R(x + 4, y + o.h - 4, 6, 4, '#6d4423'); R(x + o.w - 10, y + o.h - 4, 6, 4, '#6d4423'); R(x + 10, y - 2, 16, 10, '#c04537'); R(x + 12, y - 2, 12, 3, '#fffbe8'); R(x + o.w - 22, y - 4, 4, 8, '#fffbe8'); R(x + o.w - 21, y - 7, 2, 3, '#ffb03a'); return; }
+  if (o.type === 'bed'){ R(x, y, o.w, o.h, '#6d4423'); R(x + 3, y + 3, o.w - 6, o.h - 6, '#8a5a2b'); R(x + 5, y + 5, o.w - 10, Math.min(20, o.h * 0.28), '#fffbe8'); R(x + 5, y + Math.min(24, o.h * 0.32), o.w - 10, o.h - Math.min(24, o.h * 0.32) - 5, '#a33327'); R(x + 5, y + Math.min(24, o.h * 0.32), o.w - 10, 6, '#c04537'); R(x - 2, y - 2, 5, 8, '#4c2c08'); R(x + o.w - 3, y - 2, 5, 8, '#4c2c08'); return; }
+  if (o.type === 'stove'){ R(x - 4, y - 58, o.w + 8, 58, '#8d8577'); R(x - 4, y - 58, o.w + 8, 6, '#6f6a5e'); R(x, y, o.w, o.h, '#9a958c'); R(x - 3, y - 4, o.w + 6, 7, '#6d4423'); R(x + 10, y + o.h - 26, o.w - 20, 24, '#1c1410'); var fl = Math.sin(runTime * 11 + x) * 2; R(x + 16, y + o.h - 16 - fl, 8, 14 + fl, '#ff8a2d'); R(x + o.w - 24, y + o.h - 13 + fl, 7, 11 - fl, '#ffb03a'); R(x + o.w / 2 - 3, y + o.h - 19 - fl, 6, 17 + fl, '#ffd23e'); R(x + 12, y + o.h - 5, o.w - 24, 4, '#4c2c08'); return; }
+  if (o.type === 'shelf'){ R(x, y, o.w, o.h + 14, '#6d4423'); var bookCols = ['#c04537', '#37c978', '#ffd91a', '#5d8ac9', '#b06ab8', '#e07b1f']; for (var bk = 0; bk < 6; bk++){ var bx2 = x + 4 + bk * ((o.w - 8) / 6); R(bx2, y + 2, (o.w - 8) / 6 - 2, 10 + ((bk * 7 + (x | 0)) % 3), bookCols[bk % 6]); } R(x + 2, y + 15, o.w - 4, 3, '#8a5a2b'); return; }
+  if (o.type === 'housewall'){ return; }   /* painted by drawHouseInterior */
+  if (o.type === 'barrel'){ R(x + 2, y + 3, o.w - 4, o.h - 3, '#8a5a2b'); R(x, y + 8, o.w, 4, '#5d3a17'); R(x, y + o.h - 10, o.w, 4, '#5d3a17'); R(x + 2, y, o.w - 4, 5, '#a06a35'); return; }
+  if (o.type === 'plant'){ R(x + 4, y + o.h - 12, o.w - 8, 12, '#b4552d'); R(x + 8, y + o.h - 15, o.w - 16, 3, '#8a3d1f'); ctx.fillStyle = '#2e7d32'; ctx.beginPath(); ctx.arc(x + o.w / 2, y + o.h - 22, 10, 0, Math.PI * 2); ctx.arc(x + 6, y + o.h - 16, 6, 0, Math.PI * 2); ctx.arc(x + o.w - 6, y + o.h - 16, 6, 0, Math.PI * 2); ctx.fill(); return; }
   if (o.type === 'anvil'){ R(x + 4, y + 10, o.w - 8, 10, '#455a64'); R(x + 10, y + 20, o.w - 20, 6, '#37474f'); R(x + 2, y + 4, 12, 7, '#607d8b'); return; }
   if (o.type === 'well'){ R(x, y + 8, o.w, o.h - 8, '#8a8f96'); R(x - 3, y + 2, o.w + 6, 6, '#7c1a12'); R(x + 4, y + 12, o.w - 8, o.h - 16, '#3c4043'); return; }
   if (o.type === 'hay'){ R(x + 3, y + 8, 34, 26, '#e8b93a'); R(x + 3, y + 14, 34, 3, '#c79a24'); R(x + 3, y + 24, 34, 3, '#c79a24'); R(x + 8, y + 3, 24, 6, '#f5d76a'); }
@@ -7978,21 +8078,7 @@ function drawOwFeatures(){
       return;
     }
     if (f.kind === 'house'){
-      /* a full-size house: walls, pitched roof, chimney, lit windows,
-         a door at the trigger strip, and its name on a sign */
-      R(f.bx + 6, f.by + f.bh - 4, f.bw - 12, 7, 'rgba(0,0,0,0.18)');
-      R(f.bx, f.by + 34, f.bw, f.bh - 34, f.wall);
-      ctx.fillStyle = f.roof; ctx.beginPath();
-      ctx.moveTo(f.bx - 8, f.by + 38); ctx.lineTo(f.bx + f.bw / 2, f.by - 12); ctx.lineTo(f.bx + f.bw + 8, f.by + 38); ctx.closePath(); ctx.fill();
-      R(f.bx + f.bw - 46, f.by - 4, 16, 28, '#8a8f96');
-      R(f.bx + 18, f.by + 58, 26, 22, '#ffe9a8'); R(f.bx + f.bw - 44, f.by + 58, 26, 22, '#ffe9a8');
-      ctx.strokeStyle = '#5d3a17'; ctx.lineWidth = 2;
-      ctx.strokeRect(f.bx + 18, f.by + 58, 26, 22); ctx.strokeRect(f.bx + f.bw - 44, f.by + 58, 26, 22);
-      R(f.bx + f.bw / 2 - 17, f.by + f.bh - 46, 34, 46, '#5d3a17');
-      R(f.bx + f.bw / 2 + 8, f.by + f.bh - 25, 4, 4, '#ffd700');
-      ctx.font = '11px "Press Start 2P", monospace'; ctx.textAlign = 'center';
-      ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,0.6)';
-      ctx.strokeText(f.sign, f.bx + f.bw / 2, f.by + 54); ctx.fillStyle = '#fffbe8'; ctx.fillText(f.sign, f.bx + f.bw / 2, f.by + 54);
+      paintHouse(f.bx, f.by, f.bw, f.bh, f.door || '#5d3a17', f.sign);
       return;
     }
     if (f.kind === 'villager'){
@@ -8081,16 +8167,8 @@ function drawOwFeatures(){
       return;
     }
     if (f.style === 'hut'){
-      /* a full-size cottage now, not a person-sized box (v8) */
-      R(f.bx + 6, f.by + f.bh - 4, f.bw - 12, 7, 'rgba(0,0,0,0.18)');
-      R(f.bx, f.by + 32, f.bw, f.bh - 32, '#e8dcc0');
-      ctx.fillStyle = '#7c1a12'; ctx.beginPath();
-      ctx.moveTo(f.bx - 8, f.by + 36); ctx.lineTo(f.bx + f.bw / 2, f.by - 10); ctx.lineTo(f.bx + f.bw + 8, f.by + 36); ctx.closePath(); ctx.fill();
-      R(f.bx + 20, f.by + 54, 24, 20, '#ffe9a8'); R(f.bx + f.bw - 44, f.by + 54, 24, 20, '#ffe9a8');
-      ctx.strokeStyle = '#5d3a17'; ctx.lineWidth = 2;
-      ctx.strokeRect(f.bx + 20, f.by + 54, 24, 20); ctx.strokeRect(f.bx + f.bw - 44, f.by + 54, 24, 20);
-      R(f.bx + f.bw / 2 - 15, f.by + f.bh - 42, 30, 42, '#5d3a17');
-      R(f.bx + f.bw / 2 + 7, f.by + f.bh - 22, 4, 4, '#ffd700');
+      /* a full-size cottage in the same thatch (v9) */
+      paintHouse(f.bx, f.by, f.bw, f.bh, '#3f7d22', null);
       return;
     }
     if (f.style === 'hatch'){
