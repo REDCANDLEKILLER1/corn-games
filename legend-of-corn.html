@@ -1909,6 +1909,8 @@ function sfx(name){
   else if (name === 'piece'){ [523,659,784,1046,784,1046].forEach(function(f,i){ setTimeout(function(){ beep(f, .16, 'square', .08); }, i*110); }); }
   else if (name === 'boss'){ beep(98, .5, 'sawtooth', .12, 55); }
   else if (name === 'boom'){ beep(92, .5, 'sawtooth', .16, 36); setTimeout(function(){ beep(54, .42, 'square', .12, 28); }, 40); }
+  else if (name === 'whistle'){ [1318, 1568, 1318, 1760].forEach(function(f,i){ setTimeout(function(){ beep(f, .13, 'sine', .07); }, i*95); }); }
+  else if (name === 'warp'){ beep(900, .42, 'sine', .08, 110); setTimeout(function(){ beep(620, .3, 'sine', .05, 90); }, 90); }
   else if (name === 'win'){ [523,659,784,1046,1318,1568].forEach(function(f,i){ setTimeout(function(){ beep(f, .2, 'square', .08); }, i*130); }); }
   else if (name === 'flame'){ beep(280, .16, 'sawtooth', .06, 940); }
   else if (name === 'burn'){ [160,240,120,320,200].forEach(function(f,i){ setTimeout(function(){ beep(f, .1, 'sawtooth', .07, f * 0.6); }, i*55); }); }
@@ -2199,7 +2201,7 @@ var state = {
   wrench:0,                  // 0 none · 1 wooden · 2 silver · 3 golden
   armor:0,                   // 0 none · 1 overalls · 2 silver overalls · 3 gold overalls
   maxHp:6, hp:6,             // 3 hearts to start; +1 heart per level beaten
-  hasLantern:false, hasPouch:false, hasSledge:false, hasBombs:false, bombs:0,          // shop lantern (150 coin) — lights dark barn rooms
+  hasLantern:false, hasPouch:false, hasSledge:false, hasBombs:false, bombs:0, hasWhistle:false,          // shop lantern (150 coin) — lights dark barn rooms
   keys:0,                    // rusty keys — 1 opens 1 padlocked door, in any barn
   found:{},                  // secrets/entrances discovered: maze, hay, tomb
   burned:{},                 // designated hay bales burned with the lantern: burn1..burn5
@@ -2311,7 +2313,7 @@ function resetRun(){
   state.day = 1;
   state.equipMelee = 'wrench'; state.equipThrow = 'kernel';   /* the Pack starts empty-handed too (map knowledge stays — like visitedRooms) */
   state.maxHp = 6; state.hp = state.maxHp; state.cheatAll = false; state.cheatCorn = false;
-  state.hasLantern = false; state.hasPouch = false; state.hasSledge = false; state.hasBombs = false; state.bombs = 0; state.keys = 0; state.found = {};
+  state.hasLantern = false; state.hasPouch = false; state.hasSledge = false; state.hasBombs = false; state.hasWhistle = false; state.bombs = 0; state.keys = 0; state.found = {};
   state.burned = {}; state.superHearts = {};
   state.shedBurned = {}; state.shedStashes = {};
   state.hasLadder = false; state.ladderBurned = false;
@@ -2479,7 +2481,7 @@ function snapshotState(){
     corn: state.corn, coins: state.coins, arrows: state.arrows, goldArrows: state.goldArrows,
     hasBow: state.hasBow, hasSword: state.hasSword, oilUses: state.oilUses, wrench: state.wrench, armor: state.armor,
     maxHp: state.maxHp, hp: state.hp, cheatAll: state.cheatAll, cheatCorn: state.cheatCorn,
-    hasLantern: state.hasLantern, hasPouch: state.hasPouch, hasSledge: state.hasSledge, hasBombs: state.hasBombs, bombs: state.bombs, keys: state.keys, found: state.found,
+    hasLantern: state.hasLantern, hasPouch: state.hasPouch, hasSledge: state.hasSledge, hasBombs: state.hasBombs, hasWhistle: state.hasWhistle, bombs: state.bombs, keys: state.keys, found: state.found,
     burned: state.burned, superHearts: state.superHearts,
     shedBurned: state.shedBurned, shedStashes: state.shedStashes,
     hasLadder: state.hasLadder, ladderBurned: state.ladderBurned,
@@ -2508,7 +2510,7 @@ function applySnapshot(d){
   state.maxHp = Math.max(2, d.maxHp | 0); state.hp = Math.min(state.maxHp, Math.max(0, d.hp | 0));
   if (state.hp <= 0) state.hp = state.maxHp;
   state.cheatAll = !!d.cheatAll; state.cheatCorn = !!d.cheatCorn;
-  state.hasLantern = !!d.hasLantern; state.hasPouch = !!d.hasPouch; state.hasSledge = !!d.hasSledge; state.hasBombs = !!d.hasBombs; state.bombs = d.bombs | 0; state.keys = d.keys | 0;
+  state.hasLantern = !!d.hasLantern; state.hasPouch = !!d.hasPouch; state.hasSledge = !!d.hasSledge; state.hasBombs = !!d.hasBombs; state.hasWhistle = !!d.hasWhistle; state.bombs = d.bombs | 0; state.keys = d.keys | 0;
   state.found = (d.found && typeof d.found === 'object') ? d.found : {};
   state.burned = (d.burned && typeof d.burned === 'object') ? d.burned : {};
   state.superHearts = (d.superHearts && typeof d.superHearts === 'object') ? d.superHearts : {};
@@ -3487,6 +3489,9 @@ function renderSubscreen(){
   g += state.hasBombs
     ? subSlot('💣', 'BOMB BAG<br>×' + state.bombs + ' bombs', { equip: true, sel: state.equipThrow === 'bomb', act: 'throw-bomb', tag: 'THROW' })
     : subSlot('💣', 'A BOMB BAG<br>not found yet', { locked: true });
+  g += state.hasWhistle
+    ? subSlot('🎵', 'CORN WHISTLE<br>tap to blow it', { act: 'play-whistle' })
+    : subSlot('🎵', 'A CORN WHISTLE<br>not found yet', { locked: true });
   g += state.hasLantern ? subSlot('🔦', 'LANTERN<br>fire &amp; light', {}) : subSlot('🔦', 'A LANTERN<br>not found yet', { locked: true });
   g += state.hasLadder ? subSlot('🪜', 'SMALL LADDER<br>cross any water', {}) : subSlot('🪜', 'A LADDER<br>hidden somewhere', { locked: true });
   g += state.hasSledge ? subSlot('🔨', 'THE SLEDGE<br>smashes cracked rock', {}) : subSlot('🔨', 'A SLEDGE<br>not found yet', { locked: true });
@@ -3516,6 +3521,7 @@ function renderSubscreen(){
       doRow('PUSH', 'stones &amp; bales', true) +
       doRow('SMASH', 'swing at cracked rock', !!state.hasSledge) +
       doRow('BLOW UP', 'bombs on cracked walls', !!state.hasBombs) +
+      doRow('PLAY', 'the Corn Whistle', !!state.hasWhistle) +
       doRow(armed ? 'SWING' : 'PUNCH', 'red button', true) +
       doRow('SPIN', 'hold the red button', armed) +
       doRow('THROW', 'green button', !!state.hasPouch) +
@@ -4530,7 +4536,7 @@ function loadOwScreen(){
     owFeatures.push({ kind:'npc', x: 120, y: 470, w: 36, h: 40, hint:'🧑‍🌾 OLD FARMER: “See the hut on the island? Mind the creek — cross at the little plank bridge on the south side.”' });
     scatterObstacles(R, 'rock', 3, avoid);
   } else if (idx === OW_LOST){                               /* Lost Hills — the looping screen */
-    owFeatures.push({ kind:'npc', x: 366, y: 268, w: 36, h: 40, hint:'👵 OLD FARMER: “Lost, dearie? For the roost over the hills: GO UP, UP, UP, UP — four times north, no matter what your eyes tell you. 20 coin for the telling? …Fine, free today.”' });
+    owFeatures.push({ kind:'npc', x: 366, y: 268, w: 36, h: 40, hint:'👵 OLD FARMER: “Lost, dearie? For the roost over the hills: GO UP, UP, UP, UP — four times north, no matter what your eyes tell you. 20 coin for the telling? …Fine, free today. And hear this: if you ever find a WHISTLE, blow it here by the standing stones — the hollow tree keeps a secret under its roots.”' });
     /* THE CAVE MOUTH (v24): a dark little cave in the hillside,
        its mouth plugged with a CRACKED BOULDER — the Sledge opens
        it, and a Super Heart sleeps in the dark inside */
@@ -4538,7 +4544,15 @@ function loadOwScreen(){
     if (!state.found.smashed_lostcave) obstacles.push({ x: 110, y: 64, w: 40, h: 40, type:'cracked', smashId:'lostcave' });
     /* THE DESERT (v26): the Lost Hills are dry country — cacti
        stand where the corn gives up */
-    [[300,150],[560,300],[180,430],[648,120]].forEach(function(cp){ obstacles.push({ x: cp[0], y: cp[1], w: 40, h: 40, type:'cactus' }); });
+    [[300,150],[560,300],[180,430],[700,216]].forEach(function(cp){ obstacles.push({ x: cp[0], y: cp[1], w: 40, h: 40, type:'cactus' }); });
+    /* THE THREE STANDING STONES + THE HOLLOW TREE (v27): the
+       stones keep the north-east; the old hollow tree stands
+       north-center, and something sleeps under its roots —
+       the Corn Whistle knows what */
+    [[566,116],[614,96],[662,116]].forEach(function(sp){ obstacles.push({ x: sp[0], y: sp[1], w: 40, h: 40, type:'stone' }); });
+    var hollowTree = { x: 372, y: 44, w: 44, h: 52, type:'deadtree', hollow:true };
+    if (state.found.hollowtree){ hollowTree.x += 58; owFeatures.push({ kind:'warp', x: 380, y: 48, w: 36, h: 30, toCol: 1, toRow: 6, toX: 128, toY: 96 }); }
+    obstacles.push(hollowTree);
     scatterObstacles(R, 'rock', 8, avoid);
   } else if (idx === OW_L5){                                 /* Level 5 — roost barn over the hills */
     owFeatures.push({ kind:'dungeon', idx: dunIdxForField(4), style:'barn', x: 358, y: 168, w: 52, h: 30, bx: 296, by: 62, bw: 176, bh: 116 });
@@ -4598,6 +4612,11 @@ function loadOwScreen(){
     obstacles.push(bale);
     owSecrets.push({ id:'hay', x: 356, y: 230, w: 56, h: 56 });
     owFeatures.push({ kind:'npc', x: 130, y: 120, w: 36, h: 40, hint:'🧑‍🌾 OLD FARMER: “Funny thing — that lone hay bale in the middle of the meadow. Never seen anyone MOVE it. Wonder what’s under it…”' });
+    /* THE ROOT TUNNEL'S FAR END (v27): a hollow stump in the
+       meadow's north, its dark mouth open — step in and the
+       roots carry him back to the Lost Hills */
+    obstacles.push({ x: 96, y: 44, w: 40, h: 46, type:'deadtree' });
+    owFeatures.push({ kind:'warp', x: 128, y: 52, w: 36, h: 30, toCol: 10, toRow: 1, toX: 376, toY: 108 });
     scatterObstacles(R, 'hay', 3, avoid);
   } else if (idx === OW_MIDDLE){                             /* Corn Village — a whole village (v8, Michael 2026-11-18) */
     /* dirt paths first — features draw in push order, so the paths
@@ -5890,6 +5909,12 @@ function loadRoom(n, spawnSide){
       if (state.hasBombs) seedAlready.push('Bomb Bag 💣');
       else roomItems.push({ kind:'bombs', x: W/2 + 110, y: 108, w: 40, h: 40, emoji:'💣', label:'BOMB BAG' });
     }
+    if (idx === 4){
+      /* v27: THE CORN WHISTLE — Level 5's item (Zelda II's
+         Flute), on the item pedestal beside the cob */
+      if (state.hasWhistle) seedAlready.push('Corn Whistle 🎵');
+      else roomItems.push({ kind:'whistle', x: W/2 - 150, y: 108, w: 40, h: 40, emoji:'🎵', label:'THE CORN WHISTLE' });
+    }
     if (idx === 6){
       if (state.armor >= 3) seedAlready.push('Gold Overalls 🥇');
       else roomItems.push({ kind:'armor', armorTier: 3, x: W/2 - 150, y: 108, w: 40, h: 40, emoji:'🥇', label:'GOLD OVERALLS' });
@@ -5959,7 +5984,7 @@ function interact(){
   else if (player.dir === 'left') reach.x -= 12; else if (player.dir === 'right') reach.x += 12;
   var best = null, bestD = 1e9;
   owFeatures.forEach(function(f){
-    if (['npc','villager','sign','innbed','house','exitdoor','pedestal','dungeon','shop'].indexOf(f.kind) < 0) return;
+    if (['npc','villager','sign','innbed','house','exitdoor','pedestal','dungeon','shop','warp'].indexOf(f.kind) < 0) return;
     if (!rectsOverlap(reach, f)) return;
     var d = Math.hypot(f.x + f.w / 2 - (player.x + player.w / 2), f.y + f.h / 2 - (player.y + player.h / 2));
     if (d < bestD){ bestD = d; best = f; }
@@ -5976,6 +6001,8 @@ function interact(){
     exitHouse(); interactCd = 1.5;
   } else if (f.kind === 'pedestal'){
     if (state.wrench < 1 && !intro) startIntro('wrench');
+  } else if (f.kind === 'warp'){
+    doWarp(f);
   } else if (f.kind === 'shop'){
     player.y = f.y + f.h + 10; interactCd = 1.5; openShop();
   } else if (f.kind === 'dungeon'){
@@ -6057,6 +6084,8 @@ function owUpdate(dt){
         } else {
           enterDungeon(f.idx);
         }
+      } else if (f.kind === 'warp'){
+        doWarp(f); break;
       } else if (f.kind === 'house'){
         enterHouse(f.id); interactCd = 1.5;
       } else if (f.kind === 'villager'){
@@ -6477,6 +6506,10 @@ function enterRoom(){
     if (state.hasBombs) legacyAlready.push('Bomb Bag 💣');
     else roomItems.push({ kind:'bombs', x: W/2 + 110, y: 108, w: 40, h: 40, emoji:'💣', label:'BOMB BAG' });
   }
+  if (state.level === 4){
+    if (state.hasWhistle) legacyAlready.push('Corn Whistle 🎵');
+    else roomItems.push({ kind:'whistle', x: W/2 - 150, y: 108, w: 40, h: 40, emoji:'🎵', label:'THE CORN WHISTLE' });
+  }
   if (state.level === 6){
     if (state.armor >= 3) legacyAlready.push('Gold Overalls 🥇');
     else roomItems.push({ kind:'armor', armorTier: 3, x: W/2 - 150, y: 108, w: 40, h: 40, emoji:'🥇', label:'GOLD OVERALLS' });
@@ -6892,7 +6925,8 @@ document.addEventListener('keydown', function(ev){
   if (ev.code === 'KeyG' && state.screen === 'play'){ doGoldBow(); }
   if (ev.code === 'KeyT' && state.screen === 'play'){ doWrench(); }
   if (ev.code === 'KeyL' && state.screen === 'play'){ doLantern(); }
-  if (ev.code === 'KeyE' && state.screen === 'play'){ if (!ev.repeat) interact(); }   /* v22: E is the keyboard A button */
+  if (ev.code === 'KeyE' && state.screen === 'play'){ if (!ev.repeat) interact(); }
+  if (ev.code === 'KeyC' && state.screen === 'play'){ if (!ev.repeat) playWhistle(); }   /* v27: C blows the Corn Whistle */   /* v22: E is the keyboard A button */
   if (ev.code === 'KeyM'){ if (state.screen === 'worldmap') closeWorldMap(); else openWorldMap(); }
   if (ev.code === 'KeyN'){ if (state.screen === 'levelmap') closeLevelMap(); else openLevelMap(); }
   if (ev.code === 'KeyO'){ useOil(); }
@@ -7191,6 +7225,34 @@ function doThrow(){
   if (player.dir === 'up') dy = -1; else if (player.dir === 'down') dy = 1;
   else if (player.dir === 'left') dx = -1; else dx = 1;
   kernels.push({ x: player.x + 12, y: player.y + 12, w: 9, h: 9, vx: dx * 420, vy: dy * 420, life: 0.9 });
+}
+/* ---------- THE CORN WHISTLE (v27) ----------
+   Level 5's item, Zelda II's Flute in corn dress. Blown from
+   the Pack (tap its slot) or with C. Anywhere, it just sings —
+   but in the Lost Hills, where three standing stones keep the
+   north-east, its song wakes the HOLLOW TREE: the old dead
+   tree slides aside and the root tunnel under it opens — a
+   shortcut under the fields to the Moonlit Meadow, and back */
+function playWhistle(){
+  if (!state.hasWhistle || state.mode === 'dungeon' || !player) return;
+  sfx('whistle');
+  burst(player.x + 16, player.y - 6, '#ffe066', 8);
+  if (state.owRow * OW_COLS + state.owCol === OW_LOST && !state.found.hollowtree){
+    state.found.hollowtree = true; playSecret();
+    var tree = null;
+    for (var oi = 0; oi < obstacles.length; oi++) if (obstacles[oi].hollow){ tree = obstacles[oi]; break; }
+    if (tree) tree.x += 58;
+    owFeatures.push({ kind:'warp', x: 380, y: 48, w: 36, h: 30, toCol: 1, toRow: 6, toX: 128, toY: 96 });
+    showBanner('🎵 THE WHISTLE SINGS — AND THE HOLLOW TREE SLIDES ASIDE! A ROOT TUNNEL HIDES UNDER ITS ROOTS… 🎵', 3400);
+    saveActiveProfile();
+  }
+}
+function doWarp(f){
+  state.owCol = f.toCol; state.owRow = f.toRow;
+  loadOwScreen();
+  player.x = f.toX; player.y = f.toY;
+  interactCd = 1.5; sfx('warp');
+  showBanner('🌀 THE ROOT TUNNEL — THE FARM CARRIES HIM UNDER THE FIELDS…', 2200);
 }
 function doBomb(){
   if (!state.hasBombs){ showBanner('💣 NO BOMB BAG — THEY SAY A BAG OF BOMBS SLEEPS IN THE DARK CORN MAZE BARN (LEVEL 3).', 2600); return; }
@@ -8106,6 +8168,15 @@ function update(dt){
           roomItems.splice(ri, 1); updateHUD(); saveActiveProfile();
           /* TWO-ITEM RULE, same as the Overalls: grabbing the last
              item in the room closes the level out */
+          if (!roomItems.length && state.pieces[state.level]){
+            phase = 'blink'; blinkT = pendingLevel9Unlock ? 1.7 : 1.1; playItem();
+            dlog('That was the last item in the seed room — the level closes out: golden flash, then back outside by the barn.');
+          }
+        } else if (it.kind === 'whistle'){
+          state.hasWhistle = true; playItem();
+          showBanner('🎵 YOU GOT THE CORN WHISTLE! 🎵 BLOW IT FROM THE PACK (OR PRESS C) — AND IF YOU EVER STAND BY THREE STANDING STONES IN THE LOST HILLS, BLOW IT THERE… 🎵', 3600);
+          dlog('The Corn Whistle collected in the Level 5 seed room.');
+          roomItems.splice(ri, 1); updateHUD(); saveActiveProfile();
           if (!roomItems.length && state.pieces[state.level]){
             phase = 'blink'; blinkT = pendingLevel9Unlock ? 1.7 : 1.1; playItem();
             dlog('That was the last item in the seed room — the level closes out: golden flash, then back outside by the barn.');
@@ -9146,6 +9217,16 @@ function drawOwFeatures(){
       }
       return;
     }
+    if (f.kind === 'warp'){
+      /* the root tunnel's mouth (v27): a dark hollow ringed
+         with stone, roots curling over the top */
+      ctx.fillStyle = 'rgba(0,0,0,0.20)'; ctx.beginPath(); ctx.ellipse(f.x + f.w / 2, f.y + f.h + 2, f.w / 2 + 5, 5, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#241a10'; ctx.beginPath(); ctx.ellipse(f.x + f.w / 2, f.y + f.h / 2, f.w / 2, f.h / 2, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#120c06'; ctx.beginPath(); ctx.ellipse(f.x + f.w / 2, f.y + f.h / 2 + 3, f.w / 2 - 7, f.h / 2 - 6, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#6b6455'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.ellipse(f.x + f.w / 2, f.y + f.h / 2, f.w / 2, f.h / 2, 0, 0, Math.PI * 2); ctx.stroke();
+      return;
+    }
     if (f.kind === 'npc'){
       /* a drawn farmer now, not an emoji (Michael, 2026-11-18) */
       drawVillager(f.x + 3, f.y, Math.abs(f.x * 7 + f.y) % 4, f.name || null, false);
@@ -10059,6 +10140,7 @@ document.getElementById('worldMapCloseBtn').addEventListener('click', function()
     else if (act === 'throw-kernel'){ state.equipThrow = 'kernel'; sfx('corn'); }
     else if (act === 'throw-bow'){ if (state.hasBow){ state.equipThrow = 'bow'; sfx('unlock'); } }
     else if (act === 'throw-bomb'){ if (state.hasBombs){ state.equipThrow = 'bomb'; sfx('unlock'); } }
+    else if (act === 'play-whistle'){ if (state.hasWhistle){ resumeGame(); playWhistle(); } }
     else if (act === 'throw-gold'){ if (state.hasBow && state.goldArrows > 0){ state.equipThrow = 'gold'; sfx('unlock'); } }
     else return;
     renderSubscreen(); updateHUD(); saveActiveProfile();
