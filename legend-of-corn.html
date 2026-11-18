@@ -4769,47 +4769,146 @@ function endIntro(){
    the chat bubble. The talking farmers out on the fields are drawn
    people too — no more emoji stand-ins. */
 var houseTalk = null, currentHouse = null;
+function rrPath(x, y, w, h, r){
+  /* a rounded-rectangle path — the anti-squarey workhorse */
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y); ctx.arc(x + w - r, y + r, r, -Math.PI / 2, 0);
+  ctx.lineTo(x + w, y + h - r); ctx.arc(x + w - r, y + h - r, r, 0, Math.PI / 2);
+  ctx.lineTo(x + r, y + h); ctx.arc(x + r, y + h - r, r, Math.PI / 2, Math.PI);
+  ctx.lineTo(x, y + r); ctx.arc(x + r, y + r, r, Math.PI, Math.PI * 1.5);
+  ctx.closePath();
+}
 function paintHouse(bx, by, bw, bh, doorColor, sign){
-  /* the Minish way (Michael's reference shots): the house is mostly
-     ROOF — a great scalloped thatch over a strip of plaster, standing
-     on a stone foundation, with an arched door and a hanging sign */
-  R(bx + 6, by + bh - 4, bw - 12, 7, 'rgba(0,0,0,0.18)');
-  R(bx, by + bh - 14, bw, 14, '#9a958c');
-  R(bx + 14, by + bh - 14, 3, 14, '#857f74'); R(bx + bw - 40, by + bh - 14, 3, 14, '#857f74'); R(bx + bw / 2, by + bh - 14, 3, 14, '#857f74');
-  R(bx, by + bh * 0.52, bw, bh * 0.48 - 14, '#efe3c2');
-  ctx.fillStyle = '#d9a92e'; ctx.beginPath();
-  ctx.moveTo(bx - 10, by + bh * 0.58); ctx.lineTo(bx + bw / 2, by - 16); ctx.lineTo(bx + bw + 10, by + bh * 0.58); ctx.closePath(); ctx.fill();
-  for (var tr = 0; tr < 4; tr++){
-    var ty = by + 6 + tr * (bh * 0.13), tw = bw * (0.30 + tr * 0.19);
-    R(bx + bw / 2 - tw / 2, ty, tw, 7, tr % 2 ? '#eec95c' : '#e3b83f');
+  /* v10 — drawn FROM Michael's Minish Cap reference (Link's House):
+     the house is a golden HAYSTACK, not a triangle on a box. One big
+     rounded loaf of thatch, wider than the walls, scalloped in tufted
+     rows under a wavy fringed hem; eyebrow dormers on its face; a
+     short rounded-stone wall peeking out below; a hooded porch over
+     a round-arched door; the chimney poking out of the thatch at the
+     top right. Almost nothing here is a straight line. */
+  var cx = bx + bw / 2;
+  var seed = Math.abs(bx * 3 + by * 7) % 11 - 5;   /* each house leans its own way — the same way every frame */
+  var peakX = cx + seed;
+  var topY = by - 14;
+  var eaveY = by + bh * 0.66;
+  var baseY = by + bh;
+  /* soft oval shadow */
+  ctx.fillStyle = 'rgba(0,0,0,0.16)';
+  ctx.beginPath(); ctx.ellipse(cx, baseY + 3, bw * 0.58, 8, 0, 0, Math.PI * 2); ctx.fill();
+  /* the stone chimney first, so the thatch swallows its base */
+  var chX = bx + bw - 46, chY = topY - 10;
+  ctx.fillStyle = '#cfd4d1'; rrPath(chX, chY, 24, 48, 5); ctx.fill();
+  ctx.fillStyle = '#a9a49a'; rrPath(chX - 3, chY - 5, 30, 9, 4); ctx.fill();
+  ctx.fillStyle = '#6f6a5e'; R(chX + 5, chY, 3, 3); R(chX + 12, chY, 3, 3); R(chX + 19, chY, 3, 3);
+  /* smoke — two puffs drifting up and growing soft */
+  ctx.fillStyle = '#ffffff';
+  for (var sp = 0; sp < 2; sp++){
+    var sph = (runTime * 10 + sp * 16) % 32;
+    ctx.globalAlpha = Math.max(0.05, 0.32 - sph * 0.008);
+    ctx.beginPath(); ctx.arc(chX + 12 + Math.sin((runTime + sp * 2) * 1.3) * 3, chY - 10 - sph, 4 + sph * 0.28, 0, Math.PI * 2); ctx.fill();
   }
-  R(bx + bw / 2 - bw * 0.16, by - 13, bw * 0.32, 6, '#b98c22');
-  R(bx - 10, by + bh * 0.58 - 4, bw + 20, 5, 'rgba(90,60,10,0.35)');
-  R(bx + bw - 48, by - 2, 17, 30, '#8a8578');
-  R(bx + bw - 50, by - 6, 21, 6, '#6f6a5e');
-  ctx.globalAlpha = 0.35; ctx.fillStyle = '#ffffff';
-  var smk = (runTime * 9) % 22;
-  ctx.beginPath(); ctx.arc(bx + bw - 40, by - 12 - smk, 4 + smk * 0.25, 0, Math.PI * 2); ctx.fill();
   ctx.globalAlpha = 1;
-  [bx + 16, bx + bw - 42].forEach(function(wx){
-    R(wx, by + bh * 0.60, 26, 24, '#ffe9a8');
-    R(wx - 5, by + bh * 0.60, 5, 24, doorColor); R(wx + 26, by + bh * 0.60, 5, 24, doorColor);
-    ctx.strokeStyle = '#5d3a17'; ctx.lineWidth = 2; ctx.strokeRect(wx, by + bh * 0.60, 26, 24);
+  /* the little stone wall under the thatch — rounded stones, not a slab */
+  ctx.fillStyle = '#ddd8ce'; rrPath(bx + 8, eaveY - 8, bw - 16, baseY - eaveY + 6, 7); ctx.fill();
+  ctx.fillStyle = '#c9c2b2';
+  for (var sx = bx + 20; sx < bx + bw - 20; sx += 26){
+    ctx.beginPath(); ctx.ellipse(sx + ((sx * 7) % 5), baseY - 5, 10, 5, 0, 0, Math.PI * 2); ctx.fill();
+  }
+  /* THE THATCH — one big rounded loaf */
+  function roofPath(){
+    ctx.beginPath();
+    ctx.moveTo(bx - 14, eaveY);
+    ctx.bezierCurveTo(bx - 18, by + bh * 0.30, bx + bw * 0.06, topY + 2, peakX - bw * 0.30, topY + 1);
+    ctx.bezierCurveTo(bx + bw * 0.36, topY - 7, bx + bw * 0.62, topY - 7, peakX + bw * 0.30, topY + 1);
+    ctx.bezierCurveTo(bx + bw * 0.94, topY + 2, bx + bw + 18, by + bh * 0.30, bx + bw + 14, eaveY);
+    ctx.bezierCurveTo(bx + bw * 0.66, eaveY + 7, bx + bw * 0.34, eaveY + 7, bx - 14, eaveY);
+    ctx.closePath();
+  }
+  var g = ctx.createLinearGradient(0, topY, 0, eaveY);
+  g.addColorStop(0, '#f7cd4a'); g.addColorStop(0.55, '#eeb62e'); g.addColorStop(1, '#dd9a1a');
+  roofPath(); ctx.fillStyle = g; ctx.fill();
+  ctx.save(); roofPath(); ctx.clip();
+  /* tufted rows — overlapping scallop arcs marching down the loaf */
+  var rowsN = 5;
+  for (var r2 = 0; r2 < rowsN; r2++){
+    var ry = topY + 12 + r2 * ((eaveY - topY - 14) / rowsN);
+    ctx.fillStyle = r2 % 2 ? 'rgba(255,232,150,0.55)' : 'rgba(198,128,20,0.35)';
+    for (var tx = bx - 8 + (r2 % 2) * 11; tx < bx + bw + 10; tx += 22){
+      ctx.beginPath(); ctx.arc(tx, ry, 11, 0, Math.PI); ctx.fill();
+    }
+  }
+  /* loose straw strokes */
+  ctx.strokeStyle = 'rgba(160,98,10,0.35)'; ctx.lineWidth = 2;
+  for (var st = 0; st < 14; st++){
+    var stx = bx + 8 + ((st * 53 + Math.abs(seed) * 7) % Math.max(12, bw - 16));
+    var sty = topY + 16 + ((st * 37) % Math.max(10, eaveY - topY - 30));
+    ctx.beginPath(); ctx.moveTo(stx, sty); ctx.lineTo(stx + 2, sty + 9); ctx.stroke();
+  }
+  /* warm shade pooling at the hem */
+  var g2 = ctx.createLinearGradient(0, eaveY - 26, 0, eaveY + 4);
+  g2.addColorStop(0, 'rgba(150,84,0,0)'); g2.addColorStop(1, 'rgba(150,84,0,0.35)');
+  ctx.fillStyle = g2; ctx.fillRect(bx - 20, eaveY - 26, bw + 40, 32);
+  ctx.restore();
+  /* the warm amber outline, like the reference's edge */
+  roofPath(); ctx.strokeStyle = '#b57a10'; ctx.lineWidth = 3; ctx.stroke();
+  /* the fringed hem — little straw strands hanging off the eave */
+  ctx.strokeStyle = '#c07f10'; ctx.lineWidth = 2;
+  for (var fx = bx - 8; fx < bx + bw + 8; fx += 9){
+    var fl2 = 4 + ((fx * 13) % 4);
+    ctx.beginPath(); ctx.moveTo(fx, eaveY + 3); ctx.lineTo(fx + 1, eaveY + 3 + fl2); ctx.stroke();
+  }
+  /* eyebrow dormers — little thatch bumps with tiny dark windows */
+  [-0.27, 0.25].forEach(function(off){
+    var ddx = cx + bw * off, ddy = by + bh * 0.33;
+    ctx.fillStyle = '#f2c134';
+    ctx.beginPath(); ctx.arc(ddx, ddy + 6, 15, Math.PI, 0); ctx.fill();
+    ctx.strokeStyle = 'rgba(160,98,10,0.55)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(ddx, ddy + 6, 15, Math.PI * 1.05, Math.PI * 1.95); ctx.stroke();
+    ctx.fillStyle = '#5d3a17'; rrPath(ddx - 5, ddy - 1, 10, 8, 3); ctx.fill();
   });
-  var dx = bx + bw / 2;
-  R(dx - 21, by + bh - 48, 42, 48, '#5d3a17');
-  R(dx - 16, by + bh - 44, 32, 44, doorColor);
-  ctx.fillStyle = doorColor; ctx.beginPath(); ctx.arc(dx, by + bh - 44, 16, Math.PI, 0); ctx.fill();
-  R(dx + 8, by + bh - 22, 4, 4, '#ffd700');
-  R(dx - 24, by + bh - 3, 48, 4, '#857f74');
+  /* the porch: two posts and a little thatch hood over the door */
+  var dx = cx;
+  ctx.fillStyle = '#6d4423'; R(dx - 25, eaveY + 2, 5, baseY - eaveY - 4); R(dx + 20, eaveY + 2, 5, baseY - eaveY - 4);
+  /* the round-arched door, tucked up under the thatch */
+  ctx.fillStyle = '#4c2c08';
+  ctx.beginPath();
+  ctx.moveTo(dx - 16, baseY - 2); ctx.lineTo(dx - 16, eaveY + 9);
+  ctx.arc(dx, eaveY + 9, 16, Math.PI, 0);
+  ctx.lineTo(dx + 16, baseY - 2); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = doorColor;
+  ctx.beginPath();
+  ctx.moveTo(dx - 12, baseY - 2); ctx.lineTo(dx - 12, eaveY + 12);
+  ctx.arc(dx, eaveY + 12, 12, Math.PI, 0);
+  ctx.lineTo(dx + 12, baseY - 2); ctx.closePath(); ctx.fill();
+  /* its tiny oval window and brass knob */
+  ctx.fillStyle = '#2c1c08';
+  ctx.beginPath(); ctx.ellipse(dx, eaveY + 13, 4.5, 6, 0, 0, Math.PI * 2); ctx.fill();
+  R(dx + 6, (eaveY + baseY) / 2 + 10, 4, 4, '#ffd700');
+  /* the hood, drawn last so it caps the door's arch */
+  ctx.fillStyle = '#e9b32c';
+  ctx.beginPath();
+  ctx.moveTo(dx - 31, eaveY + 5);
+  ctx.quadraticCurveTo(dx, eaveY - 21, dx + 31, eaveY + 5);
+  ctx.quadraticCurveTo(dx, eaveY + 11, dx - 31, eaveY + 5);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = '#b57a10'; ctx.lineWidth = 2; ctx.stroke();
+  /* a stone step to land on */
+  ctx.fillStyle = '#b9b2a4'; rrPath(dx - 24, baseY - 3, 48, 8, 3); ctx.fill();
+  /* the hanging sign, on a curved arm off the porch — flipped for east-side houses */
   if (sign){
-    R(dx + 30, by + bh - 52, 3, 14, '#4c2c08');
+    var sgn = dx > 400 ? -1 : 1;
+    ctx.strokeStyle = '#4c2c08'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(dx + sgn * 23, eaveY + 8);
+    ctx.quadraticCurveTo(dx + sgn * 36, eaveY - 2, dx + sgn * 42, eaveY + 6); ctx.stroke();
     ctx.font = '10px "Press Start 2P", monospace'; ctx.textAlign = 'left';
     var swd = ctx.measureText(sign).width + 12;
-    R(dx + 33, by + bh - 52, swd, 17, '#5d3a17');
-    ctx.fillStyle = '#ffe9a8'; ctx.fillText(sign, dx + 39, by + bh - 39);
+    var sbx = sgn > 0 ? dx + 42 : dx - 42 - swd;
+    ctx.fillStyle = '#5d3a17'; rrPath(sbx, eaveY + 6, swd, 17, 4); ctx.fill();
+    ctx.fillStyle = '#ffe9a8'; ctx.fillText(sign, sbx + 6, eaveY + 19);
   }
 }
+
 function drawVillager(x, y, pal, name, kid){
   var PALS = [ ['#b03024', '#2e5f8a', '#f2c14e'], ['#2e7d32', '#6d4c41', '#8d6e63'], ['#6a1b9a', '#37474f', '#ffd54f'], ['#a34d28', '#455a64', '#e8e3d8'] ];
   var P = PALS[Math.abs(pal | 0) % 4];
@@ -4923,8 +5022,8 @@ function drawHouseInterior(){
   /* window light pooling on the floorboards */
   ctx.globalAlpha = 0.10; R(120, 120, 130, 90, '#ffe9a8'); R(500, 130, 120, 80, '#ffe9a8'); ctx.globalAlpha = 1;
   /* the rug — bordered, with a diamond at its heart */
-  R(W/2 - 132, H/2 - 86, 264, 172, hd.rug || '#a33327');
-  R(W/2 - 120, H/2 - 74, 240, 148, hd.rug2 || '#b8452f');
+  ctx.fillStyle = hd.rug || '#a33327'; rrPath(W/2 - 132, H/2 - 86, 264, 172, 18); ctx.fill();
+  ctx.fillStyle = hd.rug2 || '#b8452f'; rrPath(W/2 - 120, H/2 - 74, 240, 148, 13); ctx.fill();
   ctx.save(); ctx.translate(W/2, H/2); ctx.rotate(Math.PI / 4); R(-26, -26, 52, 52, hd.rug || '#a33327'); ctx.restore();
   /* thick stone walls with a wooden beam, all the way around */
   R(0, 0, W, 48, '#8d8577'); R(0, 44, W, 5, '#5d3a17');
@@ -7455,7 +7554,7 @@ function drawObstacle(o){
   if (o.type === 'housebody'){ return; }   /* the house feature draws the building; the obstacle is just its body */
   if (o.type === 'table'){ R(x, y + 6, o.w, o.h - 6, '#8a5a2b'); R(x - 2, y + 2, o.w + 4, 8, '#a06a35'); R(x + 4, y + o.h - 4, 6, 4, '#6d4423'); R(x + o.w - 10, y + o.h - 4, 6, 4, '#6d4423'); R(x + 10, y - 2, 16, 10, '#c04537'); R(x + 12, y - 2, 12, 3, '#fffbe8'); R(x + o.w - 22, y - 4, 4, 8, '#fffbe8'); R(x + o.w - 21, y - 7, 2, 3, '#ffb03a'); return; }
   if (o.type === 'bed'){ R(x, y, o.w, o.h, '#6d4423'); R(x + 3, y + 3, o.w - 6, o.h - 6, '#8a5a2b'); R(x + 5, y + 5, o.w - 10, Math.min(20, o.h * 0.28), '#fffbe8'); R(x + 5, y + Math.min(24, o.h * 0.32), o.w - 10, o.h - Math.min(24, o.h * 0.32) - 5, '#a33327'); R(x + 5, y + Math.min(24, o.h * 0.32), o.w - 10, 6, '#c04537'); R(x - 2, y - 2, 5, 8, '#4c2c08'); R(x + o.w - 3, y - 2, 5, 8, '#4c2c08'); return; }
-  if (o.type === 'stove'){ R(x - 4, y - 58, o.w + 8, 58, '#8d8577'); R(x - 4, y - 58, o.w + 8, 6, '#6f6a5e'); R(x, y, o.w, o.h, '#9a958c'); R(x - 3, y - 4, o.w + 6, 7, '#6d4423'); R(x + 10, y + o.h - 26, o.w - 20, 24, '#1c1410'); var fl = Math.sin(runTime * 11 + x) * 2; R(x + 16, y + o.h - 16 - fl, 8, 14 + fl, '#ff8a2d'); R(x + o.w - 24, y + o.h - 13 + fl, 7, 11 - fl, '#ffb03a'); R(x + o.w / 2 - 3, y + o.h - 19 - fl, 6, 17 + fl, '#ffd23e'); R(x + 12, y + o.h - 5, o.w - 24, 4, '#4c2c08'); return; }
+  if (o.type === 'stove'){ R(x - 4, y - 58, o.w + 8, 58, '#8d8577'); R(x - 4, y - 58, o.w + 8, 6, '#6f6a5e'); R(x, y, o.w, o.h, '#9a958c'); R(x - 3, y - 4, o.w + 6, 7, '#6d4423'); (function(){ ctx.fillStyle = '#1c1410'; ctx.beginPath(); ctx.moveTo(x + 10, y + o.h - 2); ctx.lineTo(x + 10, y + o.h - 16); ctx.arc(x + o.w / 2, y + o.h - 16, (o.w - 20) / 2, Math.PI, 0); ctx.lineTo(x + o.w - 10, y + o.h - 2); ctx.closePath(); ctx.fill(); })(); var fl = Math.sin(runTime * 11 + x) * 2; R(x + 16, y + o.h - 16 - fl, 8, 14 + fl, '#ff8a2d'); R(x + o.w - 24, y + o.h - 13 + fl, 7, 11 - fl, '#ffb03a'); R(x + o.w / 2 - 3, y + o.h - 19 - fl, 6, 17 + fl, '#ffd23e'); R(x + 12, y + o.h - 5, o.w - 24, 4, '#4c2c08'); return; }
   if (o.type === 'shelf'){ R(x, y, o.w, o.h + 14, '#6d4423'); var bookCols = ['#c04537', '#37c978', '#ffd91a', '#5d8ac9', '#b06ab8', '#e07b1f']; for (var bk = 0; bk < 6; bk++){ var bx2 = x + 4 + bk * ((o.w - 8) / 6); R(bx2, y + 2, (o.w - 8) / 6 - 2, 10 + ((bk * 7 + (x | 0)) % 3), bookCols[bk % 6]); } R(x + 2, y + 15, o.w - 4, 3, '#8a5a2b'); return; }
   if (o.type === 'housewall'){ return; }   /* painted by drawHouseInterior */
   if (o.type === 'barrel'){ R(x + 2, y + 3, o.w - 4, o.h - 3, '#8a5a2b'); R(x, y + 8, o.w, 4, '#5d3a17'); R(x, y + o.h - 10, o.w, 4, '#5d3a17'); R(x + 2, y, o.w - 4, 5, '#a06a35'); return; }
@@ -8090,9 +8189,8 @@ function drawOwFeatures(){
       return;
     }
     if (f.kind === 'exitdoor'){
-      R(f.x - 6, f.y - 24, f.w + 12, f.h + 28, '#4c2c08');
-      R(f.x, f.y - 18, f.w, f.h + 22, '#a06a1d');
-      R(f.x + 5, f.y - 13, f.w - 10, f.h + 12, '#7a4d16');
+      ctx.fillStyle = '#4c2c08'; ctx.beginPath(); ctx.moveTo(f.x - 6, f.y + f.h + 4); ctx.lineTo(f.x - 6, f.y - 12); ctx.arc(f.x + f.w / 2, f.y - 12, f.w / 2 + 6, Math.PI, 0); ctx.lineTo(f.x + f.w + 6, f.y + f.h + 4); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#8a5a2b'; ctx.beginPath(); ctx.moveTo(f.x, f.y + f.h + 2); ctx.lineTo(f.x, f.y - 10); ctx.arc(f.x + f.w / 2, f.y - 10, f.w / 2, Math.PI, 0); ctx.lineTo(f.x + f.w, f.y + f.h + 2); ctx.closePath(); ctx.fill();
       ctx.font = '9px "Press Start 2P", monospace'; ctx.textAlign = 'center'; ctx.fillStyle = '#7dff8a';
       ctx.fillText('EXIT', f.x + f.w / 2, f.y - 30);
       return;
