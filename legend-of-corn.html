@@ -3339,6 +3339,8 @@ function drawFarmMap(cv, withLabels){
     }
     if (healPondFor(i)){ mc.fillStyle = '#2f7fc4'; mc.beginPath(); mc.ellipse(cx + 20, cy + 82, 15, 9, 0, 0, Math.PI * 2); mc.fill(); mc.fillStyle = '#7cc0ee'; mc.beginPath(); mc.ellipse(cx + 17, cy + 79, 7, 3, 0, 0, Math.PI * 2); mc.fill(); }
     if (i === OW_L4){ mc.fillStyle = '#2f7fc4'; mc.beginPath(); mc.ellipse(cx + 50, cy + 50, 32, 23, 0, 0, Math.PI * 2); mc.fill(); mc.fillStyle = S.ground; mc.beginPath(); mc.ellipse(cx + 50, cy + 50, 17, 12, 0, 0, Math.PI * 2); mc.fill(); }
+    if (i === OW_L2){ mc.fillStyle = '#c9b06a'; mc.beginPath(); mc.ellipse(cx + 68, cy + 76, 30, 15, 0, 0, Math.PI * 2); mc.fill(); mc.fillStyle = '#2f7fc4'; mc.beginPath(); mc.ellipse(cx + 68, cy + 76, 25, 11, 0, 0, Math.PI * 2); mc.fill(); mc.fillStyle = '#7cc0ee'; mc.beginPath(); mc.ellipse(cx + 60, cy + 72, 9, 3, 0, 0, Math.PI * 2); mc.fill(); }
+    if (i === OW_L6){ mc.fillStyle = '#c3c9cf'; [[22, 30], [52, 26], [76, 34], [36, 58], [64, 60]].forEach(function(tp3){ mc.fillRect(cx + tp3[0], cy + tp3[1], 5, 8); }); }
     if (i === OW_L3){ mc.fillStyle = 'rgba(30,80,20,0.55)'; for (var mz = 0; mz < 4; mz++) mc.fillRect(cx + 12 + mz * 22, cy + 6, 9, 88); }
     if (i === OW_L6){ mc.fillStyle = '#9aa0a6'; mc.fillRect(cx + 18, cy + 62, 10, 14); mc.fillRect(cx + 70, cy + 58, 10, 14); mc.fillRect(cx + 44, cy + 70, 10, 14); }
     if (i === OW_GROVE){ mc.fillStyle = '#7d838a'; mc.fillRect(cx + 36, cy + 42, 28, 9); mc.fillStyle = '#5f6468'; mc.fillRect(cx + 41, cy + 51, 18, 11); if (state.wrench < 1){ mc.font = '20px serif'; mc.fillText('🔧', cx + 50, cy + 34); } }
@@ -4129,19 +4131,19 @@ function owRegionName(c, r){
   return ns + ew;
 }
 var OW_SPECIAL = {};
-OW_SPECIAL[OW_L6]   = { name:'The Old Graveyard', ground:'#55773a', ground2:'#4c6c33', ob:'tomb',    deco:'star'    };
+OW_SPECIAL[OW_L6]   = { name:'The Old Graveyard', ground:'#55773a', ground2:'#4c6c33', ob:'tomb',    deco:'star', wall:'stone' };
 OW_SPECIAL[OW_L9]   = { name:'Great Barn Hill',   ground:'#5db531', ground2:'#55a82c', ob:'rock',    deco:'flower'  };
-OW_SPECIAL[OW_LOST] = { name:'The Lost Hills',    ground:'#8a7a45', ground2:'#7f7040', ob:'rock',    deco:'corn'    };
-OW_SPECIAL[OW_L5]   = { name:'Owl Roost Ridge',   ground:'#477a35', ground2:'#3f6e2f', ob:'tree',    deco:'star'    };
-OW_SPECIAL[OW_L3]   = { name:'The Corn Maze',     ground:'#3e7d26', ground2:'#376e21', ob:'corn',    deco:'corn'    };
+OW_SPECIAL[OW_LOST] = { name:'The Lost Hills',    ground:'#8a7a45', ground2:'#7f7040', ob:'rock',    deco:'corn', wall:'rock' };
+OW_SPECIAL[OW_L5]   = { name:'Owl Roost Ridge',   ground:'#477a35', ground2:'#3f6e2f', ob:'tree',    deco:'star', wall:'tree' };
+OW_SPECIAL[OW_L3]   = { name:'The Corn Maze',     ground:'#3e7d26', ground2:'#376e21', ob:'corn',    deco:'corn', wall:'corn' };
 OW_SPECIAL[OW_MIDDLE] = { name:'Corn Village',    ground:'#64b037', ground2:'#5aa330', ob:'hay',     deco:'flower'  };
-OW_SPECIAL[OW_GROVE] = { name:'The Pedestal Grove', ground:'#477a35', ground2:'#3f6e2f', ob:'tree',    deco:'flower'  };
+OW_SPECIAL[OW_GROVE] = { name:'The Pedestal Grove', ground:'#477a35', ground2:'#3f6e2f', ob:'tree',    deco:'flower', wall:'tree' };
 OW_SPECIAL[OW_L4]   = { name:'Creek & Pond',      ground:'#4f9e4d', ground2:'#478f45', ob:'rock',    deco:'lily'    };
-OW_SPECIAL[OW_L7]   = { name:'Silo Yard',         ground:'#5b8f3e', ground2:'#527f36', ob:'rock',    deco:'corn'    };
-OW_SPECIAL[OW_L8]   = { name:'West Meadow',       ground:'#6aa832', ground2:'#619c2d', ob:'hay',     deco:'flower'  };
+OW_SPECIAL[OW_L7]   = { name:'Silo Yard',         ground:'#8a7a45', ground2:'#7f7040', ob:'rock',    deco:'corn', wall:'rock' };
+OW_SPECIAL[OW_L8]   = { name:'Moonlit Meadow',    ground:'#3d6b52', ground2:'#355e47', ob:'hay',     deco:'star', open:true };
 OW_SPECIAL[OW_HOME] = { name:'Home Farm',         ground:'#5db531', ground2:'#55a82c', ob:'hay',     deco:'flower'  };
-OW_SPECIAL[OW_L1]   = { name:'Sunny East Field',  ground:'#5db531', ground2:'#55a82c', ob:'hay',     deco:'flower'  };
-OW_SPECIAL[OW_L2]   = { name:'Pumpkin Patch',     ground:'#6aa832', ground2:'#619c2d', ob:'pumpkin', deco:'pumpkin' };
+OW_SPECIAL[OW_L1]   = { name:'Sunny East Field',  ground:'#5db531', ground2:'#55a82c', ob:'hay',     deco:'flower', open:true };
+OW_SPECIAL[OW_L2]   = { name:'The Pumpkin Lakeshore', ground:'#6aa832', ground2:'#619c2d', ob:'pumpkin', deco:'pumpkin' };
 var OW_SCREENS = [];
 for (var owr = 0; owr < OW_ROWS; owr++){
   for (var owc = 0; owc < OW_COLS; owc++){
@@ -4365,12 +4367,24 @@ function clearField(){
 }
 function borderObstacles(gaps, type){
   var T = type || 'fence', out = [], G = 124;
-  function hseg(x, y, w){ if (w > 4) out.push({ x:x, y:y, w:w, h:20, type:T }); }
-  function vseg(x, y, h){ if (h > 4) out.push({ x:x, y:y, w:20, h:h, type:T }); }
-  if (gaps.N){ hseg(0, 0, W/2 - G/2); hseg(W/2 + G/2, 0, W/2 - G/2); } else hseg(0, 0, W);
-  if (gaps.S){ hseg(0, H-20, W/2 - G/2); hseg(W/2 + G/2, H-20, W/2 - G/2); } else hseg(0, H-20, W);
-  if (gaps.W){ vseg(0, 0, H/2 - G/2); vseg(0, H/2 + G/2, H/2 - G/2); } else vseg(0, 0, H);
-  if (gaps.E){ vseg(W-20, 0, H/2 - G/2); vseg(W-20, H/2 + G/2, H/2 - G/2); } else vseg(W-20, 0, H);
+  if (T === 'fence'){
+    function hseg(x, y, w){ if (w > 4) out.push({ x:x, y:y, w:w, h:20, type:T }); }
+    function vseg(x, y, h){ if (h > 4) out.push({ x:x, y:y, w:20, h:h, type:T }); }
+    if (gaps.N){ hseg(0, 0, W/2 - G/2); hseg(W/2 + G/2, 0, W/2 - G/2); } else hseg(0, 0, W);
+    if (gaps.S){ hseg(0, H-20, W/2 - G/2); hseg(W/2 + G/2, H-20, W/2 - G/2); } else hseg(0, H-20, W);
+    if (gaps.W){ vseg(0, 0, H/2 - G/2); vseg(0, H/2 + G/2, H/2 - G/2); } else vseg(0, 0, H);
+    if (gaps.E){ vseg(W-20, 0, H/2 - G/2); vseg(W-20, H/2 + G/2, H/2 - G/2); } else vseg(W-20, 0, H);
+    return out;
+  }
+  /* v26: a wall of THINGS — trees, rocks, stones, corn — stands
+     cell by cell along the edge, with the same wide middle gaps
+     the fence always left */
+  function hcells(y, x0, x1){ for (var x = x0; x + 20 <= x1; x += 40) out.push({ x: x, y: y, w: 40, h: 40, type: T }); }
+  function vcells(x, y0, y1){ for (var y = y0; y + 20 <= y1; y += 40) out.push({ x: x, y: y, w: 40, h: 40, type: T }); }
+  if (gaps.N){ hcells(0, 0, W/2 - G/2); hcells(0, W/2 + G/2, W); } else hcells(0, 0, W);
+  if (gaps.S){ hcells(H - 40, 0, W/2 - G/2); hcells(H - 40, W/2 + G/2, W); } else hcells(H - 40, 0, W);
+  if (gaps.W){ vcells(0, 40, H/2 - G/2); vcells(0, H/2 + G/2, H - 40); } else vcells(0, 40, H - 40);
+  if (gaps.E){ vcells(W - 40, 40, H/2 - G/2); vcells(W - 40, H/2 + G/2, H - 40); } else vcells(W - 40, 40, H - 40);
   return out;
 }
 function scatterObstacles(R, type, count, avoid){
@@ -4403,8 +4417,11 @@ function scatterExtraObstacles(R, type, count, avoid){
       return rectsOverlap(o, { x: q.x - 8, y: q.y - 8, w: q.w + 16, h: q.h + 16 });
     });
     if (!bad) owFeatures.forEach(function(f){
-      var fr = (f.bw ? { x: f.bx - 6, y: f.by - 6, w: f.bw + 12, h: f.bh + 12 }
-                      : { x: f.x - 6, y: f.y - 6, w: f.w + 12, h: f.h + 12 });
+      /* features keep a full player-length apron (46px, v26b):
+         a bale flush under a barn door is clear of the door's
+         rect and still blocks the doorway — never again */
+      var fr = (f.bw ? { x: f.bx - 46, y: f.by - 46, w: f.bw + 92, h: f.bh + 92 }
+                      : { x: f.x - 46, y: f.y - 46, w: f.w + 92, h: f.h + 92 });
       if (rectsOverlap(o, fr)) bad = true;
     });
     if (!bad && avoid) avoid.forEach(function(a){ if (Math.abs(o.x - a.x) < a.r && Math.abs(o.y - a.y) < a.r) bad = true; });
@@ -4443,7 +4460,21 @@ function loadOwScreen(){
   state.visitedFields[state.world + ':' + idx] = true;
   state.visitedFields[state.world + ':' + OW_HOME] = true;
   if (idx === OW_LOST){ owGaps.N = true; owGaps.E = false; }  /* Lost Hills: north loops, east is solid rock */
-  obstacles = borderObstacles(owGaps, 'fence');
+  /* THE LAND DECIDES ITS OWN WALLS (v26, Michael 2026-11-18):
+     every country wears its own edge — the plains wear NONE
+     (walk off any side, straight into the next screen), the
+     woods wear trees, the rocky country wears rock, the
+     graveyard wears stone, the maze wears corn, and the rest
+     of the farm keeps its fences */
+  var wallType = S.wall || 'fence', openField = !!S.open;
+  if (!OW_SPECIAL[idx]){
+    var thx = OW_THEMES[(state.owCol * 3 + state.owRow * 5 + ((state.owCol + state.owRow) % 3)) % OW_THEMES.length];
+    if (thx.tag === 'Woodlot' || thx.tag === 'High Grass') wallType = 'tree';
+    else if (thx.tag === 'Rocky Field') wallType = 'rock';
+    else if (thx.tag === 'Corn Rows') wallType = 'corn';
+    else if (thx.tag === 'Meadow' || thx.tag === 'Sunflower Field' || thx.tag === 'Old Pasture') openField = true;
+  }
+  obstacles = openField ? [] : borderObstacles(owGaps, wallType);
   var avoid = [{ x: W/2, y: 40, r: 90 }, { x: W/2, y: H - 60, r: 90 }, { x: 40, y: H/2, r: 90 }, { x: W - 60, y: H/2, r: 90 }];
   if (idx === OW_HOME){                                      /* HOME FARM — a clear field (Michael, 2026-11-17): no store, no farmer standing on it. And no wrench lying in the grass (2026-11-18): it waits in the Pedestal Grove, four fields north — Corn Man fights his way there with his fists, through the morning fog. */
     scatterObstacles(R, 'hay', 4, avoid);
@@ -4465,7 +4496,14 @@ function loadOwScreen(){
     scatterObstacles(R, 'hay', 6, avoid.concat([{ x: 600, y: 110, r: 150 }]));
   } else if (idx === OW_L2){                                 /* Level 2 — cellar hatch in the pumpkin patch */
     owFeatures.push({ kind:'dungeon', idx: dunIdxForField(1), style:'hatch', x: 338, y: 138, w: 56, h: 40 });
-    scatterObstacles(R, 'pumpkin', 9, avoid.concat([{ x: 366, y: 158, r: 90 }]));
+    /* THE LAKE (v26): the farm's first real lake, along the
+       patch's south-east — sand you can walk on, water you
+       cannot (until the Ladder turns all water into a road).
+       The south fence gap opens right onto the beach */
+    obstacles.push({ x: 322, y: 400, w: 428, h: 136, type:'sand' });
+    obstacles.push({ x: 356, y: 420, w: 368, h: 96, type:'water', lake:true });
+    obstacles.push({ x: 396, y: 404, w: 288, h: 128, type:'water', lake:true });
+    scatterObstacles(R, 'pumpkin', 9, avoid.concat([{ x: 366, y: 158, r: 90 }, { x: 540, y: 470, r: 150 }]));   /* the lake keeps its water pumpkin-free */
   } else if (idx === OW_L3){                                 /* Level 3 — hidden stairs in the corn maze */
     [110, 230, 350, 470].forEach(function(y, ri){
       for (var x = 44; x < W - 60; x += 48){
@@ -4485,6 +4523,9 @@ function loadOwScreen(){
                    {x:408,y:394,w:126,h:44,type:'water'},{x:234,y:138,w:44,h:300,type:'water'},
                    {x:490,y:138,w:44,h:300,type:'water'});
     obstacles.push({ x: 299, y: 200, w: 170, h: 74, type:'housebody' });
+    /* THE ORCHARD (v26): apple trees stand around the creek
+       island — this is Orchard Rows, and now it reads like it */
+    [[96,120],[150,300],[620,120],[600,320],[96,330]].forEach(function(tp){ obstacles.push({ x: tp[0], y: tp[1], w: 40, h: 40, type:'tree' }); });
     owFeatures.push({ kind:'dungeon', idx: dunIdxForField(3), style:'hut', x: 364, y: 276, w: 40, h: 26, bx: 299, by: 182, bw: 170, bh: 120 });
     owFeatures.push({ kind:'npc', x: 120, y: 470, w: 36, h: 40, hint:'🧑‍🌾 OLD FARMER: “See the hut on the island? Mind the creek — cross at the little plank bridge on the south side.”' });
     scatterObstacles(R, 'rock', 3, avoid);
@@ -4495,10 +4536,16 @@ function loadOwScreen(){
        it, and a Super Heart sleeps in the dark inside */
     owFeatures.push({ kind:'cave', x: 96, y: 52, w: 68, h: 52 });
     if (!state.found.smashed_lostcave) obstacles.push({ x: 110, y: 64, w: 40, h: 40, type:'cracked', smashId:'lostcave' });
+    /* THE DESERT (v26): the Lost Hills are dry country — cacti
+       stand where the corn gives up */
+    [[300,150],[560,300],[180,430],[648,120]].forEach(function(cp){ obstacles.push({ x: cp[0], y: cp[1], w: 40, h: 40, type:'cactus' }); });
     scatterObstacles(R, 'rock', 8, avoid);
   } else if (idx === OW_L5){                                 /* Level 5 — roost barn over the hills */
     owFeatures.push({ kind:'dungeon', idx: dunIdxForField(4), style:'barn', x: 358, y: 168, w: 52, h: 30, bx: 296, by: 62, bw: 176, bh: 116 });
     obstacles.push({ x: 296, y: 80, w: 176, h: 88, type:'housebody' });
+    /* THE DEEP WOODS (v26): a copse crowds the field's west —
+       this is a forest with a barn in it, not a field with trees */
+    [[56,110],[104,84],[152,124],[64,176],[116,196]].forEach(function(tp){ obstacles.push({ x: tp[0], y: tp[1], w: 40, h: 40, type:'tree' }); });
     /* THE OLD STONE RING (v24): a Super Heart sleeps inside a ring
        of rocks on this shore field, and the ring's one weak stone
        is CRACKED — only the Sledge opens the way in */
@@ -4522,7 +4569,17 @@ function loadOwScreen(){
       obstacles.push({ x: rp[0], y: rp[1], w: 40, h: 40, type:'stone' });
     });
     if (!state.found.blown_cryptpocket) obstacles.push({ x: 500, y: 460, w: 40, h: 40, type:'crackedwall', smashId:'cryptpocket' });
-    owFeatures.push({ kind:'npc', x: 620, y: 452, w: 36, h: 40, hint:'👵 OLD FARMER: “Folks say a hatch sleeps under one of these stones. PUSH the big one, dearie — go on, lean on it.”' });
+    /* THE LOOSE STONE (v26, Michael 2026-11-18): one tombstone
+       in this yard is not like the others — PUSH it and hold,
+       and a HEART CONTAINER sleeps underneath. Zelda's graveyard
+       secret, word for word */
+    var ghStone = { x: 90, y: 470, w: 44, h: 46, type:'tomb', secretId:'graveheart' };
+    if (state.found.graveheart){ ghStone.x += 56; if (!state.superHearts.graveheart) pickups.push({ x: 97, y: 478, w: 30, h: 30, kind:'superheart', burnId:'graveheart', t: 0 }); }
+    obstacles.push(ghStone);
+    owSecrets.push({ id:'graveheart', x: 82, y: 462, w: 60, h: 58 });
+    /* two dead trees keep the yard's bare corners */
+    obstacles.push({ x: 660, y: 84, w: 40, h: 40, type:'deadtree' }, { x: 56, y: 96, w: 40, h: 40, type:'deadtree' });
+    owFeatures.push({ kind:'npc', x: 620, y: 452, w: 36, h: 40, hint:'👵 OLD FARMER: “Folks say a hatch sleeps under one of these stones. PUSH the big one, dearie — go on, lean on it. And down south-west stands a LOOSE one… they say a HEART sleeps under that. PUSH it too.”' });
   } else if (idx === OW_L7){                                 /* Level 7 — padlocked silo; a tractor carries the key */
     owFeatures.push({ kind:'dungeon', idx: dunIdxForField(6), style:'silo', x: 356, y: 176, w: 56, h: 34, locked:'key', bx: 330, by: 36, bw: 108, bh: 150 });
     obstacles.push({ x: 330, y: 54, w: 108, h: 122, type:'housebody' });
@@ -5883,6 +5940,7 @@ function revealOwSecret(s){
   if (s.id === 'maze'){ owFeatures.push({ kind:'dungeon', idx: dunIdxForField(2), style:'stairs', x: 98, y: 64, w: 48, h: 40 }); showBanner('🎉 SECRET FOUND! STAIRS HIDING IN THE CORN — LEVEL 3: DARK CORN MAZE! 🎉', 3000); }
   if (s.id === 'hay'){ owFeatures.push({ kind:'dungeon', idx: dunIdxForField(7), style:'hatch', x: 362, y: 240, w: 48, h: 40 }); showBanner('🎉 SECRET FOUND! THE HAY BALE HID A CELLAR HATCH — LEVEL 8: MOONLIGHT MEADOW! 🎉', 3000); }
   if (s.id === 'tomb'){ owFeatures.push({ kind:'dungeon', idx: dunIdxForField(5), style:'hatch', x: 350, y: 130, w: 48, h: 40 }); showBanner('🎉 SECRET FOUND! THE TOMBSTONE SLID ASIDE — LEVEL 6: SCARECROW RIDGE! 🎉', 3000); }
+  if (s.id === 'graveheart'){ pickups.push({ x: 97, y: 478, w: 30, h: 30, kind:'superheart', burnId:'graveheart', t: 0 }); showBanner('🎉 SECRET FOUND! A HEART CONTAINER WAS SLEEPING UNDER THE TOMBSTONE! 🎉', 3000); }
   if (s.id === 'cache'){ pickups.push({ x: 612, y: 480, w: 20, h: 20, kind:'coin', val: 5, t: 0 }, { x: 644, y: 492, w: 20, h: 20, kind:'coin', val: 5, t: 0 }, { x: 620, y: 512, w: 20, h: 20, kind:'corn', val: 3, t: 0 }); showBanner('🎉 SECRET CACHE FOUND UNDER THE ROCK! 🎉', 2600); }
   dlog('Secret revealed: ' + s.id);
 }
@@ -7273,6 +7331,7 @@ function rectOnWater(r, skipPond){
 function playerOnWater(){ return !!player && rectOnWater(player); }
 function obstacleBlocks(ent, o){
   if (o.type === 'water' && player && ent === player && state.hasLadder) return false;
+  if (o.type === 'sand') return false;   /* v26: the lakeshore — sand is ground, not a wall: everybody walks the beach */
   /* The little healing ponds — the Water of Life (fields 6-1 and
      14-3) never block Corn Man: he wades into their water, ladder
      or no ladder, and the water gives his energy back (see the pond
@@ -8167,6 +8226,34 @@ function drawObstacle(o){
   if (o.type === 'plant'){ R(x + 4, y + o.h - 12, o.w - 8, 12, '#b4552d'); R(x + 8, y + o.h - 15, o.w - 16, 3, '#8a3d1f'); ctx.fillStyle = '#2e7d32'; ctx.beginPath(); ctx.arc(x + o.w / 2, y + o.h - 22, 10, 0, Math.PI * 2); ctx.arc(x + 6, y + o.h - 16, 6, 0, Math.PI * 2); ctx.arc(x + o.w - 6, y + o.h - 16, 6, 0, Math.PI * 2); ctx.fill(); return; }
   if (o.type === 'anvil'){ R(x + 4, y + 10, o.w - 8, 10, '#455a64'); R(x + 10, y + 20, o.w - 20, 6, '#37474f'); R(x + 2, y + 4, 12, 7, '#607d8b'); return; }
   if (o.type === 'well'){ R(x, y + 8, o.w, o.h - 8, '#8a8f96'); R(x - 3, y + 2, o.w + 6, 6, '#7c1a12'); R(x + 4, y + 12, o.w - 8, o.h - 16, '#3c4043'); return; }
+  if (o.type === 'sand'){
+    /* the lakeshore (v26): warm sand with a lit top edge and an
+       ordered speckle — drawn big, walked on freely */
+    R(x, y, o.w, o.h, '#c9b06a'); R(x, y, o.w, 5, '#e8d69b'); R(x, y + o.h - 5, o.w, 5, '#b39a58');
+    ctx.fillStyle = '#a8905a';
+    for (var sdi = 0; sdi < 14; sdi++){ var sdx = x + 12 + texHash(x + sdi * 37, y) * (o.w - 24), sdy = y + 12 + texHash(x, y + sdi * 29) * (o.h - 24); ctx.fillRect(sdx, sdy, 3, 2); }
+    return;
+  }
+  if (o.type === 'cactus'){
+    /* a desert cactus (v26): green column, two arms, one pink
+       flower — the Lost Hills are dry country now */
+    R(x + 16, y + 8, 9, 30, '#2e8b3a'); R(x + 16, y + 8, 3, 30, '#35a544');
+    R(x + 5, y + 16, 11, 5, '#2e8b3a'); R(x + 5, y + 9, 5, 12, '#2e8b3a');
+    R(x + 25, y + 20, 11, 5, '#2e8b3a'); R(x + 31, y + 13, 5, 12, '#2e8b3a');
+    R(x + 18, y + 2, 6, 6, '#ff8ab0'); R(x + 10, y + 36, 22, 3, 'rgba(0,0,0,0.18)');
+    return;
+  }
+  if (o.type === 'deadtree'){
+    /* a dead tree (v26): grey trunk and bare branches — the
+       graveyard's trees gave up long ago */
+    R(x + 17, y + 16, 7, 22, '#6e6259'); R(x + 17, y + 16, 3, 22, '#7d7268');
+    ctx.strokeStyle = '#6e6259'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(x + 20, y + 20); ctx.lineTo(x + 6, y + 6); ctx.moveTo(x + 20, y + 17); ctx.lineTo(x + 34, y + 4); ctx.moveTo(x + 20, y + 22); ctx.lineTo(x + 10, y + 12); ctx.stroke();
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(x + 6, y + 6); ctx.lineTo(x + 2, y + 0); ctx.moveTo(x + 34, y + 4); ctx.lineTo(x + 38, y + 0); ctx.stroke();
+    R(x + 8, y + 37, 26, 3, 'rgba(0,0,0,0.20)');
+    return;
+  }
   if (o.type === 'hay'){ R(x + 3, y + 8, 34, 26, '#e8b93a'); R(x + 3, y + 14, 34, 3, '#c79a24'); R(x + 3, y + 24, 34, 3, '#c79a24'); R(x + 8, y + 3, 24, 6, '#f5d76a'); }
   else if (o.type === 'bush'){ R(x + 3, y + 16, 34, 20, '#2f7a1e'); R(x + 9, y + 7, 22, 12, '#2f7a1e'); R(x + 15, y + 3, 10, 8, '#2f7a1e'); R(x + 7, y + 11, 11, 9, '#3f9e2c'); R(x + 23, y + 18, 11, 9, '#3f9e2c'); R(x + 15, y + 25, 9, 7, '#58b02c'); R(x + 12, y + 15, 4, 4, '#ff5252'); R(x + 27, y + 9, 4, 4, '#ff5252'); R(x + 25, y + 28, 4, 4, '#ffd91a'); R(x + 5, y + 34, 30, 3, '#265f18'); }
   else if (o.type === 'pumpkin'){ R(x + 4, y + 10, 32, 26, '#e07b1f'); R(x + 12, y + 10, 3, 26, '#c4640f'); R(x + 24, y + 10, 3, 26, '#c4640f'); R(x + 17, y + 4, 6, 7, '#3f7d22'); }
@@ -8179,6 +8266,12 @@ function drawObstacle(o){
       R(x - 5, y - 5, o.w + 10, o.h + 10, '#c9b06a'); R(x - 5, y - 5, o.w + 10, 5, '#e8d69b');
     }
     R(x, y, o.w, o.h, '#2f7fc4'); R(x, y + 6, o.w, 3, '#57a8e8'); R(x, y + o.h - 12, o.w, 3, '#57a8e8');
+    if (o.lake){
+      /* THE LAKE (v26): lily pads ride the big water */
+      R(x + 40, y + 26, 17, 9, '#2e8b3a'); R(x + 43, y + 23, 4, 4, '#ff8ab0');
+      R(x + o.w - 90, y + o.h - 40, 19, 10, '#35a544');
+      R(x + o.w / 2 - 30, y + o.h / 2, 26, 3, '#57a8e8');
+    }
     if (o.healPond){
       R(x + 16, y + 14, 15, 8, '#2e8b3a'); R(x + 19, y + 11, 4, 4, '#ff8ab0');
       R(x + o.w - 38, y + o.h - 28, 17, 9, '#2e8b3a'); R(x + o.w - 62, y + 22, 13, 7, '#35a544');
