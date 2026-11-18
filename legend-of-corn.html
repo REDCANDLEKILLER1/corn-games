@@ -7397,38 +7397,51 @@ function drawBigEnemy(e){
   if (e.hitT > 0.12) ctx.globalAlpha = 0.55;
   if ((e.kind === 'tractor' || e.kind === 'supertractor') && e.state === 'aim' && Math.floor(runTime * 8) % 2)
     R(x - 6, y - 6, w + 12, h + 12, '#ff2d2d55');
+  /* ANIMATION (Michael, 2026-11-18 — every enemy animated): a walk
+     phase measured from the boss's REAL movement between frames,
+     the same 0.09/px the field brains accumulate, taken here in the
+     draw so every kind spends it below: legs step, feet paddle,
+     treads march, dresses sway. A boss that isn't moving isn't
+     stepping — no statues, no marching in place. */
+  if (e._lx === undefined){ e._lx = e.x; e._ly = e.y; e.walkT = 0; }
+  e.walkT = (e.walkT || 0) + (Math.abs(e.x - e._lx) + Math.abs(e.y - e._ly)) * 0.09;
+  e._lx = e.x; e._ly = e.y;
+  var wph = Math.floor((e.walkT || 0) * 2) % 2, wLegA = wph === 0 ? 3 : 0, wLegB = wph === 1 ? 3 : 0;
+  var wBob = Math.round(Math.sin((e.walkT || 0) * 6) * 1.5);
   if (e.kind === 'chicken'){
     var peck = e.state === 'lunge' ? 10 : 0;
     R(x + 8, y + 18, 44, 34, '#ffffff'); R(x + 4, y + 26, 12, 16, '#e8e8e8');       /* body + tail */
-    R(x + 38 + (f > 0 ? peck : -peck), y + 2, 22, 22, '#ffffff');                    /* head */
-    R(x + 46 + (f > 0 ? peck : -peck), y - 4, 8, 8, '#ff2d2d');                      /* comb */
-    if (f > 0) R(x + 59 + peck, y + 11, 12, 6, '#f5a301'); else R(x - 7 - peck, y + 11, 12, 6, '#f5a301'); /* beak */
-    R(x + 49 + (f > 0 ? peck : -peck), y + 8, 4, 4, '#14181d');
-    R(x + 18, y + 50, 5, 9, '#f5a301'); R(x + 38, y + 50, 5, 9, '#f5a301');
+    R(x + 38 + (f > 0 ? peck : -peck), y + 2 + wBob, 22, 22, '#ffffff');             /* head, bobbing */
+    R(x + 46 + (f > 0 ? peck : -peck), y - 4 + wBob, 8, 8, '#ff2d2d');               /* comb */
+    if (f > 0) R(x + 59 + peck, y + 11 + wBob, 12, 6, '#f5a301'); else R(x - 7 - peck, y + 11 + wBob, 12, 6, '#f5a301'); /* beak */
+    R(x + 49 + (f > 0 ? peck : -peck), y + 8 + wBob, 4, 4, '#14181d');
+    R(x + 18, y + 50 - wLegA, 5, 9, '#f5a301'); R(x + 38, y + 50 - wLegB, 5, 9, '#f5a301');   /* legs step */
   } else if (e.kind === 'turtle'){
     R(x + 6, y + 14, 58, 36, '#2f7a1e'); R(x + 14, y + 8, 42, 14, '#3f9e2c');        /* shell */
-    R(x + 22, y + 20, 26, 16, '#e8b93a');                                            /* shell pattern */
+    R(x + 22 + (wph ? 1 : -1), y + 20, 26, 16, '#e8b93a');                           /* shell pattern, rocking */
     var neck = Math.round((e.neckExt || 0) * 26);
     if (f > 0){ R(x + 60, y + 24, 8 + neck, 9, '#7fd67f'); R(x + 64 + neck, y + 18, 16, 16, '#7fd67f'); R(x + 74 + neck, y + 23, 4, 4, '#14181d'); R(x + 76 + neck, y + 30, 6, 3, '#c22e24'); }
     else { R(x + 2 - neck, y + 24, 8 + neck, 9, '#7fd67f'); R(x - 14 - neck, y + 18, 16, 16, '#7fd67f'); R(x - 12 - neck, y + 23, 4, 4, '#14181d'); R(x - 16 - neck, y + 30, 6, 3, '#c22e24'); }
-    R(x + 12, y + 48, 10, 6, '#2f7a1e'); R(x + 50, y + 48, 10, 6, '#2f7a1e');
+    R(x + 12 + (wph === 0 ? 2 : 0), y + 48, 10, 6, '#2f7a1e'); R(x + 50 + (wph === 1 ? 2 : 0), y + 48, 10, 6, '#2f7a1e');   /* feet paddle */
   } else if (e.kind === 'tractor' || e.kind === 'supertractor'){
     var superT = e.kind === 'supertractor';
-    R(x + 6, y + 14, w - 12, 30, superT ? '#c22e24' : '#37c978');                   /* body */
-    R(x + w - 42, y + 0, 30, 20, superT ? '#8f1f18' : '#2aa85f');                    /* cab */
-    R(x + w - 37, y + 4, 19, 11, '#bfe8ff');
-    R(x + 2, y + 6, 16, 10, '#e0aa00'); R(x + w - 14, y - 6, 6, 14, '#555b61');       /* header + exhaust */
+    var chug = (e.state === 'stalk' || e.state === 'charge') ? Math.round(Math.sin(runTime * 26) * 1) : 0;   /* engine shake */
+    R(x + 6, y + 14 + chug, w - 12, 30, superT ? '#c22e24' : '#37c978');             /* body */
+    R(x + w - 42, y + 0 + chug, 30, 20, superT ? '#8f1f18' : '#2aa85f');             /* cab */
+    R(x + w - 37, y + 4 + chug, 19, 11, '#bfe8ff');
+    R(x + 2, y + 6 + chug, 16, 10, '#e0aa00'); R(x + w - 14, y - 6 + chug, 6, 14, '#555b61');   /* header + exhaust */
     ctx.fillStyle = '#fff'; ctx.font = 'bold 10px Nunito, sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText(superT ? 'SUPER' : 'TRACTOR', x + w / 2 - 8, y + 34);
-    if (superT){                                                                     /* treads */
+    ctx.fillText(superT ? 'SUPER' : 'TRACTOR', x + w / 2 - 8, y + 34 + chug);
+    if (e.state === 'charge'){ var tp2 = Math.floor(runTime * 9) % 3; R(x + w - 13, y - 13 - tp2 * 3, 5 + tp2 * 2, 4 + tp2, '#9aa0a6'); }   /* charge smoke */
+    if (superT){                                                                     /* treads, marching */
       R(x + 2, y + h - 16, 40, 15, '#14181d'); R(x + w - 42, y + h - 16, 40, 15, '#14181d');
-      for (var ti = 0; ti < 5; ti++){ R(x + 6 + ti * 8, y + h - 12, 4, 7, '#8a8f96'); R(x + w - 38 + ti * 8, y + h - 12, 4, 7, '#8a8f96'); }
+      for (var ti = 0; ti < 5; ti++){ R(x + 6 + ti * 8 + (wph ? 4 : 0), y + h - 12, 4, 7, '#8a8f96'); R(x + w - 38 + ti * 8 + (wph ? 4 : 0), y + h - 12, 4, 7, '#8a8f96'); }
     } else {
-      R(x + 2, y + h - 22, 24, 22, '#14181d'); R(x + 8, y + h - 16, 12, 12, '#8a8f96');
-      R(x + w - 24, y + h - 19, 20, 19, '#14181d'); R(x + w - 18, y + h - 13, 8, 8, '#8a8f96');
+      R(x + 2, y + h - 22, 24, 22, '#14181d'); R(x + 8 + (wph ? 2 : 0), y + h - 16 + (wph ? 2 : 0), 12, 12, '#8a8f96');   /* hubs turn */
+      R(x + w - 24, y + h - 19, 20, 19, '#14181d'); R(x + w - 18 + (wph ? 1 : 0), y + h - 13 + (wph ? 1 : 0), 8, 8, '#8a8f96');
     }
   } else if (e.kind === 'wife'){
-    R(x + 10, y + 30, 36, 34, '#c94f7c'); R(x + 16, y + 38, 24, 18, '#fffbe8');      /* dress + apron */
+    R(x + 10 + (wph ? 1 : -1), y + 30, 36, 34, '#c94f7c'); R(x + 16 + (wph ? 1 : -1), y + 38, 24, 18, '#fffbe8');   /* dress + apron, swaying */
     R(x + 16, y + 8, 24, 24, '#f2c09a');                                             /* head */
     R(x + 13, y + 2, 30, 12, '#6b4a2b'); R(x + 24, y - 3, 9, 8, '#6b4a2b');          /* hair + bun */
     R(x + 21, y + 17, 4, 4, '#14181d'); R(x + 32, y + 17, 4, 4, '#14181d'); R(x + 23, y + 26, 10, 3, '#a03a1e');
@@ -7436,8 +7449,9 @@ function drawBigEnemy(e){
     ctx.save(); ctx.translate(x + (f > 0 ? w - 4 : 4), y + 30); ctx.rotate(f * (-0.5 + sw * 1.5));
     R(f > 0 ? 0 : -26, -4, 26, 7, '#c68a3f'); R(f > 0 ? 20 : -30, -6, 10, 11, '#e8d9b0');  /* rolling pin */
     ctx.restore();
-    R(x + 18, y + 62, 7, 6, '#5b3a12'); R(x + 32, y + 62, 7, 6, '#5b3a12');
+    R(x + 18, y + 62 - wLegA, 7, 6, '#5b3a12'); R(x + 32, y + 62 - wLegB, 7, 6, '#5b3a12');   /* shoes shuffle */
   } else if (e.kind === 'owl'){
+    ctx.save(); ctx.translate(0, Math.round(Math.sin(runTime * 10) * 1.5));   /* body rides the flap */
     var flap = Math.sin(runTime * 10) * 7;
     R(x - 4, y + 8 - flap, 20, 10, '#6b4a2b'); R(x + w - 16, y + 8 - flap, 20, 10, '#6b4a2b');  /* wings */
     R(x + 16, y + 10, 42, 40, '#8a5f36'); R(x + 22, y + 26, 30, 20, '#e8d9b0');      /* body + belly */
@@ -7446,7 +7460,9 @@ function drawBigEnemy(e){
     R(x + 27, y + 10, 5, 5, '#14181d'); R(x + 44, y + 10, 5, 5, '#14181d');
     R(x + 34, y + 17, 7, 5, '#f5a301');                                             /* beak */
     R(x + 26, y + 49, 6, 6, '#f5a301'); R(x + 43, y + 49, 6, 6, '#f5a301');          /* talons */
+    ctx.restore();
   } else if (e.kind === 'spider'){
+    ctx.save(); ctx.translate(0, Math.round(Math.sin(runTime * 6) * 1));   /* body breathes */
     ctx.strokeStyle = '#2b2135'; ctx.lineWidth = 4;
     for (var li = 0; li < 4; li++){
       var ly = y + 14 + li * 12, wig = Math.sin(runTime * 6 + li) * 3;
@@ -7457,6 +7473,7 @@ function drawBigEnemy(e){
     R(x + 28, y + 2, 22, 16, '#2b2135');                                             /* head */
     R(x + 31, y + 7, 5, 5, '#ff2d2d'); R(x + 42, y + 7, 5, 5, '#ff2d2d');            /* eyes */
     ctx.font = '15px serif'; ctx.textAlign = 'center'; ctx.fillText('🕸️', x + w / 2, y + 40);
+    ctx.restore();
   } else if (e.kind === 'farmer'){
     R(x + 12, y + 26, 32, 30, '#2456c9'); R(x + 12, y + 26, 32, 8, '#f2c230');       /* overalls + shirt */
     R(x + 17, y + 8, 22, 20, '#f2c09a');                                             /* head */
@@ -7467,17 +7484,24 @@ function drawBigEnemy(e){
     R(0, -14, 4, 30, '#8a5a2b');                                                     /* pitchfork handle */
     R(-4, -20, 12, 4, '#cfd8dc'); R(-4, -20, 3, 9, '#cfd8dc'); R(1, -20, 3, 9, '#cfd8dc'); R(6, -20, 3, 9, '#cfd8dc');
     ctx.restore();
-    R(x + 18, y + 56, 7, 7, '#5b3a12'); R(x + 32, y + 56, 7, 7, '#5b3a12');
+    R(x + 18, y + 56 - wLegA, 7, 7, '#5b3a12'); R(x + 32, y + 56 - wLegB, 7, 7, '#5b3a12');   /* boots step */
   }
   ctx.globalAlpha = 1;
 }
 /* ---------- Super Corn Man (Level 9 boss) ---------- */
 function drawBoss(b){
   var x = b.x, y = b.y;
+  /* he stomps: the same displacement-measured walk phase as the
+     big enemies, spent as a bob under the whole body */
+  if (b._lx === undefined){ b._lx = b.x; b._ly = b.y; b.walkT = 0; }
+  b.walkT = (b.walkT || 0) + (Math.abs(b.x - b._lx) + Math.abs(b.y - b._ly)) * 0.09;
+  b._lx = b.x; b._ly = b.y;
+  ctx.save(); ctx.translate(0, Math.round(Math.sin((b.walkT || 0) * 6) * 1.5));
   if (b.hitT > 0.12) ctx.globalAlpha = 0.6;
   if (b.dashT > 0 && Math.floor(runTime * 10) % 2) R(x - 5, y - 5, b.w + 10, b.h + 10, '#ffd91a44');
   /* golden cape */
-  R(x - 4, y + 18, 12, 34, '#e0aa00'); R(x + b.w - 8, y + 18, 12, 34, '#e0aa00');
+  var capeFl = 34 + Math.round(Math.sin(runTime * 6) * 3);
+  R(x - 4, y + 18, 12, capeFl, '#e0aa00'); R(x + b.w - 8, y + 18, 12, capeFl, '#e0aa00');   /* cape, fluttering */
   /* bigger corn-cob body */
   R(x + 8, y + 26, 40, 26, '#ffd91a'); R(x + 8, y + 48, 40, 14, '#2456c9');
   R(x + 18, y + 26, 3, 36, '#e0aa00'); R(x + 28, y + 26, 3, 36, '#e0aa00'); R(x + 38, y + 26, 3, 36, '#e0aa00');
@@ -7487,11 +7511,13 @@ function drawBoss(b){
   R(x + 20, y + 0, 3, 28, '#e0aa00'); R(x + 33, y + 0, 3, 28, '#e0aa00'); R(x + 10, y + 9, 36, 3, '#e0aa00'); R(x + 10, y + 19, 36, 3, '#e0aa00');
   R(x + 6, y + 20, 7, 12, '#3f8f22'); R(x + 43, y + 20, 7, 12, '#3f8f22'); R(x + 24, y - 5, 8, 7, '#58b02c');
   R(x + 15, y + 10, 8, 5, '#14181d'); R(x + 33, y + 10, 8, 5, '#14181d');           /* angry brows */
-  R(x + 17, y + 13, 4, 4, '#ff2d2d'); R(x + 35, y + 13, 4, 4, '#ff2d2d');           /* glowing eyes */
+  if ((runTime % 2.9) > 2.72){ R(x + 17, y + 15, 4, 1, '#ff2d2d'); R(x + 35, y + 15, 4, 1, '#ff2d2d'); }   /* a blink */
+  else { R(x + 17, y + 13, 4, 4, '#ff2d2d'); R(x + 35, y + 13, 4, 4, '#ff2d2d'); }           /* glowing eyes */
   R(x + 22, y + 23, 12, 3, '#14181d');
   ctx.font = '17px serif'; ctx.textAlign = 'center';
   ctx.fillText('👑', x + b.w / 2, y - 8 + Math.sin(runTime * 4) * 2);
   ctx.globalAlpha = 1;
+  ctx.restore();
 }
 function drawRoomFloor(){
   R(0, 0, W, H, '#8a5a2b');
