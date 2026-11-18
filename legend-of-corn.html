@@ -8394,6 +8394,8 @@ function drawObstacle(o){
     R(x, y, o.w, o.h, '#c9b06a'); R(x, y, o.w, 5, '#e8d69b'); R(x, y + o.h - 5, o.w, 5, '#b39a58');
     ctx.fillStyle = '#a8905a';
     for (var sdi = 0; sdi < 14; sdi++){ var sdx = x + 12 + texHash(x + sdi * 37, y) * (o.w - 24), sdy = y + 12 + texHash(x, y + sdi * 29) * (o.h - 24); ctx.fillRect(sdx, sdy, 3, 2); }
+    ctx.strokeStyle = 'rgba(168,144,90,0.6)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(x + o.w * 0.3, y + o.h * 0.62, 26, Math.PI * 1.15, Math.PI * 1.85); ctx.arc(x + o.w * 0.68, y + o.h * 0.4, 20, Math.PI * 1.15, Math.PI * 1.85); ctx.stroke();
     return;
   }
   if (o.type === 'cactus'){
@@ -8406,14 +8408,27 @@ function drawObstacle(o){
     return;
   }
   if (o.type === 'deadtree'){
-    /* a dead tree (v26): grey trunk and bare branches — the
-       graveyard's trees gave up long ago */
-    R(x + 17, y + 16, 7, 22, '#6e6259'); R(x + 17, y + 16, 3, 22, '#7d7268');
-    ctx.strokeStyle = '#6e6259'; ctx.lineWidth = 4;
-    ctx.beginPath(); ctx.moveTo(x + 20, y + 20); ctx.lineTo(x + 6, y + 6); ctx.moveTo(x + 20, y + 17); ctx.lineTo(x + 34, y + 4); ctx.moveTo(x + 20, y + 22); ctx.lineTo(x + 10, y + 12); ctx.stroke();
-    ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(x + 6, y + 6); ctx.lineTo(x + 2, y + 0); ctx.moveTo(x + 34, y + 4); ctx.lineTo(x + 38, y + 0); ctx.stroke();
+    /* a dead tree (v26, grown v30): a thicker knotted trunk,
+       a dark knot hole, roots gripping the ground, and
+       branches that fork like fingers */
     R(x + 8, y + 37, 26, 3, 'rgba(0,0,0,0.20)');
+    R(x + 15, y + 14, 10, 24, '#6e6259'); R(x + 15, y + 14, 4, 24, '#7d7268'); R(x + 21, y + 14, 4, 24, '#5d534b');
+    R(x + 13, y + 35, 5, 4, '#6e6259'); R(x + 23, y + 35, 5, 4, '#6e6259');
+    ctx.fillStyle = '#4c443d'; ctx.beginPath(); ctx.ellipse(x + 20, y + 24, 2.6, 3.6, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#6e6259'; ctx.lineWidth = 4; ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(x + 20, y + 18); ctx.lineTo(x + 7, y + 5);
+    ctx.moveTo(x + 20, y + 15); ctx.lineTo(x + 33, y + 3);
+    ctx.moveTo(x + 20, y + 21); ctx.lineTo(x + 9, y + 12);
+    ctx.moveTo(x + 20, y + 20); ctx.lineTo(x + 32, y + 13);
+    ctx.stroke();
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x + 7, y + 5); ctx.lineTo(x + 3, y + 0); ctx.moveTo(x + 7, y + 5); ctx.lineTo(x + 11, y + 1);
+    ctx.moveTo(x + 33, y + 3); ctx.lineTo(x + 38, y + 0); ctx.moveTo(x + 33, y + 3); ctx.lineTo(x + 30, y + 0);
+    ctx.moveTo(x + 32, y + 13); ctx.lineTo(x + 37, y + 10);
+    ctx.stroke();
+    ctx.lineCap = 'butt';
     return;
   }
   if (o.type === 'hay'){ R(x + 3, y + 8, 34, 26, '#e8b93a'); R(x + 3, y + 14, 34, 3, '#c79a24'); R(x + 3, y + 24, 34, 3, '#c79a24'); R(x + 8, y + 3, 24, 6, '#f5d76a'); }
@@ -8429,10 +8444,23 @@ function drawObstacle(o){
     }
     R(x, y, o.w, o.h, '#2f7fc4'); R(x, y + 6, o.w, 3, '#57a8e8'); R(x, y + o.h - 12, o.w, 3, '#57a8e8');
     if (o.lake){
-      /* THE LAKE (v26): lily pads ride the big water */
+      /* THE LAKE (v26, dressed v30): lily pads, a foam edge
+         that follows the TRUE shore (an arc is skipped where
+         another water body covers that edge, so no foam line
+         ever crosses the middle), and sun sparkles that sit
+         still — position-hashed, never shimmering */
       R(x + 40, y + 26, 17, 9, '#2e8b3a'); R(x + 43, y + 23, 4, 4, '#ff8ab0');
       R(x + o.w - 90, y + o.h - 40, 19, 10, '#35a544');
       R(x + o.w / 2 - 30, y + o.h / 2, 26, 3, '#57a8e8');
+      ctx.strokeStyle = 'rgba(240,250,255,0.75)'; ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (var lfx = 14; lfx < o.w - 10; lfx += 26){
+        var covered = obstacles.some(function(q){ return q !== o && q.type === 'water' && x + lfx >= q.x && x + lfx <= q.x + q.w && y - 8 >= q.y && y - 8 <= q.y + q.h; });
+        if (!covered) ctx.arc(x + lfx, y + 3, 7, Math.PI * 1.08, Math.PI * 1.92);
+      }
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,0.55)';
+      for (var lsi = 0; lsi < 7; lsi++){ var lsx = x + 20 + texHash(x + lsi * 53, y + 9) * (o.w - 40), lsy = y + 14 + texHash(x + 4, y + lsi * 31) * (o.h - 28); ctx.fillRect(lsx, lsy, 5, 2); ctx.fillRect(lsx + 2, lsy - 1, 1, 4); }
     }
     if (o.healPond){
       R(x + 16, y + 14, 15, 8, '#2e8b3a'); R(x + 19, y + 11, 4, 4, '#ff8ab0');
@@ -8441,7 +8469,17 @@ function drawObstacle(o){
   }
   else if (o.type === 'tomb'){ R(x + 6, y + 4, 28, 34, '#a7adb5'); R(x + 6, y + 4, 28, 8, '#c3c9cf'); R(x + 17, y + 16, 3, 12, '#6f757d'); R(x + 12, y + 20, 13, 3, '#6f757d'); R(x + 2, y + 36, 36, 5, '#8a8f96'); }
   else if (o.type === 'wall'){ R(x, y, o.w, o.h, '#6e4a26'); for (var wx = 0; wx < o.w; wx += 26) R(x + wx, y + 3, 3, o.h - 6, '#54371a'); for (var wy = 0; wy < o.h; wy += 26) R(x + 3, y + wy, o.w - 6, 3, '#54371a'); }
-  else if (o.type === 'stone'){ R(x, y, o.w, o.h, '#8a8f96'); R(x, y, o.w, 4, '#a7adb5'); R(x, y + o.h - 4, o.w, 4, '#6f757d'); ctx.strokeStyle = '#5d646b'; ctx.lineWidth = 2; ctx.strokeRect(x + 3, y + 3, o.w - 6, o.h - 6); }
+  else if (o.type === 'stone'){
+    /* CUT STONE (v30): a beveled block — lit top, shadowed
+       base, chisel speckle, and a tone that shifts block to
+       block so a wall of them never reads cloned */
+    var st = texHash(x * 3, y * 5);
+    R(x, y, o.w, o.h, st > 0.6 ? '#90959c' : st > 0.3 ? '#8a8f96' : '#82878e');
+    R(x, y, o.w, 5, '#aeb4bb'); R(x, y + o.h - 5, o.w, 5, '#6f757d'); R(x, y + 5, 3, o.h - 10, '#9ba1a8');
+    ctx.fillStyle = 'rgba(60,64,67,0.35)';
+    for (var sti = 0; sti < 5; sti++) ctx.fillRect(x + 6 + texHash(x + sti * 13, y) * (o.w - 12), y + 8 + texHash(x, y + sti * 17) * (o.h - 16), 2, 2);
+    ctx.strokeStyle = '#5d646b'; ctx.lineWidth = 2; ctx.strokeRect(x + 2, y + 2, o.w - 4, o.h - 4);
+  }
   else if (o.type === 'shutter'){ R(x, y, o.w, o.h, '#7a3b2e'); for (var sx = 4; sx < o.w; sx += 12) R(x + sx, y + 2, 4, o.h - 4, '#5d2a20'); R(x, y + o.h - 4, o.w, 4, '#4c2c08'); }
   else if (o.type === 'lockeddoor'){ R(x, y, o.w, o.h, '#7a3b2e'); for (var lx = 4; lx < o.w; lx += 12) R(x + lx, y + 2, 4, o.h - 4, '#5d2a20'); ctx.font = '17px serif'; ctx.textAlign = 'center'; ctx.fillText('🔒', x + o.w / 2, y + o.h - 5);
     /* a plain-words label under the door, so the lock explains itself:
@@ -8492,12 +8530,58 @@ function drawObstacle(o){
   else if (o.type === 'cracked'){
     /* a CRACKED BOULDER (v24) — the plain rock, split by a dark
        crack down its face: the Sledge's whole reason to exist */
-    R(x + 3, y + 8, 34, 28, '#8a8f96'); R(x + 8, y + 3, 20, 8, '#a7adb5'); R(x + 10, y + 18, 8, 4, '#6f757d');
+    /* THE BOULDER (v30): a rounded, sun-lit rock — a shaded
+       dome, a bright facet where the light hits, a facet line,
+       a shadow pooled at its base, and a tone that shifts
+       stone to stone so no two rocks are twins */
+    var bt = texHash(x, y);
+    ctx.fillStyle = 'rgba(0,0,0,0.20)'; ctx.beginPath(); ctx.ellipse(x + 20, y + 36, 19, 5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = bt > 0.66 ? '#9398a0' : bt > 0.33 ? '#8a8f96' : '#7f848c';
+    ctx.beginPath();
+    ctx.moveTo(x + 4, y + 36);
+    ctx.quadraticCurveTo(x + 1, y + 14, x + 12, y + 7);
+    ctx.quadraticCurveTo(x + 20, y + 2, x + 28, y + 7);
+    ctx.quadraticCurveTo(x + 39, y + 14, x + 36, y + 36);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.28)';
+    ctx.beginPath();
+    ctx.moveTo(x + 9, y + 20);
+    ctx.quadraticCurveTo(x + 10, y + 9, x + 19, y + 6);
+    ctx.quadraticCurveTo(x + 24, y + 12, x + 20, y + 20);
+    ctx.quadraticCurveTo(x + 14, y + 24, x + 9, y + 20);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = 'rgba(60,64,67,0.55)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(x + 24, y + 10); ctx.lineTo(x + 27, y + 22); ctx.lineTo(x + 23, y + 33); ctx.stroke();
+    R(x + 12, y + 27, 5, 3, 'rgba(0,0,0,0.18)');
     ctx.strokeStyle = '#3c4043'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(x + 20, y + 4); ctx.lineTo(x + 17, y + 14); ctx.lineTo(x + 22, y + 22); ctx.lineTo(x + 18, y + 34); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(x + 17, y + 14); ctx.lineTo(x + 10, y + 19); ctx.stroke();
   }
-  else { R(x + 3, y + 8, 34, 28, '#8a8f96'); R(x + 8, y + 3, 20, 8, '#a7adb5'); R(x + 10, y + 18, 8, 4, '#6f757d'); }
+  else {
+    /* THE BOULDER (v30): a rounded, sun-lit rock — a shaded
+       dome, a bright facet where the light hits, a facet line,
+       a shadow pooled at its base, and a tone that shifts
+       stone to stone so no two rocks are twins */
+    var bt = texHash(x, y);
+    ctx.fillStyle = 'rgba(0,0,0,0.20)'; ctx.beginPath(); ctx.ellipse(x + 20, y + 36, 19, 5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = bt > 0.66 ? '#9398a0' : bt > 0.33 ? '#8a8f96' : '#7f848c';
+    ctx.beginPath();
+    ctx.moveTo(x + 4, y + 36);
+    ctx.quadraticCurveTo(x + 1, y + 14, x + 12, y + 7);
+    ctx.quadraticCurveTo(x + 20, y + 2, x + 28, y + 7);
+    ctx.quadraticCurveTo(x + 39, y + 14, x + 36, y + 36);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.28)';
+    ctx.beginPath();
+    ctx.moveTo(x + 9, y + 20);
+    ctx.quadraticCurveTo(x + 10, y + 9, x + 19, y + 6);
+    ctx.quadraticCurveTo(x + 24, y + 12, x + 20, y + 20);
+    ctx.quadraticCurveTo(x + 14, y + 24, x + 9, y + 20);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = 'rgba(60,64,67,0.55)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(x + 24, y + 10); ctx.lineTo(x + 27, y + 22); ctx.lineTo(x + 23, y + 33); ctx.stroke();
+    R(x + 12, y + 27, 5, 3, 'rgba(0,0,0,0.18)');
+  }
 }
 /* v22: asleep in the inn — Corn Man LYING in the bed (Michael:
    "when you get in the bed it looks like you're laying in the bed"):
