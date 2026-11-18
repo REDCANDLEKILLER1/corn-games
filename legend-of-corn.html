@@ -4465,7 +4465,6 @@ function startIntro(key){
   var pages = INTRO_TEXT[key];
   if (!pages || !player || state.introsSeen[key] || intro) return;
   intro = { key: key, pages: pages, i: 0, stage: 'walk', toY: Math.max(64, player.y - 92) };
-  player.invuln = Math.max(player.invuln || 0, 999);
   hideBanner();
   dlog('Intro playing: ' + key + ' (' + pages.length + ' pages).');
 }
@@ -7034,7 +7033,11 @@ function drawCornMan(p){
   var x = p.x, y = p.y;
   var bob = moving ? ((frame === 1 || frame === 3) ? 2 : 0) : 0;
   y -= bob;
-  if (p.invuln > 0 && Math.floor(runTime * 14) % 2) ctx.globalAlpha = 0.35;
+  /* Flashing means DANGER (Michael, 2026-11-18: "that would be
+     fine if he's about to die — maybe one heart left"): Corn Man
+     strobes only at one heart or less (hp is half-hearts, so <= 2).
+     Invincibility after a hit still protects him — silently. */
+  if (state.hp > 0 && state.hp <= 2 && Math.floor(runTime * 10) % 2) ctx.globalAlpha = 0.35;
   var ov = ['#2456c9', '#2456c9', '#aebfd0', '#e8b93a'][state.armor];
   var sway = moving ? (stepA ? -2 : stepB ? 2 : 0) : 0;
   var liftL = stepA ? 4 : 0, liftR = stepB ? 4 : 0;
