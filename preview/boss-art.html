@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Legend of Corn — Boss Art Test</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#122b14;color:#fffbe8}
+iframe{width:100%;height:100%;display:block;border:0}
+#testTag{position:fixed;z-index:100;right:7px;top:7px;background:#0e2415e8;border:1px solid #a3ff4c;border-radius:6px;padding:4px 7px;font:10px monospace;pointer-events:none}
+#testTag.ok{color:#baff66}#testTag.bad{color:#ff7777}
+</style>
+</head>
+<body>
+<iframe id="corn" src="../legend-of-corn.html" title="Legend of Corn boss graphics test" allow="autoplay; fullscreen"></iframe>
+<div id="testTag" role="status">BOSS ART PREVIEW — LOADING</div>
+<script>
+(function(){
+"use strict";
+var frame=document.getElementById("corn"),tag=document.getElementById("testTag");
+frame.addEventListener("load",function(){
+  try {
+    var game=frame.contentWindow;
+    if(!game || !game.document || !game.document.getElementById("game"))throw Error("game canvas unavailable");
+    var script=game.document.createElement("script");
+    script.src="/preview/boss-art-pass.js";
+    script.onload=function(){
+      var ok=!!game.__cornBossArtPreview;
+      tag.className=ok?"ok":"bad";
+      tag.textContent=ok?"BOSS ART TEST — ACTIVE":"BOSS ART TEST — INACTIVE";
+    };
+    script.onerror=function(){
+      tag.className="bad";tag.textContent="BOSS ART TEST — ASSET FAILED";
+    };
+    game.document.body.appendChild(script);
+  } catch(err){
+    tag.className="bad";tag.textContent="BOSS ART TEST — CANNOT LOAD";
+    console.error(err);
+  }
+});
+})();
+</script>
+</body>
+</html>
