@@ -3293,6 +3293,7 @@ function drawFarmMap(cv, withLabels){
   var CW = 100, CH = 100;
   mc.fillStyle = '#1d3016'; mc.fillRect(0, 0, 1600, 800);
   var spots = {}; getMapSpots().forEach(function(sp){ spots[sp.ow] = sp; });
+  var mapLabels37 = [];   /* v37c: place labels, painted after the loop */
   var baleFields = {}, shedFields = {};
   effBurnBales().forEach(function(bb){ baleFields[bb.ow] = true; });
   effBurnSheds().forEach(function(sd){ shedFields[sd.ow] = true; });
@@ -3301,21 +3302,30 @@ function drawFarmMap(cv, withLabels){
   for (var i = 0; i < OW_COLS * OW_ROWS; i++){
     var S = OW_SCREENS[i], cx = (i % OW_COLS) * CW, cy = Math.floor(i / OW_COLS) * CH;
     if (!mapVisited(i)){
+      mc.fillStyle = 'rgba(37,46,41,0.38)'; mc.fillRect(cx - 9, cy - 9, CW + 18, CH + 18);   /* v37: the fog's soft halo — mist, not a box */
       mc.fillStyle = '#252e29'; mc.fillRect(cx, cy, CW, CH);
       var fr = rng(i * 31 + 5);
       mc.fillStyle = 'rgba(196,208,196,0.13)';
       for (var fw = 0; fw < 3; fw++){ mc.beginPath(); mc.ellipse(cx + 20 + fr() * 60, cy + 20 + fr() * 60, 16 + fr() * 14, 7 + fr() * 5, 0, 0, Math.PI * 2); mc.fill(); }
-      mc.strokeStyle = '#121a13'; mc.lineWidth = 2; mc.strokeRect(cx + 1, cy + 1, CW - 2, CH - 2);
       continue;
     }
-    var grd = mc.createLinearGradient(cx, cy, cx, cy + CH);
-    grd.addColorStop(0, S.ground); grd.addColorStop(1, S.ground2);
-    mc.fillStyle = grd; mc.fillRect(cx, cy, CW, CH);
+    /* v37 (THE REAL MAP): one flat land colour per field — fields in
+       the same country share it, so the landmass reads whole. v37c:
+       the chart paints the REGION's colours for every field, even
+       the named ones — a special field's own ground belongs to the
+       field itself, and on the chart it ghosted the grid back in */
+    var reg37 = REGIONS[S.region] || S;
+    mc.fillStyle = reg37.ground; mc.fillRect(cx, cy, CW, CH);
     /* terrain glyphs from the field's own obstacle kind, seeded per field */
     var tr = rng(i * 77 + 3);
-    mc.save(); mc.beginPath(); mc.rect(cx, cy, CW, CH); mc.clip();
-    for (var tg = 0; tg < 6; tg++){
-      var gx = cx + 8 + tr() * 84, gy = cy + 8 + tr() * 84;
+    /* v37: NO CLIP — soft ground blotches first, then the terrain,
+       all of it free to bleed across the square's edge, the way the
+       Player's Guide maps push a hillside into the next panel */
+    mc.fillStyle = reg37.ground2; mc.globalAlpha = 0.11;
+    for (var bl = 0; bl < 5; bl++){ mc.beginPath(); mc.ellipse(cx - 10 + tr() * 120, cy - 10 + tr() * 120, 16 + tr() * 22, 10 + tr() * 14, tr() * 3, 0, Math.PI * 2); mc.fill(); }
+    mc.globalAlpha = 1;
+    for (var tg = 0; tg < 7; tg++){
+      var gx = cx - 8 + tr() * 116, gy = cy - 8 + tr() * 116;
       if (S.ob === 'tree'){ mc.fillStyle = '#7a4d16'; mc.fillRect(gx + 3, gy + 6, 3, 6); mc.fillStyle = '#2f7a1e'; mc.beginPath(); mc.arc(gx + 5, gy + 5, 7, 0, Math.PI * 2); mc.fill(); }
       else if (S.ob === 'rock'){ mc.fillStyle = '#8a8f96'; mc.fillRect(gx, gy + 3, 10, 7); mc.fillStyle = '#a8adb2'; mc.fillRect(gx + 2, gy, 8, 4); }
       else if (S.ob === 'hay'){ mc.fillStyle = '#e8b93a'; mc.fillRect(gx, gy + 2, 11, 8); mc.fillStyle = '#c79a24'; mc.fillRect(gx, gy + 5, 11, 2); }
@@ -3323,7 +3333,6 @@ function drawFarmMap(cv, withLabels){
       else if (S.ob === 'pumpkin'){ mc.fillStyle = '#e07b24'; mc.beginPath(); mc.arc(gx + 5, gy + 6, 6, 0, Math.PI * 2); mc.fill(); mc.fillStyle = '#2f7a1e'; mc.fillRect(gx + 4, gy - 1, 2, 3); }
       else { mc.fillStyle = 'rgba(20,40,16,0.35)'; mc.fillRect(gx, gy, 5, 5); }
     }
-    mc.restore();
     /* ---- structures, drawn as structures ---- */
     /* the north road + Corn Village's houses, drawn on the map
        (Michael, 2026-11-18) — so the charted map reads like the farm
@@ -3376,34 +3385,49 @@ function drawFarmMap(cv, withLabels){
     if (i === LADDER_BALE.ow) sec.push('🪜');
     mc.font = '17px serif';
     for (var si = 0; si < sec.length && si < 3; si++) mc.fillText(sec[si], cx + 13 + si * 20, cy + 14);
-    /* fences: gaps where you can walk through, solid where you cannot */
+    /* v37: no fences on the map any more — the guide maps show
+       LAND, not lots. (The fences still stand in the fields
+       themselves; only the map's grid voice is gone.) */
     var cc = i % OW_COLS, rr = Math.floor(i / OW_COLS);
-    mc.strokeStyle = '#5d4023'; mc.lineWidth = 4; mc.lineCap = 'butt';
-    function fence(x1, y1, x2, y2, open){
-      mc.beginPath();
-      if (open){ mc.moveTo(x1, y1); mc.lineTo(x1 + (x2 - x1) * 0.32, y1 + (y2 - y1) * 0.32); mc.moveTo(x1 + (x2 - x1) * 0.68, y1 + (y2 - y1) * 0.68); mc.lineTo(x2, y2); }
-      else { mc.moveTo(x1, y1); mc.lineTo(x2, y2); }
-      mc.stroke();
-    }
-    fence(cx, cy, cx + CW, cy, rr > 0);
-    fence(cx, cy + CH, cx + CW, cy + CH, rr < OW_ROWS - 1);
-    fence(cx, cy, cx, cy + CH, cc > 0 && i !== OW_LOST + 1);
-    fence(cx + CW, cy, cx + CW, cy + CH, cc < OW_COLS - 1 && i !== OW_LOST);
     if (i === here){
-      mc.strokeStyle = '#ffd91a'; mc.lineWidth = 6; mc.strokeRect(cx + 3, cy + 3, CW - 6, CH - 6);
+      mc.beginPath(); mc.arc(cx + 50, cy + 50, 33, 0, Math.PI * 2);
+      mc.strokeStyle = '#ffd91a'; mc.lineWidth = 5; mc.stroke();
+      mc.beginPath(); mc.arc(cx + 50, cy + 50, 40, 0, Math.PI * 2);
+      mc.strokeStyle = 'rgba(255,217,26,0.35)'; mc.lineWidth = 3; mc.stroke();
       mc.font = '21px serif'; mc.fillText('📍', cx + 85, cy + 82);
     }
     if ((warpMode && i === warpSel) || (!warpMode && redBarnCheatArmed && i === farmTapCell && farmTapCount > 0)){
       mc.strokeStyle = '#ff9d1a'; mc.lineWidth = 5; mc.strokeRect(cx + 2, cy + 2, CW - 4, CH - 4);
     }
-    if (withLabels){
-      mc.font = '700 19px Nunito, sans-serif';
-      var nm = S.name, tw = mc.measureText(nm).width;
-      if (tw > 94) mc.font = '700 ' + Math.max(11, Math.floor(19 * 94 / tw)) + 'px Nunito, sans-serif';
-      mc.lineWidth = 3; mc.strokeStyle = 'rgba(255,251,232,0.85)';
-      mc.strokeText(nm, cx + 50, cy + 93); mc.fillStyle = '#16290d'; mc.fillText(nm, cx + 50, cy + 93);
-    }
+    if (withLabels && OW_SPECIAL[i]) mapLabels37.push([S.name, cx + 50, cy + 93]);   /* v37c: drawn after the loop */
   }
+  /* place labels (v37c) — painted over everything, so no tail is
+     ever covered by a neighbouring field */
+  mc.font = '700 14px Nunito, sans-serif';
+  mc.lineWidth = 3; mc.strokeStyle = 'rgba(255,251,232,0.85)'; mc.fillStyle = '#16290d';
+  mapLabels37.forEach(function(ml37){ mc.strokeText(ml37[0], ml37[1], ml37[2]); mc.fillText(ml37[0], ml37[1], ml37[2]); });
+  /* THE COUNTRIES' NAMES (v37) — written across their landmasses
+     the way the guide maps name Death Mountain and the Swamp; a
+     country is named once Corn Man has walked into it */
+  var REGION_LABELS = [
+    ['THE GRAVEYARD', 310, 88, 24, 'graveyard', 'rgba(235,245,225,0.60)'],
+    ['THE NORTH WOODS', 650, 122, 24, 'northwoods', 'rgba(235,245,225,0.55)'],
+    ['THE DESERT', 1080, 105, 24, 'desert', 'rgba(74,52,16,0.60)'],
+    ['POND COUNTRY', 1450, 132, 17, 'pond', 'rgba(20,40,16,0.55)'],
+    ['THE MAZE WOODS', 200, 552, 24, 'mazewoods', 'rgba(235,245,225,0.55)'],
+    ['THE FARMLANDS', 900, 585, 20, 'farmland', 'rgba(20,40,16,0.50)'],
+    ['THE ORCHARD', 1030, 385, 18, 'orchard', 'rgba(20,40,16,0.55)'],
+    ['SILO YARDS', 1500, 462, 17, 'silo', 'rgba(20,40,16,0.55)'],
+    ['THE RIVER', 1252, 322, 14, 'lakeshore', 'rgba(235,250,255,0.80)'],
+    ['MOONLIT MEADOW', 330, 762, 24, 'moonlit', 'rgba(235,245,225,0.60)'],
+    ['THE GREAT LAKE', 1470, 655, 20, 'lakeshore', 'rgba(235,250,255,0.80)']
+  ];
+  REGION_LABELS.forEach(function(rl){
+    /* named once he has walked into the country — any field of it */
+    if (!OW_SCREENS.some(function(s2, si2){ return s2.region === rl[4] && mapVisited(si2); })) return;
+    mc.font = '700 ' + rl[3] + 'px Nunito, sans-serif';
+    mc.fillStyle = rl[5]; mc.fillText(rl[0], rl[1], rl[2]);
+  });
   /* compass */
   mc.beginPath(); mc.arc(1550, 50, 30, 0, Math.PI * 2);
   mc.fillStyle = 'rgba(240,230,190,0.92)'; mc.fill(); mc.lineWidth = 3; mc.strokeStyle = '#7c5a24'; mc.stroke();
