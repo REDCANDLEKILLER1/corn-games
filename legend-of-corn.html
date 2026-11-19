@@ -3344,6 +3344,7 @@ function drawFarmMap(cv, withLabels){
     if (healPondFor(i)){ mc.fillStyle = '#2f7fc4'; mc.beginPath(); mc.ellipse(cx + 20, cy + 82, 15, 9, 0, 0, Math.PI * 2); mc.fill(); mc.fillStyle = '#7cc0ee'; mc.beginPath(); mc.ellipse(cx + 17, cy + 79, 7, 3, 0, 0, Math.PI * 2); mc.fill(); }
     if (i === OW_L4){ mc.fillStyle = '#2f7fc4'; mc.beginPath(); mc.ellipse(cx + 50, cy + 50, 32, 23, 0, 0, Math.PI * 2); mc.fill(); mc.fillStyle = S.ground; mc.beginPath(); mc.ellipse(cx + 50, cy + 50, 17, 12, 0, 0, Math.PI * 2); mc.fill(); }
     if (i === OW_L2){ mc.fillStyle = '#c9b06a'; mc.beginPath(); mc.ellipse(cx + 68, cy + 76, 30, 15, 0, 0, Math.PI * 2); mc.fill(); mc.fillStyle = '#2f7fc4'; mc.beginPath(); mc.ellipse(cx + 68, cy + 76, 25, 11, 0, 0, Math.PI * 2); mc.fill(); mc.fillStyle = '#7cc0ee'; mc.beginPath(); mc.ellipse(cx + 60, cy + 72, 9, 3, 0, 0, Math.PI * 2); mc.fill(); }
+    if (RIVER36[i]){ RIVER36[i].forEach(function(w36){ if (w36[0] === 'bridge') return; mc.fillStyle = w36[0] === 'sand' ? '#c9b06a' : '#2f7fc4'; mc.fillRect(cx + w36[1] * 100 / 768, cy + w36[2] * 50 / 576, Math.max(3, w36[3] * 100 / 768), Math.max(3, w36[4] * 50 / 576)); }); }
     if (i === OW_L6){ mc.fillStyle = '#c3c9cf'; [[22, 30], [52, 26], [76, 34], [36, 58], [64, 60]].forEach(function(tp3){ mc.fillRect(cx + tp3[0], cy + tp3[1], 5, 8); }); }
     if (i === OW_L3){ mc.fillStyle = 'rgba(30,80,20,0.55)'; for (var mz = 0; mz < 4; mz++) mc.fillRect(cx + 12 + mz * 22, cy + 6, 9, 88); }
     if (i === OW_L6){ mc.fillStyle = '#9aa0a6'; mc.fillRect(cx + 18, cy + 62, 10, 14); mc.fillRect(cx + 70, cy + 58, 10, 14); mc.fillRect(cx + 44, cy + 70, 10, 14); }
@@ -4176,6 +4177,31 @@ function regionOf(c, r){
   if (r >= 5 && c >= 12) return 'lakeshore';
   return 'farmland';
 }
+/* THE RIVER AND THE GREAT LAKE (v36, Michael 2026-11-18: "there's
+   so much more water in Zelda") — one stream down the east side of
+   the farm, two fields wide where it runs (cols 12-13, rows 2-4),
+   with a plank bridge on the silo road, pouring into a great lake
+   that fills the south-east (rows 5-7). Parts paint in order:
+   sand, then water, then the bridge over it. */
+var RIVER36 = {};
+function river36(c, r, parts){ RIVER36[owIdx(c, r)] = parts; }
+river36(12, 2, [['sand',520,0,248,576],['water',560,0,208,576]]);
+river36(13, 2, [['sand',0,0,248,576],['water',0,0,208,576]]);
+river36(12, 3, [['sand',520,0,248,576],['water',560,0,208,252],['water',560,316,208,260],['bridge',536,252,232,64]]);
+river36(13, 3, [['sand',0,0,248,576],['water',0,0,208,252],['water',0,316,208,260],['bridge',0,252,232,64]]);
+river36(12, 4, [['sand',520,0,248,576],['water',560,0,208,576]]);
+river36(13, 4, [['sand',0,0,248,576],['water',0,0,208,576]]);
+river36(12, 5, [['sand',440,0,328,576],['water',480,0,288,576],['water',240,320,528,256]]);
+river36(13, 5, [['sand',0,40,768,90],['water',0,96,768,480]]);
+river36(14, 5, [['sand',0,0,768,80],['water',0,60,768,516]]);
+river36(15, 5, [['sand',0,0,768,80],['water',0,60,768,516]]);
+river36(12, 6, [['sand',390,0,90,576],['water',430,0,338,576]]);
+river36(14, 6, [['water',0,0,768,576],['sand',330,240,110,80]]);
+river36(15, 6, [['water',0,0,768,576],['sand',100,120,100,80]]);
+river36(12, 7, [['sand',390,0,90,576],['water',430,0,338,576]]);
+river36(13, 7, [['sand',0,380,768,196],['water',60,0,648,400]]);
+river36(14, 7, [['water',0,0,768,576],['sand',500,300,110,80]]);
+river36(15, 7, [['water',0,0,768,576]]);
 var OW_SPECIAL = {};
 OW_SPECIAL[OW_L6]   = { name:'The Old Graveyard', ground:'#55773a', ground2:'#4c6c33', ob:'tomb',    deco:'star', wall:'stone' };
 OW_SPECIAL[OW_L9]   = { name:'Great Barn Hill',   ground:'#5db531', ground2:'#55a82c', ob:'rock',    deco:'flower'  };
@@ -4214,6 +4240,25 @@ OW_SPECIAL_ENEMIES[OW_HOME] = [['chicken',2]];
 OW_SPECIAL_ENEMIES[OW_L1] = [['chicken',3],['pig',2]];
 OW_SPECIAL_ENEMIES[OW_L2] = [['chicken',2],['pig',2],['crow',1]];
 OW_SPECIAL_ENEMIES[OW_GROVE] = [['chicken',2],['crow',1]];
+/* v36: the river and lake fields — crows over the water, goats on
+   the banks; the deep fields spawn nothing at all (the Lakelurks
+   move into the water itself in v37) */
+OW_SPECIAL_ENEMIES[owIdx(12, 2)] = [['crow',1]];
+OW_SPECIAL_ENEMIES[owIdx(12, 3)] = [['crow',1]];
+OW_SPECIAL_ENEMIES[owIdx(12, 4)] = [['crow',1],['goat',1]];
+OW_SPECIAL_ENEMIES[owIdx(13, 3)] = [['goat',1],['crow',1]];
+OW_SPECIAL_ENEMIES[owIdx(13, 4)] = [['goat',1],['crow',1]];
+OW_SPECIAL_ENEMIES[owIdx(12, 5)] = [['crow',2]];
+OW_SPECIAL_ENEMIES[owIdx(13, 5)] = [['crow',1]];
+OW_SPECIAL_ENEMIES[owIdx(14, 5)] = [];
+OW_SPECIAL_ENEMIES[owIdx(15, 5)] = [];
+OW_SPECIAL_ENEMIES[owIdx(12, 6)] = [['crow',1],['pig',1]];
+OW_SPECIAL_ENEMIES[owIdx(14, 6)] = [];
+OW_SPECIAL_ENEMIES[owIdx(15, 6)] = [];
+OW_SPECIAL_ENEMIES[owIdx(12, 7)] = [['crow',1]];
+OW_SPECIAL_ENEMIES[owIdx(13, 7)] = [['crow',1],['goat',1]];
+OW_SPECIAL_ENEMIES[owIdx(14, 7)] = [];
+OW_SPECIAL_ENEMIES[owIdx(15, 7)] = [];
 var OW_ENEMIES = [];
 for (var oei = 0; oei < OW_COLS * OW_ROWS; oei++){
   if (OW_SPECIAL_ENEMIES[oei]){ OW_ENEMIES.push(OW_SPECIAL_ENEMIES[oei]); continue; }
@@ -4392,11 +4437,11 @@ var BURN_SHEDS = [
   { id:'shed9',  ow:69,  type:'barnlet', x:530, y:390, w:88, h:64, coins:true  },
   { id:'shed10', ow:78,  type:'shed',    x:196, y:148, w:44, h:40, coins:true  },
   { id:'shed11', ow:82,  type:'shed',    x:532, y:148, w:44, h:40, coins:false },
-  { id:'shed12', ow:93,  type:'barnlet', x:194, y:342, w:88, h:64, coins:true  },
+  { id:'shed12', ow:93,  type:'barnlet', x:194, y:52, w:88, h:64, coins:true  },   /* v36d: moved up onto the lake shore — it stood in the water */
   { id:'shed13', ow:101, type:'barnlet', x:98,  y:246, w:88, h:64, coins:false },
-  { id:'shed14', ow:110, type:'shed',    x:580, y:244, w:44, h:40, coins:true  },
+  { id:'shed14', ow:110, type:'shed',    x:362, y:260, w:44, h:40, coins:true  },   /* v36d: moved onto the lake's little islet */
   { id:'shed15', ow:116, type:'shed',    x:292, y:100, w:44, h:40, coins:false },
-  { id:'shed16', ow:124, type:'barnlet', x:386, y:390, w:88, h:64, coins:true  }
+  { id:'shed16', ow:124, type:'barnlet', x:250, y:390, w:88, h:64, coins:true  }   /* v36d: moved west onto dry land, clear of the water */
 ];
 function shedDef(id){
   for (var i = 0; i < BURN_SHEDS.length; i++) if (BURN_SHEDS[i].id === id) return BURN_SHEDS[i];
@@ -4527,6 +4572,10 @@ function loadOwScreen(){
   if (owGaps.E && state.owCol < OW_COLS - 1 && OW_SCREENS[idx + 1].region === S.region) gaps35.E = 'open';
   obstacles = openField ? [] : borderObstacles(gaps35, wallType);
   var avoid = [{ x: W/2, y: 40, r: 90 }, { x: W/2, y: H - 60, r: 90 }, { x: 40, y: H/2, r: 90 }, { x: W - 60, y: H/2, r: 90 }];
+  /* THE RIVER AND THE GREAT LAKE (v36) — the water lies under
+     everything else the field grows: sand, then water, then the
+     plank bridge over it */
+  if (RIVER36[idx]) RIVER36[idx].forEach(function(p36){ obstacles.push({ x: p36[1], y: p36[2], w: p36[3], h: p36[4], type: p36[0], river: true }); });
   if (idx === OW_HOME){                                      /* HOME FARM — a clear field (Michael, 2026-11-17): no store, no farmer standing on it. And no wrench lying in the grass (2026-11-18): it waits in the Pedestal Grove, four fields north — Corn Man fights his way there with his fists, through the morning fog. */
     scatterObstacles(R, 'hay', 4, avoid);
     /* ELI — the greeter (Michael, 2026-11-18: "put a person in the
@@ -4818,7 +4867,7 @@ function loadOwScreen(){
     }
     var shedRect = { x: sd.x, y: sd.y, w: sd.w, h: sd.h };
     obstacles = obstacles.filter(function(o){
-      if (o.type === 'fence' || o.secretId || o.burnId) return true;
+      if (o.type === 'fence' || o.secretId || o.burnId || o.river) return true;   /* v36b: the river is not dressing — the shed clearing must not drain it */
       return !rectsOverlap(shedRect, o);
     });
     obstacles.push({ x: sd.x, y: sd.y, w: sd.w, h: sd.h, type: sd.type, shedId: sd.id });
@@ -4882,7 +4931,7 @@ function loadOwScreen(){
     if (idx !== hp.ow) return;
     var pondRect = { x: hp.x, y: hp.y, w: hp.w, h: hp.h };
     obstacles = obstacles.filter(function(o){
-      if (o.type === 'fence' || o.secretId || o.burnId) return true;
+      if (o.type === 'fence' || o.secretId || o.burnId || o.river) return true;   /* v36b: same — the pond clearing must not drain the river it feeds */
       return !rectsOverlap(pondRect, o);
     });
     obstacles.push({ x: hp.x, y: hp.y, w: hp.w, h: hp.h, type:'water', healPond:true });
@@ -7527,6 +7576,7 @@ function playerOnWater(){ return !!player && rectOnWater(player); }
 function obstacleBlocks(ent, o){
   if (o.type === 'water' && player && ent === player && state.hasLadder) return false;
   if (o.type === 'sand') return false;   /* v26: the lakeshore — sand is ground, not a wall: everybody walks the beach */
+  if (o.type === 'bridge') return false;   /* v36: the plank bridge over the river — everybody crosses */
   /* The little healing ponds — the Water of Life (fields 6-1 and
      14-3) never block Corn Man: he wades into their water, ladder
      or no ladder, and the water gives his energy back (see the pond
@@ -8472,6 +8522,17 @@ function drawObstacle(o){
   if (o.type === 'plant'){ R(x + 4, y + o.h - 12, o.w - 8, 12, '#b4552d'); R(x + 8, y + o.h - 15, o.w - 16, 3, '#8a3d1f'); ctx.fillStyle = '#2e7d32'; ctx.beginPath(); ctx.arc(x + o.w / 2, y + o.h - 22, 10, 0, Math.PI * 2); ctx.arc(x + 6, y + o.h - 16, 6, 0, Math.PI * 2); ctx.arc(x + o.w - 6, y + o.h - 16, 6, 0, Math.PI * 2); ctx.fill(); return; }
   if (o.type === 'anvil'){ R(x + 4, y + 10, o.w - 8, 10, '#455a64'); R(x + 10, y + 20, o.w - 20, 6, '#37474f'); R(x + 2, y + 4, 12, 7, '#607d8b'); return; }
   if (o.type === 'well'){ R(x, y + 8, o.w, o.h - 8, '#8a8f96'); R(x - 3, y + 2, o.w + 6, 6, '#7c1a12'); R(x + 4, y + 12, o.w - 8, o.h - 16, '#3c4043'); return; }
+  if (o.type === 'bridge'){
+    /* the silo-road bridge (v36): a plank deck over the river —
+       grained boards, two rails, posts at the ends */
+    R(x, y + 6, o.w, o.h - 12, '#8a5a28');
+    ctx.fillStyle = '#6e4520';
+    for (var bxi = x + 14; bxi < x + o.w - 4; bxi += 18) ctx.fillRect(bxi, y + 6, 3, o.h - 12);
+    R(x, y, o.w, 7, '#a06a32'); R(x, y + o.h - 7, o.w, 7, '#a06a32');
+    R(x, y + 2, o.w, 2, '#c08a48'); R(x, y + o.h - 4, o.w, 2, '#c08a48');
+    R(x + 4, y - 3, 8, o.h + 6, '#5d3c1c'); R(x + o.w - 12, y - 3, 8, o.h + 6, '#5d3c1c');
+    return;
+  }
   if (o.type === 'sand'){
     /* the lakeshore (v26): warm sand with a lit top edge and an
        ordered speckle — drawn big, walked on freely */
