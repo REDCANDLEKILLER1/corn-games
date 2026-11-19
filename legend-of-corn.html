@@ -4727,12 +4727,14 @@ function scatterExtraObstacles(R, type, count, avoid){
    aprons, avoid circles, the player's own ground) except one:
    trees may stand shoulder to shoulder with other trees. */
 function plantForest(R, type, avoid){
-  var cx0 = 2 + Math.floor(R() * 11), cy0 = 2 + Math.floor(R() * 7), placed = 0;
-  for (var dty = -1; dty <= 1; dty++) for (var dtx = -1; dtx <= 1; dtx++){
-    if (placed >= 8) return;
+  var cx0 = 3 + Math.floor(R() * 9), cy0 = 3 + Math.floor(R() * 5), placed = 0;
+  for (var dty = -2; dty <= 2; dty++) for (var dtx = -2; dtx <= 2; dtx++){
+    if (placed >= 12) return;
     var tx = cx0 + dtx, ty = cy0 + dty;
     if (tx < 1 || tx > 14 || ty < 1 || ty > 10) continue;
-    if ((dtx || dty) && R() < 0.18) continue;   /* a ragged edge, not a hedge */
+    var dist42 = Math.sqrt(dtx * dtx + dty * dty);
+    if (dist42 > 2.25) continue;
+    if (dist42 > 1.15 && R() < (dist42 - 1.15) * 0.62) continue;   /* v42: a round stand with a ragged falloff, not a square hedge */
     var o = { x: tx * TILE + 4, y: ty * TILE + 4, w: 40, h: 40, type: type };
     var bad = obstacles.some(function(q){ return q.type !== type && rectsOverlap(o, { x: q.x - 4, y: q.y - 4, w: q.w + 8, h: q.h + 8 }); });
     if (!bad) owFeatures.forEach(function(f){
@@ -4801,11 +4803,11 @@ function loadOwScreen(){
      graveyard, and the Silo Yard grows a rocky shoulder. Solid as
      any wall — they are geography, not decoration. */
   var CLIFFS40 = {};
-  CLIFFS40[OW_L9] = [[0,16],[48,16],[96,16],[144,16],[576,16],[624,16],[672,16],[720,16]];
-  CLIFFS40[OW_L5] = [[48,24],[96,24],[560,24],[608,24],[656,24],[656,72]];
-  CLIFFS40[OW_LOST] = [[384,384],[432,384],[480,384],[432,432],[480,432]];
-  CLIFFS40[OW_L6] = [[24,216],[24,264],[72,264]];
-  CLIFFS40[OW_L7] = [[592,40],[640,40],[640,88]];
+  CLIFFS40[OW_L9] = [[0,16],[48,16],[96,16],[144,64],[576,16],[624,64],[672,16],[720,16]];
+  CLIFFS40[OW_L5] = [[48,24],[96,24],[96,72],[560,24],[608,72],[656,24]];
+  CLIFFS40[OW_LOST] = [[384,384],[432,384],[480,384],[432,432],[528,432]];
+  CLIFFS40[OW_L6] = [[24,216],[24,264],[72,312]];
+  CLIFFS40[OW_L7] = [[592,40],[640,88],[688,40]];
   if (CLIFFS40[idx]) CLIFFS40[idx].forEach(function(cp){ obstacles.push({ x: cp[0], y: cp[1], w: 48, h: 48, type: 'cliff' }); });
   var avoid = [{ x: W/2, y: 40, r: 90 }, { x: W/2, y: H - 60, r: 90 }, { x: 40, y: H/2, r: 90 }, { x: W - 60, y: H/2, r: 90 }];
   /* THE RIVER AND THE GREAT LAKE (v36) — the water lies under
@@ -8890,6 +8892,19 @@ function R(x, y, w, h, c){ ctx.fillStyle = c; ctx.fillRect(Math.round(x), Math.r
 function drawGround(L, idx){
   for (var ty = 0; ty < 12; ty++) for (var tx = 0; tx < 16; tx++)
     R(tx * TILE, ty * TILE, TILE, TILE, (tx + ty) % 2 ? L.ground : L.ground2);
+  /* v42: large soft ground blotches in WORLD space — a coarse
+     4-tile grid laid over the whole 16x8 world, so a patch of worn
+     earth flows across field borders like the shorelines do */
+  var bc42 = idx % 16, br42 = Math.floor(idx / 16);
+  for (var bgy = Math.floor((br42 * H - 170) / 192); bgy <= Math.floor((br42 * H + H + 170) / 192); bgy++)
+    for (var bgx = Math.floor((bc42 * W - 170) / 192); bgx <= Math.floor((bc42 * W + W + 170) / 192); bgx++){
+      if (texHash(bgx * 3 + 7, bgy * 5 + 11) < 0.42) continue;
+      var bcx = bgx * 192 + 96 + (texHash(bgx, bgy) - 0.5) * 90 - bc42 * W, bcy = bgy * 192 + 96 + (texHash(bgx + 31, bgy + 7) - 0.5) * 90 - br42 * H;
+      ctx.globalAlpha = 0.09; ctx.fillStyle = L.ground2;
+      if (texHash(bgx + 3, bgy + 17) <= 0.5){ ctx.globalAlpha = 0.05; ctx.fillStyle = '#000000'; }
+      ctx.beginPath(); ctx.ellipse(bcx, bcy, 110 + texHash(bgx + 9, bgy) * 70, 70 + texHash(bgx, bgy + 23) * 46, 0, 0, Math.PI * 2); ctx.fill();
+    }
+  ctx.globalAlpha = 1;
   var R2 = rng(idx * 31 + 7);
   ctx.globalAlpha = 0.5;
   for (var i = 0; i < 46; i++){
@@ -8902,6 +8917,70 @@ function drawGround(L, idx){
     else { R(x, y, 3, 3, '#ffe95e'); }
   }
   ctx.globalAlpha = 1;
+}
+/* ===== ORGANIC TOPOGRAPHY (v42) =====
+   The 1986 masters drew shorelines tile by tile because tiles were
+   all they had. We have arithmetic: a shore's wobble is a function
+   of WORLD tile coordinates, so a bank flows across field borders
+   without a seam — both fields compute the same wobble for the
+   shared border tiles. Collision stays the honest rectangles it
+   always was; only the drawing goes organic. */
+function shoreWob42(key){ return Math.floor(texHash(key * 7 + 13, key * 3 + 41) * 13) - 6; }
+function shoreDry42(px, py, kinds){
+  return !obstacles.some(function(q){ return kinds.indexOf(q.type) >= 0 && px >= q.x - 2 && px <= q.x + q.w + 2 && py >= q.y - 2 && py <= q.y + q.h + 2; });
+}
+function shoreContinues42(dir, along){
+  var nc = state.owCol, nr = state.owRow;
+  if (dir === 'E') nc++; else if (dir === 'W') nc--; else if (dir === 'S') nr++; else nr--;
+  if (nc < 0 || nc > 15 || nr < 0 || nr > 7) return false;
+  var parts = RIVER36[owIdx(nc, nr)]; if (!parts) return false;
+  return parts.some(function(p){
+    if (p[0] !== 'water') return false;
+    if (dir === 'E') return p[1] === 0 && along >= p[2] - 24 && along <= p[2] + p[4] + 24;
+    if (dir === 'W') return p[1] + p[3] === W && along >= p[2] - 24 && along <= p[2] + p[4] + 24;
+    if (dir === 'S') return p[2] === 0 && along >= p[1] - 24 && along <= p[1] + p[3] + 24;
+    return p[2] + p[4] === H && along >= p[1] - 24 && along <= p[1] + p[3] + 24;
+  });
+}
+function shoreEdges42(o){
+  return [
+    { dx: 0, dy: -1, horiz: true,  at: o.y,       from: o.x, len: o.w, dir: 'N' },
+    { dx: 0, dy: 1,  horiz: true,  at: o.y + o.h, from: o.x, len: o.w, dir: 'S' },
+    { dx: -1, dy: 0, horiz: false, at: o.x,       from: o.y, len: o.h, dir: 'W' },
+    { dx: 1,  dy: 0,  horiz: false, at: o.x + o.w, from: o.y, len: o.h, dir: 'E' }
+  ];
+}
+function drawShore42(o){
+  var wx0 = state.owCol * W, wy0 = state.owRow * H;
+  shoreEdges42(o).forEach(function(e){
+    for (var s = 12; s < e.len - 6; s += 24){
+      var along = e.from + s;
+      var px = e.horiz ? along : e.at + e.dx * 9, py = e.horiz ? e.at + e.dy * 9 : along;
+      if (!shoreDry42(px, py, ['water', 'bridge'])) continue;
+      var onBorder = (e.dir === 'N' && o.y === 0) || (e.dir === 'S' && o.y + o.h === H) || (e.dir === 'W' && o.x === 0) || (e.dir === 'E' && o.x + o.w === W);
+      if (onBorder && shoreContinues42(e.dir, along)) continue;
+      var key = Math.floor(((e.horiz ? wx0 : wy0) + along) / TILE);
+      var wob = shoreWob42(key);
+      ctx.fillStyle = '#c9b06a';
+      ctx.beginPath(); ctx.arc(e.horiz ? along : e.at + e.dx * wob * 1.6, e.horiz ? e.at + e.dy * wob * 1.6 : along, 5.5 + texHash(key * 3 + 1, s * 7) * 4.5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(240,250,255,0.75)';
+      ctx.beginPath(); ctx.arc(e.horiz ? along : e.at - e.dx * 3, e.horiz ? e.at - e.dy * 3 : along, 4.5, 0, Math.PI * 2); ctx.fill();
+    }
+  });
+}
+function drawSandEdge42(o){
+  var wx0 = state.owCol * W, wy0 = state.owRow * H;
+  ctx.fillStyle = '#e2d096';
+  shoreEdges42(o).forEach(function(e){
+    for (var s = 12; s < e.len - 6; s += 24){
+      var along = e.from + s;
+      var px = e.horiz ? along : e.at + e.dx * 9, py = e.horiz ? e.at + e.dy * 9 : along;
+      if (!shoreDry42(px, py, ['water', 'sand', 'bridge'])) continue;
+      var key = Math.floor(((e.horiz ? wx0 : wy0) + along) / TILE);
+      var wob = shoreWob42(key);
+      ctx.beginPath(); ctx.arc(e.horiz ? along : e.at + e.dx * wob * 1.6, e.horiz ? e.at + e.dy * wob * 1.6 : along, 4.5 + texHash(key * 5 + 2, s * 7) * 3.5, 0, Math.PI * 2); ctx.fill();
+    }
+  });
 }
 function drawObstacle(o){
   var x = o.x, y = o.y;
@@ -8945,6 +9024,7 @@ function drawObstacle(o){
     for (var sdi = 0; sdi < 14; sdi++){ var sdx = x + 12 + texHash(x + sdi * 37, y) * (o.w - 24), sdy = y + 12 + texHash(x, y + sdi * 29) * (o.h - 24); ctx.fillRect(sdx, sdy, 3, 2); }
     ctx.strokeStyle = 'rgba(168,144,90,0.6)'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(x + o.w * 0.3, y + o.h * 0.62, 26, Math.PI * 1.15, Math.PI * 1.85); ctx.arc(x + o.w * 0.68, y + o.h * 0.4, 20, Math.PI * 1.15, Math.PI * 1.85); ctx.stroke();
+    drawSandEdge42(o);   /* v42: the beach's outer edge wobbles too */
     return;
   }
   if (o.type === 'cactus'){
@@ -9022,6 +9102,7 @@ function drawObstacle(o){
       R(x - 5, y - 5, o.w + 10, o.h + 10, '#c9b06a'); R(x - 5, y - 5, o.w + 10, 5, '#e8d69b');
     }
     R(x, y, o.w, o.h, '#2f7fc4'); R(x, y + 6, o.w, 3, '#57a8e8'); R(x, y + o.h - 12, o.w, 3, '#57a8e8');
+    drawShore42(o);   /* v42: the organic bank — sand scallops + foam, world-keyed */
     if (o.lake){
       /* THE LAKE (v26, dressed v30): lily pads, a foam edge
          that follows the TRUE shore (an arc is skipped where
@@ -9031,13 +9112,7 @@ function drawObstacle(o){
       R(x + 40, y + 26, 17, 9, '#2e8b3a'); R(x + 43, y + 23, 4, 4, '#ff8ab0');
       R(x + o.w - 90, y + o.h - 40, 19, 10, '#35a544');
       R(x + o.w / 2 - 30, y + o.h / 2, 26, 3, '#57a8e8');
-      ctx.strokeStyle = 'rgba(240,250,255,0.75)'; ctx.lineWidth = 2;
-      ctx.beginPath();
-      for (var lfx = 14; lfx < o.w - 10; lfx += 26){
-        var covered = obstacles.some(function(q){ return q !== o && q.type === 'water' && x + lfx >= q.x && x + lfx <= q.x + q.w && y - 8 >= q.y && y - 8 <= q.y + q.h; });
-        if (!covered) ctx.arc(x + lfx, y + 3, 7, Math.PI * 1.08, Math.PI * 1.92);
-      }
-      ctx.stroke();
+      /* foam scallops moved to the v42 shore pass (drawShore42) — one shore system for every water body */
       ctx.fillStyle = 'rgba(255,255,255,0.55)';
       for (var lsi = 0; lsi < 7; lsi++){ var lsx = x + 20 + texHash(x + lsi * 53, y + 9) * (o.w - 40), lsy = y + 14 + texHash(x + 4, y + lsi * 31) * (o.h - 28); ctx.fillRect(lsx, lsy, 5, 2); ctx.fillRect(lsx + 2, lsy - 1, 1, 4); }
     }
