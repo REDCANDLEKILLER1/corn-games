@@ -4142,6 +4142,40 @@ function owRegionName(c, r){
   if (!ew) return ns;
   return ns + ew;
 }
+/* THE REGIONS (v35, Michael 2026-11-18: "the map doesn't look like
+   a bunch of squares... the map on Zelda looks like a map") —
+   Hyrule is the same 16x8 grid of screens Corn's farm already is;
+   what makes it a WORLD is that neighbouring screens share one
+   land. So every field now belongs to a REGION: the region sets
+   its ground, its walls and its name, and where two fields of the
+   same region meet there is NO wall at all — the land continues. */
+var REGIONS = {
+  graveyard:  { name:'The Graveyard',   ground:'#4e5a3a', ground2:'#455234', ob:'tomb', deco:'star',   wall:'stone' },
+  northwoods: { name:'The North Woods', ground:'#477a35', ground2:'#3f6e2f', ob:'tree', deco:'star',   wall:'tree' },
+  desert:     { name:'The Desert',      ground:'#c9b06a', ground2:'#bfa55e', ob:'rock', deco:'star',   wall:null },
+  pond:       { name:'Pond Country',    ground:'#4f9e4d', ground2:'#478f45', ob:'rock', deco:'lily',   wall:'tree' },
+  mazewoods:  { name:'The Maze Woods',  ground:'#3a6b2c', ground2:'#336024', ob:'tree', deco:'corn',   wall:'corn' },
+  orchard:    { name:'The Orchard',     ground:'#5f9e3e', ground2:'#548c36', ob:'tree', deco:'flower', wall:'tree' },
+  silo:       { name:'The Silo Yards',  ground:'#8a7a45', ground2:'#7f7040', ob:'rock', deco:'corn',   wall:'rock' },
+  moonlit:    { name:'Moonlit Meadow',  ground:'#3d6b52', ground2:'#355e47', ob:'hay',  deco:'star',   wall:null },
+  lakeshore:  { name:'The Lakeshore',   ground:'#6aa832', ground2:'#619c2d', ob:'rock', deco:'lily',   wall:'fence' },
+  farmland:   { name:'The Farmlands',   ground:'#69b83c', ground2:'#61ab35', ob:'hay',  deco:'flower', wall:'fence' }
+};
+function regionOf(c, r){
+  if (r <= 2 && c <= 3) return 'graveyard';
+  if (r <= 2 && c <= 8) return 'northwoods';
+  if (r <= 1 && c >= 9 && c <= 12) return 'desert';
+  if (r === 2 && c >= 9 && c <= 11) return 'desert';
+  if (r <= 1 && c >= 13) return 'pond';
+  if (r >= 3 && r <= 5 && c <= 4) return 'mazewoods';
+  if (r >= 3 && r <= 5 && c >= 10 && c <= 11) return 'orchard';
+  if (r >= 2 && r <= 4 && c >= 14) return 'silo';
+  if (r >= 2 && r <= 4 && c === 13) return 'lakeshore';
+  if (c === 12 && r >= 2 && r <= 4) return 'lakeshore';
+  if (r >= 6 && c <= 4) return 'moonlit';
+  if (r >= 5 && c >= 12) return 'lakeshore';
+  return 'farmland';
+}
 var OW_SPECIAL = {};
 OW_SPECIAL[OW_L6]   = { name:'The Old Graveyard', ground:'#55773a', ground2:'#4c6c33', ob:'tomb',    deco:'star', wall:'stone' };
 OW_SPECIAL[OW_L9]   = { name:'Great Barn Hill',   ground:'#5db531', ground2:'#55a82c', ob:'rock',    deco:'flower'  };
@@ -4161,10 +4195,11 @@ for (var owr = 0; owr < OW_ROWS; owr++){
   for (var owc = 0; owc < OW_COLS; owc++){
     var owi = owIdx(owc, owr);
     if (OW_SPECIAL[owi]){ OW_SCREENS.push(OW_SPECIAL[owi]); continue; }
-    var th = OW_THEMES[(owc * 3 + owr * 5 + ((owc + owr) % 3)) % OW_THEMES.length];
-    OW_SCREENS.push({ name: owRegionName(owc, owr) + ' ' + th.tag, ground: th.ground, ground2: th.ground2, ob: th.ob, deco: th.deco });
+    var rg = REGIONS[regionOf(owc, owr)];
+    OW_SCREENS.push({ name: rg.name, ground: rg.ground, ground2: rg.ground2, ob: rg.ob, deco: rg.deco });
   }
 }
+OW_SCREENS.forEach(function(s, i){ s.region = regionOf(i % OW_COLS, Math.floor(i / OW_COLS)); });
 var OW_SPECIAL_ENEMIES = {};
 OW_SPECIAL_ENEMIES[OW_L6] = [['crow',2],['goat',1],['wraith',3]];   /* v28: the graveyard is haunted */
 OW_SPECIAL_ENEMIES[OW_L9] = [['crow',2],['pig',1],['wraith',2]];   /* v28: and so is the Great Barn's field */
@@ -4382,10 +4417,10 @@ function borderObstacles(gaps, type){
   if (T === 'fence'){
     function hseg(x, y, w){ if (w > 4) out.push({ x:x, y:y, w:w, h:20, type:T }); }
     function vseg(x, y, h){ if (h > 4) out.push({ x:x, y:y, w:20, h:h, type:T }); }
-    if (gaps.N){ hseg(0, 0, W/2 - G/2); hseg(W/2 + G/2, 0, W/2 - G/2); } else hseg(0, 0, W);
-    if (gaps.S){ hseg(0, H-20, W/2 - G/2); hseg(W/2 + G/2, H-20, W/2 - G/2); } else hseg(0, H-20, W);
-    if (gaps.W){ vseg(0, 0, H/2 - G/2); vseg(0, H/2 + G/2, H/2 - G/2); } else vseg(0, 0, H);
-    if (gaps.E){ vseg(W-20, 0, H/2 - G/2); vseg(W-20, H/2 + G/2, H/2 - G/2); } else vseg(W-20, 0, H);
+    if (gaps.N === 'open'){ } else if (gaps.N){ hseg(0, 0, W/2 - G/2); hseg(W/2 + G/2, 0, W/2 - G/2); } else hseg(0, 0, W);
+    if (gaps.S === 'open'){ } else if (gaps.S){ hseg(0, H-20, W/2 - G/2); hseg(W/2 + G/2, H-20, W/2 - G/2); } else hseg(0, H-20, W);
+    if (gaps.W === 'open'){ } else if (gaps.W){ vseg(0, 0, H/2 - G/2); vseg(0, H/2 + G/2, H/2 - G/2); } else vseg(0, 0, H);
+    if (gaps.E === 'open'){ } else if (gaps.E){ vseg(W-20, 0, H/2 - G/2); vseg(W-20, H/2 + G/2, H/2 - G/2); } else vseg(W-20, 0, H);
     return out;
   }
   /* v26: a wall of THINGS — trees, rocks, stones, corn — stands
@@ -4393,10 +4428,10 @@ function borderObstacles(gaps, type){
      the fence always left */
   function hcells(y, x0, x1){ for (var x = x0; x + 20 <= x1; x += 40) out.push({ x: x, y: y, w: 40, h: 40, type: T }); }
   function vcells(x, y0, y1){ for (var y = y0; y + 20 <= y1; y += 40) out.push({ x: x, y: y, w: 40, h: 40, type: T }); }
-  if (gaps.N){ hcells(0, 0, W/2 - G/2); hcells(0, W/2 + G/2, W); } else hcells(0, 0, W);
-  if (gaps.S){ hcells(H - 40, 0, W/2 - G/2); hcells(H - 40, W/2 + G/2, W); } else hcells(H - 40, 0, W);
-  if (gaps.W){ vcells(0, 40, H/2 - G/2); vcells(0, H/2 + G/2, H - 40); } else vcells(0, 40, H - 40);
-  if (gaps.E){ vcells(W - 40, 40, H/2 - G/2); vcells(W - 40, H/2 + G/2, H - 40); } else vcells(W - 40, 40, H - 40);
+  if (gaps.N === 'open'){ } else if (gaps.N){ hcells(0, 0, W/2 - G/2); hcells(0, W/2 + G/2, W); } else hcells(0, 0, W);
+  if (gaps.S === 'open'){ } else if (gaps.S){ hcells(H - 40, 0, W/2 - G/2); hcells(H - 40, W/2 + G/2, W); } else hcells(H - 40, 0, W);
+  if (gaps.W === 'open'){ } else if (gaps.W){ vcells(0, 40, H/2 - G/2); vcells(0, H/2 + G/2, H - 40); } else vcells(0, 40, H - 40);
+  if (gaps.E === 'open'){ } else if (gaps.E){ vcells(W - 40, 40, H/2 - G/2); vcells(W - 40, H/2 + G/2, H - 40); } else vcells(W - 40, 40, H - 40);
   return out;
 }
 function scatterObstacles(R, type, count, avoid){
@@ -4478,15 +4513,19 @@ function loadOwScreen(){
      woods wear trees, the rocky country wears rock, the
      graveyard wears stone, the maze wears corn, and the rest
      of the farm keeps its fences */
-  var wallType = S.wall || 'fence', openField = !!S.open;
-  if (!OW_SPECIAL[idx]){
-    var thx = OW_THEMES[(state.owCol * 3 + state.owRow * 5 + ((state.owCol + state.owRow) % 3)) % OW_THEMES.length];
-    if (thx.tag === 'Woodlot' || thx.tag === 'High Grass') wallType = 'tree';
-    else if (thx.tag === 'Rocky Field') wallType = 'rock';
-    else if (thx.tag === 'Corn Rows') wallType = 'corn';
-    else if (thx.tag === 'Meadow' || thx.tag === 'Sunflower Field' || thx.tag === 'Old Pasture') openField = true;
-  }
-  obstacles = openField ? [] : borderObstacles(owGaps, wallType);
+  /* v35: the REGION decides the walls now — the v26 per-field
+     theme formula is retired. And where the field next door is
+     the SAME region, that edge gets no wall at all: the land just
+     continues, the way Hyrule's screens flow into one another.
+     A hard-closed gap (the Lost Hills' east rock) still wins. */
+  var reg35 = REGIONS[S.region || 'farmland'];
+  var wallType = S.wall || reg35.wall, openField = !!S.open || !wallType;
+  var gaps35 = { N: owGaps.N, S: owGaps.S, E: owGaps.E, W: owGaps.W };
+  if (owGaps.N && state.owRow > 0 && OW_SCREENS[idx - OW_COLS].region === S.region) gaps35.N = 'open';
+  if (owGaps.S && state.owRow < OW_ROWS - 1 && OW_SCREENS[idx + OW_COLS].region === S.region) gaps35.S = 'open';
+  if (owGaps.W && state.owCol > 0 && OW_SCREENS[idx - 1].region === S.region) gaps35.W = 'open';
+  if (owGaps.E && state.owCol < OW_COLS - 1 && OW_SCREENS[idx + 1].region === S.region) gaps35.E = 'open';
+  obstacles = openField ? [] : borderObstacles(gaps35, wallType);
   var avoid = [{ x: W/2, y: 40, r: 90 }, { x: W/2, y: H - 60, r: 90 }, { x: 40, y: H/2, r: 90 }, { x: W - 60, y: H/2, r: 90 }];
   if (idx === OW_HOME){                                      /* HOME FARM — a clear field (Michael, 2026-11-17): no store, no farmer standing on it. And no wrench lying in the grass (2026-11-18): it waits in the Pedestal Grove, four fields north — Corn Man fights his way there with his fists, through the morning fog. */
     scatterObstacles(R, 'hay', 4, avoid);
@@ -4693,6 +4732,7 @@ function loadOwScreen(){
     scatterObstacles(R, 'tree', 7, avoid.concat([{ x: W/2, y: 250, r: 175 }]));
   } else {
     scatterObstacles(R, S.ob, 6, avoid);
+    if (S.region === 'desert') scatterObstacles(R, 'cactus', 3, avoid);   /* v35: the desert grows cacti */
   }
   /* The Country Stores are GONE (Michael, 2026-11-17): no store
      buildings anywhere on the farm and nowhere to buy anything —
