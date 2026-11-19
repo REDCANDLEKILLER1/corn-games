@@ -3290,6 +3290,141 @@ function farmCellDetail(i){
    painter draws the big zoomable map and the Pack's mini map. */
 var mapView = { s: 1, x: 0, y: 0, bw: 0, bh: 0 };
 function mapVisited(i){ return warpMode || !!(state.visitedFields && state.visitedFields[state.world + ':' + i]); }
+/* ---------- THE STITCHED MAP (v39) ----------
+   The Player's Guide method, learned from the LttP guide Michael
+   filed: their maps are not charts ABOUT the world — they are the
+   world itself, screen by screen, joined into one picture. So a
+   charted field is now painted from the game's OWN field data:
+   load the field, paint what actually stands there at tile scale.
+   The pass snapshots the world first (loadOwScreen CHARTS every
+   field it loads) and restores it after, reloading wherever
+   Corn Man actually is. Uncharted fields keep the v37 fog. */
+var stitchCells39 = {};
+function paintFieldTiles39(mc, i, cx, cy){
+  var S = OW_SCREENS[i];
+  var SX = 100 / W, SY = 100 / H;
+  function X(x){ return cx + x * SX; }
+  function Y(y){ return cy + y * SY; }
+  var reg = REGIONS[S.region] || S;
+  mc.fillStyle = reg.ground; mc.fillRect(cx, cy, 100, 100);
+  mc.fillStyle = reg.ground2; mc.globalAlpha = 0.45;
+  for (var tx = 0; tx < 16; tx++) for (var ty = 0; ty < 12; ty++)
+    if ((tx + ty) % 2) mc.fillRect(cx + tx * 6.25, cy + ty * (100 / 12), 6.25, 100 / 12);
+  mc.globalAlpha = 1;
+  function barnGlyph(x, y, w, h){
+    mc.fillStyle = '#3a0f0a'; mc.fillRect(x - 0.7, y + h * 0.3 - 0.7, w + 1.4, h * 0.7 + 1.4);
+    mc.fillStyle = '#b03024'; mc.fillRect(x, y + h * 0.3, w, h * 0.7);
+    mc.fillStyle = '#7c1a12'; mc.beginPath(); mc.moveTo(x - 1, y + h * 0.34); mc.lineTo(x + w + 1, y + h * 0.34); mc.lineTo(x + w / 2, y); mc.closePath(); mc.fill();
+    mc.fillStyle = '#fffbe8'; mc.fillRect(x + w / 2 - 1, y + h * 0.55, 2, h * 0.4);
+  }
+  obstacles.forEach(function(o){
+    var x = X(o.x), y = Y(o.y), w = Math.max(2, o.w * SX), h = Math.max(2, o.h * SY);
+    switch (o.type){
+      case 'sand': mc.fillStyle = '#c9b06a'; mc.fillRect(x - 1, y - 1, w + 2, h + 2); break;
+      case 'water':
+        if (o.healPond){ mc.fillStyle = '#c9b06a'; mc.fillRect(x - 1, y - 1, w + 2, h + 2); }
+        mc.fillStyle = '#2f7fc4'; mc.fillRect(x, y, w, h);
+        mc.fillStyle = '#57a8e8'; mc.fillRect(x, y, w, 1.5);
+        break;
+      case 'bridge': mc.fillStyle = '#a06a35'; mc.fillRect(x, y, w, h); mc.fillStyle = '#6d4423'; mc.fillRect(x, y, w, 1); mc.fillRect(x, y + h - 1, w, 1); break;
+      case 'fence': mc.fillStyle = '#7a4d16'; mc.fillRect(x, y, w, h); break;
+      case 'tree':
+        mc.fillStyle = '#7a4d16'; mc.fillRect(x + w / 2 - 0.5, y + h * 0.55, 1, h * 0.4);
+        mc.fillStyle = '#2f7a1e'; mc.beginPath(); mc.arc(x + w / 2, y + h * 0.38, Math.max(3.2, w * 0.66), 0, Math.PI * 2); mc.fill();
+        mc.fillStyle = '#3f9e2c'; mc.beginPath(); mc.arc(x + w / 2 - 1, y + h * 0.3, Math.max(2, w * 0.38), 0, Math.PI * 2); mc.fill();
+        break;
+      case 'deadtree': mc.fillStyle = '#5d4023'; mc.fillRect(x + w / 2 - 0.5, y, 1, h); mc.fillRect(x + 1, y + h * 0.25, w - 2, 1); break;
+      case 'hay': mc.fillStyle = '#e8b93a'; mc.fillRect(x, y, w, h); mc.fillStyle = '#c79a24'; mc.fillRect(x, y + h / 2, w, 1); break;
+      case 'bush': mc.fillStyle = '#2f7a1e'; mc.beginPath(); mc.arc(x + w / 2, y + h / 2, Math.max(2.2, w * 0.42), 0, Math.PI * 2); mc.fill(); break;
+      case 'pumpkin': mc.fillStyle = '#e07b1f'; mc.beginPath(); mc.arc(x + w / 2, y + h / 2, Math.max(2, w * 0.4), 0, Math.PI * 2); mc.fill(); break;
+      case 'corn': mc.fillStyle = '#3f8f22'; mc.fillRect(x, y, w, h); mc.fillStyle = '#ffd91a'; mc.fillRect(x, y, w, 1.5); break;
+      case 'cactus': mc.fillStyle = '#2e8b3a'; mc.fillRect(x + w / 2 - 1, y, 2, h); mc.fillRect(x, y + h * 0.35, w, 1.5); break;
+      case 'tomb': mc.fillStyle = '#a7adb5'; mc.fillRect(x, y, w, h); mc.fillStyle = '#c3c9cf'; mc.fillRect(x, y, w, 2); break;
+      case 'stone': case 'cracked': case 'crackedwall':
+        mc.fillStyle = '#8a8f96'; mc.fillRect(x, y, w, h); mc.fillStyle = '#aeb4bb'; mc.fillRect(x, y, w, 1.5); break;
+      case 'housebody':
+        mc.fillStyle = '#3a2c14'; mc.fillRect(x - 0.7, y + h * 0.3 - 0.7, w + 1.4, h * 0.7 + 1.4);
+        mc.fillStyle = '#e8dcc0'; mc.fillRect(x, y + h * 0.3, w, h * 0.7);
+        mc.fillStyle = '#7c1a12'; mc.beginPath(); mc.moveTo(x - 1, y + h * 0.34); mc.lineTo(x + w + 1, y + h * 0.34); mc.lineTo(x + w / 2, y); mc.closePath(); mc.fill();
+        break;
+      case 'well': mc.fillStyle = '#8a8f96'; mc.fillRect(x, y, w, h); mc.fillStyle = '#7c1a12'; mc.fillRect(x, y, w, 2); break;
+      case 'barrel': mc.fillStyle = '#8a5a2b'; mc.beginPath(); mc.arc(x + w / 2, y + h / 2, Math.max(1.8, w * 0.4), 0, Math.PI * 2); mc.fill(); break;
+      case 'barnlet': case 'shed': barnGlyph(x, y, w, h); break;
+      case 'housewall': case 'table': case 'bed': case 'stove': case 'shelf': case 'plant': case 'anvil': break;   /* furniture lives indoors */
+      default: mc.fillStyle = '#8a8f96'; mc.fillRect(x, y, w, h); mc.fillStyle = '#a8adb2'; mc.fillRect(x, y, w, 1.5); break;   /* the boulder */
+    }
+  });
+  owFeatures.forEach(function(f){
+    var x = X(f.x), y = Y(f.y), w = Math.max(2, f.w * SX), h = Math.max(2, f.h * SY);
+    if (f.kind === 'path'){ mc.fillStyle = '#b99a5e'; mc.fillRect(x, y, w, h); return; }
+    if (f.kind === 'dungeon'){
+      var bx = X(f.bx !== undefined ? f.bx : f.x), by = Y(f.by !== undefined ? f.by : f.y);
+      var bw = Math.max(4, (f.bw !== undefined ? f.bw : f.w) * SX), bh = Math.max(4, (f.bh !== undefined ? f.bh : f.h) * SY);
+      if (f.style === 'silo'){
+        mc.fillStyle = '#9aa0a6'; mc.fillRect(bx + bw * 0.25, by, bw * 0.5, bh);
+        mc.beginPath(); mc.ellipse(bx + bw / 2, by, bw * 0.26, 3, 0, 0, Math.PI * 2); mc.fill();
+        mc.fillStyle = '#7d838a'; mc.fillRect(bx + bw * 0.25, by + bh * 0.35, bw * 0.5, 1.5); mc.fillRect(bx + bw * 0.25, by + bh * 0.65, bw * 0.5, 1.5);
+      } else if (f.style === 'hatch'){
+        mc.fillStyle = '#6f757d'; mc.fillRect(bx, by, bw, bh);
+        mc.fillStyle = '#2a2d33'; mc.fillRect(bx + bw * 0.15, by + bh * 0.3, bw * 0.3, bh * 0.7); mc.fillRect(bx + bw * 0.55, by + bh * 0.3, bw * 0.3, bh * 0.7);
+      } else if (f.style === 'stairs'){
+        mc.fillStyle = '#8a8f96'; mc.fillRect(bx, by, bw, bh);
+        mc.fillStyle = '#3a3f45'; mc.fillRect(bx + bw * 0.2, by + bh * 0.25, bw * 0.6, bh * 0.2); mc.fillRect(bx + bw * 0.3, by + bh * 0.5, bw * 0.4, bh * 0.2);
+      } else if (f.style === 'hut'){
+        mc.fillStyle = '#3a2c14'; mc.fillRect(bx - 0.7, by + bh * 0.3 - 0.7, bw + 1.4, bh * 0.7 + 1.4);
+        mc.fillStyle = '#e8dcc0'; mc.fillRect(bx, by + bh * 0.3, bw, bh * 0.7);
+        mc.fillStyle = '#b03a2e'; mc.beginPath(); mc.moveTo(bx - 1, by + bh * 0.34); mc.lineTo(bx + bw + 1, by + bh * 0.34); mc.lineTo(bx + bw / 2, by); mc.closePath(); mc.fill();
+      } else barnGlyph(bx, by, bw, bh);
+      return;
+    }
+    if (f.kind === 'pedestal'){ mc.fillStyle = '#7d838a'; mc.fillRect(x, y + h * 0.4, w, h * 0.6); mc.fillStyle = '#5f6468'; mc.fillRect(x + w * 0.2, y + h * 0.7, w * 0.6, h * 0.3); return; }
+    if (f.kind === 'warp'){ mc.fillStyle = '#1c2416'; mc.beginPath(); mc.arc(x + w / 2, y + h / 2, Math.max(2.5, w * 0.4), 0, Math.PI * 2); mc.fill(); return; }
+    if (f.kind === 'cave'){ mc.fillStyle = '#241a10'; mc.fillRect(x, y + h * 0.25, w, h * 0.75); return; }
+    /* houses paint from their housebody obstacle; people, signs
+       and doors are not geography */
+  });
+}
+function stitchSig39(){
+  var f = 0, v = 0, k;
+  for (k in state.found) if (state.found[k]) f++;
+  for (k in state.visitedFields) if (state.visitedFields[k]) v++;
+  return state.world + '|' + v + '|' + f + '|' + state.completedCount + '|' + Object.keys(state.superHearts).length + '|' + Object.keys(state.shedStashes).length + '|' + (warpMode ? 1 : 0);
+}
+var stitchCv39 = null, stitchSigCache39 = '';
+function stitchMap39(mc){
+  stitchCells39 = {};
+  if (!player) return;
+  var sig39 = stitchSig39();
+  if (stitchCv39 && sig39 === stitchSigCache39){
+    for (var ci = 0; ci < OW_COLS * OW_ROWS; ci++)
+      if (warpMode || state.visitedFields[state.world + ':' + ci]) stitchCells39[ci] = true;
+    mc.drawImage(stitchCv39, 0, 0);
+    return;
+  }
+  stitchCv39 = document.createElement('canvas'); stitchCv39.width = 1600; stitchCv39.height = 800;
+  var cmc = stitchCv39.getContext('2d');
+  var snapVisited = {}; for (var k in state.visitedFields) snapVisited[k] = true;
+  var sc = state.owCol, sr = state.owRow, sm = state.mode;
+  var spx = player.x, spy = player.y;
+  var sRoom = (typeof dunRoom !== 'undefined') ? dunRoom : 0;
+  var sHouse = (typeof currentHouse !== 'undefined') ? currentHouse : null;
+  for (var i = 0; i < OW_COLS * OW_ROWS; i++){
+    if (!(warpMode || snapVisited[state.world + ':' + i])) continue;
+    state.owCol = i % OW_COLS; state.owRow = Math.floor(i / OW_COLS);
+    loadOwScreen();
+    paintFieldTiles39(cmc, i, (i % OW_COLS) * 100, Math.floor(i / OW_COLS) * 100);
+    stitchCells39[i] = true;
+  }
+  state.visitedFields = snapVisited;
+  state.owCol = sc; state.owRow = sr;
+  if (sm === 'dungeon' && typeof loadRoom === 'function') loadRoom(sRoom, 'S');
+  else if (sm === 'house' && sHouse && typeof loadHouse === 'function') loadHouse(sHouse);
+  else loadOwScreen();
+  if (player){ player.x = spx; player.y = spy; }
+  startMusic();
+  stitchSigCache39 = sig39;
+  mc.drawImage(stitchCv39, 0, 0);
+}
 function drawFarmMap(cv, withLabels){
   var mc = cv.getContext('2d');
   var CW = 100, CH = 100;
@@ -3301,6 +3436,7 @@ function drawFarmMap(cv, withLabels){
   effBurnSheds().forEach(function(sd){ shedFields[sd.ow] = true; });
   var here = heroOwIndex();
   mc.textAlign = 'center'; mc.textBaseline = 'middle';
+  stitchMap39(mc);   /* v39: charted fields are painted from the fields themselves, below everything else */
   for (var i = 0; i < OW_COLS * OW_ROWS; i++){
     var S = OW_SCREENS[i], cx = (i % OW_COLS) * CW, cy = Math.floor(i / OW_COLS) * CH;
     if (!mapVisited(i)){
@@ -3311,6 +3447,7 @@ function drawFarmMap(cv, withLabels){
       for (var fw = 0; fw < 3; fw++){ mc.beginPath(); mc.ellipse(cx + 20 + fr() * 60, cy + 20 + fr() * 60, 16 + fr() * 14, 7 + fr() * 5, 0, 0, Math.PI * 2); mc.fill(); }
       continue;
     }
+    if (!stitchCells39[i]){   /* v39: an unstitched cell keeps the v37 chart painting */
     /* v37 (THE REAL MAP): one flat land colour per field — fields in
        the same country share it, so the landmass reads whole. v37c:
        the chart paints the REGION's colours for every field, even
@@ -3360,11 +3497,13 @@ function drawFarmMap(cv, withLabels){
     if (i === OW_L3){ mc.fillStyle = 'rgba(30,80,20,0.55)'; for (var mz = 0; mz < 4; mz++) mc.fillRect(cx + 12 + mz * 22, cy + 6, 9, 88); }
     if (i === OW_L6){ mc.fillStyle = '#9aa0a6'; mc.fillRect(cx + 18, cy + 62, 10, 14); mc.fillRect(cx + 70, cy + 58, 10, 14); mc.fillRect(cx + 44, cy + 70, 10, 14); }
     if (i === OW_GROVE){ mc.fillStyle = '#7d838a'; mc.fillRect(cx + 36, cy + 42, 28, 9); mc.fillStyle = '#5f6468'; mc.fillRect(cx + 41, cy + 51, 18, 11); if (state.wrench < 1){ mc.font = '20px serif'; mc.fillText('🔧', cx + 50, cy + 34); } }
+    }   /* v39: end of the fallback painting */
     var sp = spots[i];
-    if (sp && i === OW_L7){
+    if (stitchCells39[i]){ /* v39b: the field paints its own buildings — no chart icon on top */ }
+    else if (sp && i === OW_L7){
       mc.fillStyle = '#9aa0a6'; mc.fillRect(cx + 38, cy + 16, 24, 54); mc.beginPath(); mc.ellipse(cx + 50, cy + 16, 12, 5, 0, 0, Math.PI * 2); mc.fill();
       mc.fillStyle = '#7d838a'; mc.fillRect(cx + 38, cy + 32, 24, 3); mc.fillRect(cx + 38, cy + 50, 24, 3);
-    } else if (sp){
+    } else if (sp && !stitchCells39[i]){
       mc.fillStyle = '#b03024'; mc.fillRect(cx + 26, cy + 34, 48, 34);
       mc.fillStyle = '#7c1a12'; mc.beginPath(); mc.moveTo(cx + 19, cy + 35); mc.lineTo(cx + 81, cy + 35); mc.lineTo(cx + 50, cy + 15); mc.closePath(); mc.fill();
       mc.fillStyle = '#fffbe8'; mc.fillRect(cx + 44, cy + 48, 12, 20);
