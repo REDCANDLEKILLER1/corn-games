@@ -2132,6 +2132,8 @@ var ENEMY_TYPES = {
   goat:      { hp:5, speed:88,  dmg:1, score:3, ai:'goat' },      /* brain: goatStep — zigzag in, head down, HEADBUTT, dizzy */
   tractor:   { hp:8, speed:62,  dmg:2, score:5, ai:'tractor' },  /* brain: tractorStep — chug, REV, DRIVE, stall steaming; drops oil */
   mole:      { hp:4, speed:100, dmg:1, score:2, ai:'mole' },      /* brain: moleStep — burrows as a mound, POPS UP, swipes */
+  lakelurk:  { hp:4, speed:0,   dmg:1, score:3, ai:'lakelurk' },  /* brain: lakelurkStep (v38) — rises out of the water, spits once, dives */
+  leever:    { hp:3, speed:62,  dmg:1, score:2, ai:'leever' },    /* brain: leeverStep (v38) — burrows in the sand, pops up, spin-charges */
   /* end guys (big bosses) */
   boss_chicken:      { hp:16, speed:66, dmg:1, score:5, ai:'peck' },
   boss_turtle:       { hp:18, speed:48, dmg:1, score:5, ai:'turtle' },
@@ -4226,6 +4228,25 @@ river36(12, 7, [['sand',390,0,90,576],['water',430,0,338,576]]);
 river36(13, 7, [['sand',0,380,768,196],['water',60,0,648,400]]);
 river36(14, 7, [['water',0,0,768,576],['sand',500,300,110,80]]);
 river36(15, 7, [['water',0,0,768,576]]);
+/* THE LAKELURKS (v38) — what lives in the water, field by field:
+   [x, y] of each lurking spot, every one of them in open water */
+var LAKELURKS = {};
+LAKELURKS[owIdx(12, 3)] = [[628,120],[628,430]];
+LAKELURKS[owIdx(13, 3)] = [[84,120],[84,430]];
+LAKELURKS[owIdx(12, 4)] = [[628,180],[628,420]];
+LAKELURKS[owIdx(13, 4)] = [[84,200]];
+LAKELURKS[owIdx(12, 5)] = [[590,120],[560,430]];
+LAKELURKS[owIdx(13, 5)] = [[280,300],[560,360]];
+LAKELURKS[owIdx(14, 5)] = [[200,300],[520,220]];
+LAKELURKS[owIdx(15, 5)] = [[380,320]];
+LAKELURKS[owIdx(12, 6)] = [[570,200]];
+LAKELURKS[owIdx(13, 6)] = [[520,455]];
+LAKELURKS[owIdx(14, 6)] = [[200,160],[540,420]];
+LAKELURKS[owIdx(15, 6)] = [[300,300]];
+LAKELURKS[owIdx(12, 7)] = [[570,300]];
+LAKELURKS[owIdx(13, 7)] = [[300,160]];
+LAKELURKS[owIdx(14, 7)] = [[240,200]];
+LAKELURKS[owIdx(15, 7)] = [[420,340]];
 var OW_SPECIAL = {};
 OW_SPECIAL[OW_L6]   = { name:'The Old Graveyard', ground:'#55773a', ground2:'#4c6c33', ob:'tomb',    deco:'star', wall:'stone' };
 OW_SPECIAL[OW_L9]   = { name:'Great Barn Hill',   ground:'#5db531', ground2:'#55a82c', ob:'rock',    deco:'flower'  };
@@ -4262,7 +4283,7 @@ OW_SPECIAL_ENEMIES[OW_L7] = [['tractor',1],['scarecrow',2]];
 OW_SPECIAL_ENEMIES[OW_L8] = [['chicken',3],['pig',1]];
 OW_SPECIAL_ENEMIES[OW_HOME] = [['chicken',2]];
 OW_SPECIAL_ENEMIES[OW_L1] = [['chicken',3],['pig',2]];
-OW_SPECIAL_ENEMIES[OW_L2] = [['chicken',2],['pig',2],['crow',1]];
+OW_SPECIAL_ENEMIES[OW_L2] = [['chicken',2],['pig',2],['crow',1],['leever',1]];
 OW_SPECIAL_ENEMIES[OW_GROVE] = [['chicken',2],['crow',1]];
 /* v36: the river and lake fields — crows over the water, goats on
    the banks; the deep fields spawn nothing at all (the Lakelurks
@@ -4283,6 +4304,12 @@ OW_SPECIAL_ENEMIES[owIdx(12, 7)] = [['crow',1]];
 OW_SPECIAL_ENEMIES[owIdx(13, 7)] = [['crow',1],['goat',1]];
 OW_SPECIAL_ENEMIES[owIdx(14, 7)] = [];
 OW_SPECIAL_ENEMIES[owIdx(15, 7)] = [];
+/* v38: Leevers under the desert sand */
+OW_SPECIAL_ENEMIES[owIdx(9, 0)]  = [['leever',2]];
+OW_SPECIAL_ENEMIES[owIdx(11, 0)] = [['leever',2],['crow',1]];
+OW_SPECIAL_ENEMIES[owIdx(12, 1)] = [['leever',2]];
+OW_SPECIAL_ENEMIES[owIdx(9, 2)]  = [['leever',2]];
+OW_SPECIAL_ENEMIES[owIdx(10, 2)] = [['leever',1],['goat',1]];
 var OW_ENEMIES = [];
 for (var oei = 0; oei < OW_COLS * OW_ROWS; oei++){
   if (OW_SPECIAL_ENEMIES[oei]){ OW_ENEMIES.push(OW_SPECIAL_ENEMIES[oei]); continue; }
@@ -4959,6 +4986,12 @@ function loadOwScreen(){
       return !rectsOverlap(pondRect, o);
     });
     obstacles.push({ x: hp.x, y: hp.y, w: hp.w, h: hp.h, type:'water', healPond:true });
+  });
+  /* THE LAKELURKS (v38) — set down by hand in the river and the
+     lake, never scattered: each one waits under its own water */
+  if (LAKELURKS[idx]) LAKELURKS[idx].forEach(function(lp){
+    enemies.push({ type:'lakelurk', x: lp[0], y: lp[1], w: 34, h: 32, hp: ENEMY_TYPES.lakelurk.hp, maxHp: ENEMY_TYPES.lakelurk.hp,
+                   speed: 0, dir: 0, t: Math.random() * 2, hitT: 0, chargeT: 0, stunT: 0, lk: 'down', lkT: 1 + Math.random() * 2, spat: false });
   });
   spawnFieldEnemies(OW_ENEMIES[idx], R, idx === OW_L7 ? 'tractor' : null);
   interactCd = Math.max(interactCd, 0.6);
@@ -6478,6 +6511,11 @@ function damageEnemy(e, dmg, source){
   /* the unseen cannot be hurt (v28): every weapon passes
      through a wraith until the Storm Charm opens his eyes */
   if (e.type === 'wraith' && !state.hasCharm) return false;
+  /* the buried and the dived cannot be hurt (v38): a Leever under
+     the sand and a Lakelurk under the water are simply not there
+     to hit — wait for them to surface */
+  if (e.type === 'leever' && (!e.lv || e.lv === 'under')) return false;   /* v38b: under the sand (or not yet ticked) = cannot be hurt */
+  if (e.type === 'lakelurk' && (!e.lk || e.lk === 'down')) return false;
   if (e.big && e.weak && e.weak !== 'any'){
     var ok = (e.weak === 'arrow' && (source === 'arrow' || source === 'goldarrow')) ||
              (e.weak === 'kernel' && source === 'kernel');
@@ -7388,6 +7426,51 @@ function moleStep(e, dt){
   e.walkT += dt * (Math.abs(vx) + Math.abs(vy)) * 0.09;
   return [vx, vy];
 }
+function leeverStep(e, dt){
+  if (e.lv === undefined){ e.lv = 'under'; e.lvT = 1 + Math.random(); e.buried = true; e.age = 0; e.walkT = 0; }
+  e.age += dt;
+  var cx = player.x + 16 - (e.x + e.w / 2), cy = player.y + 18 - (e.y + e.h / 2);
+  var dist = Math.hypot(cx, cy) || 1;
+  var ux = cx / dist, uy = cy / dist;
+  var vx = 0, vy = 0, spd = e.speed;
+  e.lvT -= dt;
+  if (e.lv === 'under'){                  /* the mound creeps under the sand toward him */
+    e.buried = true;
+    vx = ux * spd * 0.5; vy = uy * spd * 0.5;
+    if (e.lvT <= 0 && dist < 210){ e.lv = 'pop'; e.lvT = 0.22; sfx('corn'); burst(e.x + e.w / 2, e.y + e.h / 2, '#c9b06a', 7); }
+  } else if (e.lv === 'pop'){             /* bursting out — and its aim locks NOW */
+    e.buried = false;
+    if (e.lvT <= 0){ e.lv = 'spin'; e.lvT = 1.05; e.aimX = ux; e.aimY = uy; }
+  } else if (e.lv === 'spin'){            /* the spin charge: straight, fast, no steering */
+    vx = e.aimX * spd * 2.1; vy = e.aimY * spd * 2.1;
+    if (e.lvT <= 0){ e.lv = 'burrow'; e.lvT = 0.25; }
+  } else {                                /* burrow — gone again */
+    if (e.lvT <= 0){ e.lv = 'under'; e.lvT = 1.6 + Math.random() * 1.4; e.buried = true; }
+  }
+  e.walkT += dt * (Math.abs(vx) + Math.abs(vy)) * 0.09;
+  return [vx, vy];
+}
+function lakelurkStep(e, dt){
+  if (e.lk === undefined){ e.lk = 'down'; e.lkT = 1 + Math.random() * 2; e.spat = false; }
+  e.lkT -= dt;
+  var cx = player.x + 16 - (e.x + e.w / 2), cy = player.y + 18 - (e.y + e.h / 2);
+  var dist = Math.hypot(cx, cy) || 1;
+  if (e.lk === 'down'){                   /* under the water: only ripples, and it waits for him to come near */
+    if (e.lkT <= 0 && dist < 360){ e.lk = 'rise'; e.lkT = 0.35; e.spat = false; burst(e.x + e.w / 2, e.y + e.h / 2, '#bfe8ff', 5); }
+  } else if (e.lk === 'rise'){
+    if (e.lkT <= 0){ e.lk = 'up'; e.lkT = 1.7; }
+  } else if (e.lk === 'up'){              /* surfaced: ONE spit per surfacing, aimed at Corn Man */
+    if (!e.spat && dist < 340){
+      e.spat = true;
+      eprojectiles.push({ kind:'spit', x: e.x + e.w / 2 - 7, y: e.y + 4, w: 14, h: 14,
+                          vx: cx / dist * 235, vy: cy / dist * 235, life: 2.2, t: 0 });
+      sfx('throw');
+    }
+    if (e.lkT <= 0){ e.lk = 'sink'; e.lkT = 0.3; }
+  } else {                                /* sink */
+    if (e.lkT <= 0){ e.lk = 'down'; e.lkT = 1.6 + Math.random() * 2.2; }
+  }
+}
 function tractorStep(e, dt){
   if (e.tr === undefined){ e.tr = 'chug'; e.trT = 0; e.trCd = 0; e.age = 0; e.walkT = 0; }
   e.age += dt;
@@ -8144,6 +8227,17 @@ function update(dt){
       if (!e.buried && rectsOverlap(pb, e)) hurtPlayer(def.dmg, e);
       continue;
     }
+    if (def.ai === 'leever'){
+      var lvv = leeverStep(e, dt);
+      moveWithCollide(e, lvv[0] * dt, lvv[1] * dt);
+      if (e.lv && e.lv !== 'under' && rectsOverlap(pb, e)) hurtPlayer(def.dmg, e);   /* v38b: no bite from under the sand */
+      continue;
+    }
+    if (def.ai === 'lakelurk'){
+      lakelurkStep(e, dt);
+      if (e.lk !== 'down' && rectsOverlap(pb, e)) hurtPlayer(def.dmg, e);
+      continue;
+    }
     if (def.ai === 'tractor'){
       var trv = tractorStep(e, dt);
       moveWithCollide(e, trv[0] * dt, trv[1] * dt);
@@ -8218,7 +8312,7 @@ function update(dt){
   for (var qi2 = eprojectiles.length - 1; qi2 >= 0; qi2--){
     var ep = eprojectiles[qi2];
     ep.x += ep.vx * dt; ep.y += ep.vy * dt; ep.life -= dt; ep.t += dt;
-    var edead = ep.life <= 0 || obstacles.some(function(o){ return rectsOverlap(ep, o); });
+    var edead = ep.life <= 0 || obstacles.some(function(o){ return !(ep.kind === 'spit' && o.type === 'water') && rectsOverlap(ep, o); });   /* v38: Lakelurk spit flies over water, dies on land */
     if (!edead && rectsOverlap(pb, ep)){
       hurtPlayer(1);
       if (ep.kind === 'web' && state.hp > 0){
@@ -9125,6 +9219,49 @@ function drawEnemy(e){
     if (tr === 'drive'){ R(x - 6, y + 10, 9, 2, '#cfd8dc'); R(x - 8, y + 17, 11, 2, '#cfd8dc'); R(x + 4, y + 30, 12, 3, '#d8c690'); }  /* speed lines + dust */
     ctx.restore();
     if (tr === 'rev'){ R(x + 15, y - 15, 3, 9, '#ffd91a'); R(x + 15, y - 4, 3, 3, '#ffd91a'); }   /* the ! */
+  } else if (e.type === 'lakelurk'){
+    /* THE LAKELURK (v38) — the river's own River Zora: DOWN it is
+       only ripples on the water. UP: a teal head with a fin crest
+       and a spitting snout, foam at the waterline, front-facing */
+    var lk = e.lk || 'down';
+    if (lk === 'down'){
+      var rp = 6 + (e.t * 14) % 12;
+      ctx.strokeStyle = 'rgba(230,248,255,0.65)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.ellipse(x + 17, y + 20, rp, rp * 0.45, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(x + 17, y + 20, rp * 0.55, rp * 0.25, 0, 0, Math.PI * 2); ctx.stroke();
+    } else {
+      var lRise = lk === 'up' ? 0 : 7, lBob = Math.round(Math.sin(e.t * 3.2) * 1.5);
+      ctx.fillStyle = 'rgba(240,252,255,0.8)';
+      ctx.beginPath(); ctx.ellipse(x + 17, y + 31 + lBob, 15, 4, 0, 0, Math.PI * 2); ctx.fill();
+      R(x + 5, y + 12 + lRise + lBob, 24, 18, '#2e8f86');                    /* head */
+      R(x + 8, y + 8 + lRise + lBob, 18, 7, '#35a596');                     /* brow */
+      R(x + 15, y + 1 + lRise + lBob, 4, 8, '#e2543e');                      /* fin crest */
+      R(x + 11, y + 3 + lRise + lBob, 3, 6, '#e2543e'); R(x + 20, y + 3 + lRise + lBob, 3, 6, '#e2543e');
+      R(x + 9, y + 16 + lRise + lBob, 3, 4, '#0d2b29'); R(x + 22, y + 16 + lRise + lBob, 3, 4, '#0d2b29');   /* eyes */
+      R(x + 13, y + 24 + lRise + lBob, 9, 6, '#277a72');                     /* snout */
+      R(x + 16, y + 26 + lRise + lBob, 3, 3, '#0d2b29');                     /* mouth */
+    }
+  } else if (e.type === 'leever'){
+    /* THE LEEVER (v38) — UNDER: a creeping sand mound. UP: a
+       banded tan grub with fangs; in its SPIN it whirls */
+    var lv = e.lv || 'under';
+    if (lv === 'under'){
+      var sBob = Math.round(Math.sin((e.age || 0) * 8));
+      R(x + 4, y + 22 + sBob, 26, 9, '#b39a58');
+      R(x + 9, y + 18 + sBob, 16, 6, '#c9b06a');
+      R(x + 13, y + 15 + sBob, 8, 4, '#e8d69b');
+      R(x + 6, y + 26, 5, 3, '#a8905a'); R(x + 24, y + 27, 5, 3, '#a8905a');
+    } else {
+      var lRise2 = (lv === 'pop' || lv === 'burrow') ? 8 : 0;
+      ctx.save(); ctx.translate(x + 17, y + 17); if (lv === 'spin') ctx.rotate((e.age || 0) * 18); ctx.translate(-(x + 17), -(y + 17));
+      R(x + 6, y + 10 + lRise2, 22, 17, '#d9b878');                          /* body */
+      R(x + 10, y + 10 + lRise2, 3, 17, '#b39a58'); R(x + 17, y + 10 + lRise2, 3, 17, '#b39a58'); R(x + 24, y + 10 + lRise2, 3, 17, '#b39a58');   /* bands */
+      R(x + 10, y + 13 + lRise2, 3, 3, '#14181d'); R(x + 21, y + 13 + lRise2, 3, 3, '#14181d');   /* eyes */
+      R(x + 12, y + 23 + lRise2, 4, 5, '#ffffff'); R(x + 19, y + 23 + lRise2, 4, 5, '#ffffff');   /* fangs */
+      ctx.restore();
+      R(x + 3, y + 27, 28, 6, '#b39a58');
+      if (lv === 'pop'){ R(x + 2, y + 8, 4, 4, '#c9b06a'); R(x + 28, y + 6, 4, 4, '#b39a58'); R(x + 15, y + 2, 4, 4, '#e8d69b'); }
+    }
   } else { /* mole */
     /* THE MOLE (brain: moleStep): BURIED it is just a moving dirt
        mound — it cannot hurt Corn Man down there. POP: it bursts
@@ -10299,6 +10436,7 @@ function draw(){
     ctx.textAlign = 'center';
     if (ep.kind === 'web'){ ctx.font = '18px serif'; ctx.fillText('🕸️', ep.x + 8, ep.y + 15 + Math.sin(ep.t * 9) * 2); }
     else if (ep.kind === 'fireball'){ ctx.font = '19px serif'; ctx.fillText('🔥', ep.x + 8, ep.y + 16 + Math.sin(ep.t * 13) * 1.5); }
+    else if (ep.kind === 'spit'){ ctx.fillStyle = '#7cc0ee'; ctx.beginPath(); ctx.ellipse(ep.x + 7, ep.y + 7, 7, 6, 0, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#dff3ff'; ctx.beginPath(); ctx.ellipse(ep.x + 4, ep.y + 4, 2.5, 2, 0, 0, Math.PI * 2); ctx.fill(); }
     else { R(ep.x, ep.y, 11, 11, '#ffd91a'); R(ep.x + 3, ep.y + 3, 4, 4, '#fff3a0'); }
   });
   wrenches.forEach(function(w){
