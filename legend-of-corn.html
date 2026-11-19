@@ -3339,6 +3339,12 @@ function paintFieldTiles39(mc, i, cx, cy){
       case 'pumpkin': mc.fillStyle = '#e07b1f'; mc.beginPath(); mc.arc(x + w / 2, y + h / 2, Math.max(2, w * 0.4), 0, Math.PI * 2); mc.fill(); break;
       case 'corn': mc.fillStyle = '#3f8f22'; mc.fillRect(x, y, w, h); mc.fillStyle = '#ffd91a'; mc.fillRect(x, y, w, 1.5); break;
       case 'cactus': mc.fillStyle = '#2e8b3a'; mc.fillRect(x + w / 2 - 1, y, 2, h); mc.fillRect(x, y + h * 0.35, w, 1.5); break;
+      case 'cliff':
+        mc.fillStyle = '#9c7a3f'; mc.fillRect(x, y, w, h * 0.2);
+        mc.fillStyle = '#c96a2c'; mc.fillRect(x, y + h * 0.2, w, h * 0.27);
+        mc.fillStyle = '#a34d1c'; mc.fillRect(x, y + h * 0.47, w, h * 0.27);
+        mc.fillStyle = '#7c3a12'; mc.fillRect(x, y + h * 0.74, w, h * 0.26);
+        break;
       case 'tomb': mc.fillStyle = '#a7adb5'; mc.fillRect(x, y, w, h); mc.fillStyle = '#c3c9cf'; mc.fillRect(x, y, w, 2); break;
       case 'stone': case 'cracked': case 'crackedwall':
         mc.fillStyle = '#8a8f96'; mc.fillRect(x, y, w, h); mc.fillStyle = '#aeb4bb'; mc.fillRect(x, y, w, 1.5); break;
@@ -4711,6 +4717,30 @@ function scatterExtraObstacles(R, type, count, avoid){
     if (!bad){ obstacles.push(o); count--; }
   }
 }
+/* v40: A FOREST STAND — trees planted as a packed 3x3 stand, the
+   way the guide's woods read as solid canopy instead of singles.
+   Every safety rule from scatterExtraObstacles holds (feature
+   aprons, avoid circles, the player's own ground) except one:
+   trees may stand shoulder to shoulder with other trees. */
+function plantForest(R, type, avoid){
+  var cx0 = 2 + Math.floor(R() * 11), cy0 = 2 + Math.floor(R() * 7), placed = 0;
+  for (var dty = -1; dty <= 1; dty++) for (var dtx = -1; dtx <= 1; dtx++){
+    if (placed >= 8) return;
+    var tx = cx0 + dtx, ty = cy0 + dty;
+    if (tx < 1 || tx > 14 || ty < 1 || ty > 10) continue;
+    if ((dtx || dty) && R() < 0.18) continue;   /* a ragged edge, not a hedge */
+    var o = { x: tx * TILE + 4, y: ty * TILE + 4, w: 40, h: 40, type: type };
+    var bad = obstacles.some(function(q){ return q.type !== type && rectsOverlap(o, { x: q.x - 4, y: q.y - 4, w: q.w + 8, h: q.h + 8 }); });
+    if (!bad) owFeatures.forEach(function(f){
+      var fr = (f.bw ? { x: f.bx - 46, y: f.by - 46, w: f.bw + 92, h: f.bh + 92 }
+                      : { x: f.x - 46, y: f.y - 46, w: f.w + 92, h: f.h + 92 });
+      if (rectsOverlap(o, fr)) bad = true;
+    });
+    if (!bad && avoid) avoid.forEach(function(a){ if (Math.abs(o.x - a.x) < a.r && Math.abs(o.y - a.y) < a.r) bad = true; });
+    if (!bad && player && Math.abs(o.x - player.x) < 100 && Math.abs(o.y - player.y) < 100) bad = true;
+    if (!bad){ obstacles.push(o); placed++; }
+  }
+}
 function spawnFieldEnemies(list, R, keyCarrierType){
   list.forEach(function(pair){
     for (var k = 0; k < pair[1]; k++){
@@ -4761,6 +4791,18 @@ function loadOwScreen(){
   if (owGaps.W && state.owCol > 0 && OW_SCREENS[idx - 1].region === S.region) gaps35.W = 'open';
   if (owGaps.E && state.owCol < OW_COLS - 1 && OW_SCREENS[idx + 1].region === S.region) gaps35.E = 'open';
   obstacles = openField ? [] : borderObstacles(gaps35, wallType);
+  /* v40: THE CLIFFS — hand-laid rock faces on the named heights:
+     the Great Barn sits in a cliff notch, the Owl Roost keeps its
+     ridge, a mesa stands in the Lost Hills, a bluff haunts the
+     graveyard, and the Silo Yard grows a rocky shoulder. Solid as
+     any wall — they are geography, not decoration. */
+  var CLIFFS40 = {};
+  CLIFFS40[OW_L9] = [[0,16],[48,16],[96,16],[144,16],[576,16],[624,16],[672,16],[720,16]];
+  CLIFFS40[OW_L5] = [[48,24],[96,24],[560,24],[608,24],[656,24],[656,72]];
+  CLIFFS40[OW_LOST] = [[384,384],[432,384],[480,384],[432,432],[480,432]];
+  CLIFFS40[OW_L6] = [[24,216],[24,264],[72,264]];
+  CLIFFS40[OW_L7] = [[592,40],[640,40],[640,88]];
+  if (CLIFFS40[idx]) CLIFFS40[idx].forEach(function(cp){ obstacles.push({ x: cp[0], y: cp[1], w: 48, h: 48, type: 'cliff' }); });
   var avoid = [{ x: W/2, y: 40, r: 90 }, { x: W/2, y: H - 60, r: 90 }, { x: 40, y: H/2, r: 90 }, { x: W - 60, y: H/2, r: 90 }];
   /* THE RIVER AND THE GREAT LAKE (v36) — the water lies under
      everything else the field grows: sand, then water, then the
@@ -4972,6 +5014,7 @@ function loadOwScreen(){
   } else {
     scatterObstacles(R, S.ob, 6, avoid);
     if (S.region === 'desert') scatterObstacles(R, 'cactus', 3, avoid);   /* v35: the desert grows cacti */
+    if (S.region === 'northwoods' || S.region === 'mazewoods'){ plantForest(R, 'tree', avoid); plantForest(R, 'tree', avoid); }   /* v40: the woods grow in stands, not singles */
   }
   /* The Country Stores are GONE (Michael, 2026-11-17): no store
      buildings anywhere on the farm and nowhere to buy anything —
@@ -8831,6 +8874,27 @@ function drawObstacle(o){
     ctx.moveTo(x + 32, y + 13); ctx.lineTo(x + 37, y + 10);
     ctx.stroke();
     ctx.lineCap = 'butt';
+    return;
+  }
+  if (o.type === 'cliff'){
+    /* v40: THE CLIFF FACE — a stepped rock wall, the guide's way:
+       a dry plateau lip on top, three strata bands stepping down,
+       dark seams between them, hashed vertical cracks, and the
+       shadow the face throws on the ground below */
+    R(x - 2, y + o.h - 2, o.w + 4, 7, 'rgba(0,0,0,0.20)');
+    R(x, y, o.w, 10, '#9c7a3f');
+    R(x, y, o.w, 3, '#b8905a');
+    for (var cs = 0; cs < 6; cs++) if (texHash(x + cs * 31, y + 3) > 0.5) R(x + 4 + texHash(x + cs * 31, y + 3) * (o.w - 10), y + 4, 3, 2, '#8a6a35');
+    R(x, y + 10, o.w, 12, '#c96a2c');
+    R(x, y + 22, o.w, 12, '#a34d1c');
+    R(x, y + 34, o.w, o.h - 34, '#7c3a12');
+    R(x, y + 10, o.w, 2, '#5d2a0c'); R(x, y + 22, o.w, 2, '#5d2a0c'); R(x, y + 34, o.w, 2, '#4c220a');
+    for (var cv2 = 0; cv2 < 5; cv2++){
+      var vx = x + 5 + texHash(x * 3 + cv2 * 47, y) * (o.w - 10);
+      R(vx, y + 12, 2, 8, 'rgba(60,30,8,0.55)');
+      R(vx + (texHash(y, cv2 * 13) > 0.5 ? 3 : -3), y + 24, 2, 8, 'rgba(60,30,8,0.5)');
+    }
+    R(x, y, 2, o.h, 'rgba(0,0,0,0.25)'); R(x + o.w - 2, y, 2, o.h, 'rgba(0,0,0,0.25)');
     return;
   }
   if (o.type === 'hay'){ R(x + 3, y + 8, 34, 26, '#e8b93a'); R(x + 3, y + 14, 34, 3, '#c79a24'); R(x + 3, y + 24, 34, 3, '#c79a24'); R(x + 8, y + 3, 24, 6, '#f5d76a'); }
